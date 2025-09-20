@@ -13,36 +13,44 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
+
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity //Con esto habilitamos el uso de PreAuthorize para cada método (Permite agregarla sin esta anotación pero no se aplica)
 public class SecurityConfig {
-    @Autowired
-    private UtilJWTCookieAuthFilter jwtCookieAuthFilter;
 
+    private final UtilJWTCookieAuthFilter jwtCookieAuthFilter; // Variable statica
+    private final CorsConfigurationSource corsConfigurationSource; // Inyecta CorsConfigurationSource
+
+    // Complemento de las variables de arriba
+    public SecurityConfig(UtilJWTCookieAuthFilter jwtCookieAuthFilter,
+                          CorsConfigurationSource corsConfigurationSource) {
+        this.jwtCookieAuthFilter = jwtCookieAuthFilter;
+        this.corsConfigurationSource = corsConfigurationSource;
+    }
     //Método que se centra en la cadena de filtros de seguridad y reglas de autorización
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                //Aplica la configuración de CORS que realizamos dentro de nuestra aplicación, esto porque al conectarlo al frontend va a dar problema de CORS si no se agrega
-                .cors(withDefaults())
 
-                //Desactiva Cross Site Request Forgery
+
                 .csrf(csrf -> csrf.disable())
-
-                //Ahora, estas son las reglas de autorización por las rutas HTTP
+                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Con esto se esta configurando los CORS
                 .authorizeHttpRequests(auth -> auth
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //  Permite los  preflight requests
+                                .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll() // Esto es para que a este endpoint acceda cualquiera
+                                .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
+                                .requestMatchers("api/auth/me").authenticated()   // Este endpoint es para ver la info del usuario logeado
 
-                        //Endpoints que no van a requerir el JWT
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/logout").permitAll()
-
-                        //Endpoints que si requieren estar autenticado con el JWT
-                        .requestMatchers("/api/auth/me").authenticated()
-
-                        //Todos los demás endpoints deben requerir JWT, sino 401
-                        .anyRequest().authenticated()
+                        // Para manejar los niveles de usuario se utiliza lo siguiente donde se tiene que para cada rol tendran su endpoint donde
+                        // Y se pone el endpoint completo y si es un GET,POST,PUT O DELETE diciendo que solo
+                        // podran acceder solo los del mismo rol 1.Administrador 2.Docente 3.Jefe inmediaato
+                        // El ".authenticated()" significa que pueden acceder a ese endpoint solo los usuarios que iniciaron sesiòn
+                        // El  ".hasAuthority("ROLE_Administrador")" significa que pueden acceder a ese endpoint solo los usuarios con rol 'Administrador'
+                        // El  ".hasAnyAuthority("ROLE_Administrador", "ROLE_Docente")" Solo pueden acceder solo los rusuarios con rol 'Administrador y Docente'
                 )
 
                 //Sin estado de sesión: cada request debe traer su JWT (no se guarda nada en servidor) Esto porque usa autenticación por cookies
