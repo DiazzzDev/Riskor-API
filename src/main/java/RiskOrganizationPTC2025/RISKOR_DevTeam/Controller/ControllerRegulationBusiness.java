@@ -1,0 +1,248 @@
+package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
+
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegulationBusiness;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceRegulationBusiness;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/regulationBusiness")
+@Validated
+public class ControllerRegulationBusiness {
+    @Autowired
+    private ServiceRegulationBusiness objServiceRB;
+
+    @PersistenceContext
+    private EntityManager em; //Ayuda a evitar cargar objetos completos en FK
+
+    @GetMapping("/getRegulationBusiness")
+    public ResponseEntity<?> getRegulationBusiness(
+            @RequestAttribute("auth.business") String idBusiness, //Se coloca PathVariable por semántica y evitar problemas de mezcla de datos con el cliente-empresa
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (size <= 0 || size > 40) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "El tamaño de la página debe estar entre 1 y 40"
+            ));
+        }
+
+        return ResponseEntity.ok(objServiceRB.getRegulations(idBusiness, page, size));
+    }
+
+    //Delete de la imágen de los planos del área
+    @DeleteMapping("/{idRegulation}/document")
+    public ResponseEntity<?> deleteDocument(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idRegulation
+    ) {
+        try {
+            DTORegulationBusiness updated = objServiceRB.deleteDocument(idBusiness, idRegulation);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Regulación eliminada correctamente, Success",
+                    "data", updated
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", "La regulación no pertenece a esta empresa o no existe",
+                    "detail", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al eliminar la regulación del área",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    @PutMapping("/{idRegulation}/document")
+    public ResponseEntity<?> replaceDocument(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idRegulation,
+            @RequestParam("image") MultipartFile image
+    ) {
+        try {
+            DTORegulationBusiness updated = objServiceRB.updateRegulation(idBusiness, idRegulation, image);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Documento actualizado correctamente, Success",
+                    "data", updated
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", "El documento no pertenece a esta empresa o no existe",
+                    "detail", e.getMessage()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
+            ));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al subir el documento",
+                    "detail", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al actualizar el documento",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/{idRegulation}/document/upload")
+    public ResponseEntity<?> uploadDocument(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idRegulation,
+            @RequestParam("image") MultipartFile image
+    ) {
+        try {
+            DTORegulationBusiness updated = objServiceRB.updateRegulation(idBusiness, idRegulation, image);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Documento agregada correctamente, Success",
+                    "data", updated
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", "El documento no pertenece a esta empresa o no existe",
+                    "detail", e.getMessage()
+            ));
+        } catch (IllegalArgumentException e) {
+            // Errores de validación de imagen (tamaño, extensión, content-type, etc.)
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
+            ));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al subir el documento",
+                    "detail", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al actualizar el documento",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/postRegulationBusiness")
+    //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
+    public ResponseEntity<?> postRegulationBusiness(
+            @RequestAttribute("auth.business") String idBusiness,
+            @Valid @RequestBody DTORegulationBusiness dto,
+            BindingResult dataResult
+    ) {
+        if (dataResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(dataResult.getAllErrors());
+        }
+        try {
+            dto.setIdBusiness(idBusiness); //Se coloca desde aquí el negocio para...
+            DTORegulationBusiness answer = objServiceRB.postResgulationBusiness(dto, idBusiness);
+            if (answer == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Error al guardar los datos",
+                        "errorType", "VALIDATION_ERROR",
+                        "message", "Datos inválidos, vuelva a intentarlo"
+                ));
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "status", "Regulación empresarial registrada correctamente, Success",
+                    "data", answer
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al registrar la regulación empresarial",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    @PutMapping("/putRegulationBusiness/{idRegulation}")
+    public ResponseEntity<?> putRegulationBusiness(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idRegulation,
+            @Valid @RequestBody DTORegulationBusiness dto,
+            BindingResult dataResult
+    ) {
+
+        //Validamos si existen errores ANTES de proceder con el PUT dentro de los datos solicitados (método de seguridad)
+        if (dataResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(dataResult.getAllErrors());
+        }
+        try {
+            dto.setIdBusiness(idBusiness); //Se coloca desde aquí el negocio para...
+            DTORegulationBusiness answer = objServiceRB.putRegulationBusiness(dto, idRegulation, idBusiness);
+            if (answer == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Error al actualizar los datos",
+                        "errorType", "VALIDATION_ERROR",
+                        "message", "Datos inválidos, vuelva a intentarlo"
+                ));
+            }
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                    "status", "Regulación empresarial modificada correctamente, Success",
+                    "data", answer
+            ));
+        } catch (ExceptionDataNotFound e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al actualizar la regulación empresarial",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    @DeleteMapping("/deleteRegulationBusiness/{idRegulation}")
+    public ResponseEntity<?> deleteRegulationBusiness(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idRegulation) {
+        try {
+            boolean ok = objServiceRB.removeRegulationBusiness(idRegulation, idBusiness);
+            if (!ok) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).header(
+                        "Error, ID no encontrado", "ID de la regulación empresarial no encontrado").body(Map.of(
+                        "status", "No encontrado, Error",
+                        "message", "El ID de la regulación empresarial no ha sido encontrado",
+                        "timeStamp", Instant.now().toString()
+                ));
+            }
+            return ResponseEntity.ok(Map.of(
+                    "status", "Proceso completado correctamente",
+                    "message", "Regulación empresarial eliminada correctamente, Success"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al eliminar la regulación empresarial",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+}
