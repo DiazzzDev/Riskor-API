@@ -11,7 +11,7 @@ public class ServiceEmailSender {
     @Autowired
     private JavaMailSender mailSender; //Interfaz que ofrece Spring que facilita envío de correos
 
-    @Value("${EMAIL_USERNAME}")
+    @Value("${spring.mail.username}")
     private String sender;
 
     public void sendEmail(String toEmail, String subject, String body){
