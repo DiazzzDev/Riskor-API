@@ -17,6 +17,7 @@ public class CorsConfig {
         config.setAllowCredentials(true);
         config.addAllowedOrigin("http://127.0.0.1:5501");
         config.addAllowedOrigin("https://riskor.app");
+        config.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
 
         config.addAllowedMethod("GET");
         config.addAllowedMethod("POST");
@@ -42,6 +43,8 @@ public class CorsConfig {
         configuration.addAllowedOrigin("http://localhost:8080");
         configuration.addAllowedOrigin("https://localhost");
         configuration.addAllowedOrigin("https://*.herokuapp.com");
+        configuration.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
+
         configuration.addAllowedOrigin("https://riskor.app/");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
