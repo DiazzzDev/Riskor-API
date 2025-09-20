@@ -42,8 +42,13 @@ public class UtilJWTCookieAuthFilter extends OncePerRequestFilter {
             //Extraer token de la cookie
             String token = extractTokenFromCookie(request);
             if (token == null || token.isBlank()) {
-                sendError(response, "Token no encontrado", HttpServletResponse.SC_UNAUTHORIZED);
+                if (!isPublicEndpoint(request)){
+                    sendError(response, "Token no encontrado", HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
+                filterChain.doFilter(request,response);
                 return;
+
             }
             //Obtenemos los claims mandando a llamar el método parsetoken() del JWTUtils
             Claims claims = jwtUtils.parseToken(token);
