@@ -64,7 +64,7 @@ public class ControllerAuth {
 
             Cookie cookie = new Cookie("authToken", token);
             cookie.setHttpOnly(true);
-            cookie.setSecure(false);                //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
+            cookie.setSecure(true);                //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
             cookie.setPath("/");                    //Se aplica para toda la api esta cookie creada
             cookie.setMaxAge((int) maxAgeSeconds);  //Convertimos de long a entero para colocar el tiempo de vida del token en segundos
 
@@ -76,7 +76,7 @@ public class ControllerAuth {
     private void clearCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie("authToken", "");
         cookie.setHttpOnly(true);
-        cookie.setSecure(false);                //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
+        cookie.setSecure(true);                //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
         cookie.setPath("/");                    //Se aplica para toda la api esta cookie creada
         cookie.setMaxAge(0);  //Convertimos de long a entero para colocar el tiempo de vida del token en segundos
 
