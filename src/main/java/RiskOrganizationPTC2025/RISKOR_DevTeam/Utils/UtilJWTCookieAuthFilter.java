@@ -31,60 +31,42 @@ public class UtilJWTCookieAuthFilter extends OncePerRequestFilter {
     //Se declara así y no en el lugar donde lo usamos porque facilita mantenimiento, no debe cambiarse en ejecución (final/constante)
     private static final String AUTH_COOKIE_NAME = "authToken";
 
-    @Override
+    @Override //Este método es protegido porque así es en la clase OncePerRequestFilter, para no exponer el ciclo del filtro públicamente
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        //If para saltar autenticación si el endpoint es público
-        if (isPublicEndpoint(request)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-        try {
-            //Extraer token de la cookie
-            String token = extractTokenFromCookie(request);
-            if (token == null || token.isBlank()) {
-                if (!isPublicEndpoint(request)){
-                    sendError(response, "Token no encontrado", HttpServletResponse.SC_UNAUTHORIZED);
-                    return;
-                }
-                filterChain.doFilter(request,response);
-                return;
+        //Extraer token de la cookie
+        String token = extractTokenFromCookie(request);
+        if (token != null && !token.isBlank()) {
+            try{
+                //Obtenemos los claims mandando a llamar el método parsetoken() del JWTUtils
+                Claims claims = jwtUtils.parseToken(token);
 
+                //Guardamos los datos en la request, estos son obtenidos del token, útiles para personalizar el acceso a nuestros endpoints (Empresa/Rol)
+                request.setAttribute("auth.role", jwtUtils.extractRole(token));
+                request.setAttribute("auth.business", jwtUtils.extractBusiness(token));
+
+                //Authorities y autenticación
+                //Convierte a string auth.role y lo guarda en una variable
+                String role = (String) request.getAttribute("auth.role");
+
+                //Construye Authentication con el rol del token, se agrega el prefijo "ROLE_" porque spring así lo espera
+                var authority = new SimpleGrantedAuthority("ROLE_" + role);
+
+                //Construimos el token de autenticación de Spring Security.
+                //Usamos el "subject" del token (email del empleado)
+                //Credentials: null porque ya validamos el JWT
+                //Colocamos al último argumento como lista porque UsernamePasswordAuthenticationToken espera un Colletion...
+                var authentication = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, List.of(authority));
+
+                //A partir de aquí @PreAuthorize(...) podrá evaluar roles que hemos asignado en UsernamePasswordAuthenticationToken
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }catch (ExpiredJwtException | MalformedJwtException e){
+                // Token inválido/expirado: no autenticamos y dejamos que Security responda
+                SecurityContextHolder.clearContext();
             }
-            //Obtenemos los claims mandando a llamar el método parsetoken() del JWTUtils
-            Claims claims = jwtUtils.parseToken(token);
-
-            //Guardamos los datos en la request, estos son obtenidos del token, útiles para personalizar el acceso a nuestros endpoints (Empresa/Rol)
-            request.setAttribute("auth.role", jwtUtils.extractRole(token));
-            request.setAttribute("auth.business", jwtUtils.extractBusiness(token));
-
-            //Authorities y autenticación
-            //Convierte a string auth.role y lo guarda en una variable
-            String role = (String) request.getAttribute("auth.role");
-
-            //Construye Authentication con el rol del token, se agrega el prefijo "ROLE_" porque spring así lo espera
-            var authority = new SimpleGrantedAuthority("ROLE_" + role);
-
-            //Construimos el token de autenticación de Spring Security.
-            //Usamos el "subject" del token (email del empleado)
-            //Credentials: null porque ya validamos el JWT
-            //Colocamos al último argumento como lista porque UsernamePasswordAuthenticationToken espera un Colletion...
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, List.of(authority));
-
-            //A partir de aquí @PreAuthorize(...) podrá evaluar roles que hemos asignado en UsernamePasswordAuthenticationToken
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            //Se continua con el resto de filtros por cada solicitud HTTP
-            filterChain.doFilter(request, response);
-        } catch (ExpiredJwtException e) {
-            //JWT con fecha de expiración vencida
-            sendError(response, "Token expirado", HttpServletResponse.SC_UNAUTHORIZED);
-        } catch (MalformedJwtException e) {
-            //Firma inválida
-            sendError(response, "Token inválido", HttpServletResponse.SC_FORBIDDEN);
-        } catch (Exception e) {
-            //Cualquier otra condición inesperada
-            sendError(response, "Error de autenticación", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+
+        //Se continua con el resto de filtros por cada solicitud HTTP
+        filterChain.doFilter(request, response);
     }
 
     //Busca la cookie "authToken" y extrae su JWT o devuelve null si no fue encontrado (Ej. No hubo login, cookie expirada, etc)
@@ -103,19 +85,15 @@ public class UtilJWTCookieAuthFilter extends OncePerRequestFilter {
                 .orElse(null); //Si no se encontró una cookie con el nombre esperado retorna null
     }
 
-    //Método para enviar respuesta JSON de error con su status respectivo
-    private void sendError(HttpServletResponse response, String message, int status) throws IOException {
-        response.setContentType("application/json");
-        response.setStatus(status);
-        response.getWriter().write(String.format("{\"error\": \"%s\", \"status\": %d}", message, status));
-    }
-
-    //Método para centralizar las rutas que no requieren autenticación
-    private boolean isPublicEndpoint(HttpServletRequest request) {
-        String path = request.getRequestURI();
+    //Método para centralizar las rutas que no requieren autenticación, así que vamos a sobreescribir un método de Once Per Request Filter
+    //Ya no usamos isPublicEndpoint() porque
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String p = request.getRequestURI();
         String method = request.getMethod();
-
-        //Endpoints públicos
-        return (path.equals("/api/auth/login") && "POST".equals(method)) || (path.equals("/api/auth/register") && "POST".equals(method));
+        if ("OPTIONS".equalsIgnoreCase(method)) return true;
+        if ("/api/auth/login".equals(p) && "POST".equalsIgnoreCase(method)) return true;
+        if ("/api/businessInfo/postBusinessInfo".equals(p) && "POST".equalsIgnoreCase(method)) return true;
+        return false;
     }
 }

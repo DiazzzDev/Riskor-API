@@ -22,11 +22,7 @@ public class CorsConfig {
         config.addAllowedOrigin("https://riskor.app");
         config.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
 
-        config.addAllowedMethod("GET");
-        config.addAllowedMethod("POST");
-        config.addAllowedMethod("PUT");
-        config.addAllowedMethod("DELETE");
-        config.addAllowedMethod("OPTIONS");
+        config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
 
         //Cabeceras
         config.addAllowedHeader("Origin");
