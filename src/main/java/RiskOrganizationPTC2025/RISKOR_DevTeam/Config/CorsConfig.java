@@ -8,6 +8,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 public class CorsConfig {
@@ -54,14 +55,12 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.addAllowedOrigin("http://localhost:8080");
-        configuration.addAllowedOrigin("https://localhost");
-        configuration.addAllowedOrigin("https://*.herokuapp.com");
+        configuration.addAllowedOrigin("http://127.0.0.1:5501");
         configuration.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
+        configuration.addAllowedOrigin("https://riskor.app");
 
-        configuration.addAllowedOrigin("https://riskor.app/");
-        configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("*");
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Content-Type","Authorization","Accept","Origin","X-Requested-With"));
 
         configuration.addExposedHeader("Set-Cookie");
         configuration.addExposedHeader("Cookie");
