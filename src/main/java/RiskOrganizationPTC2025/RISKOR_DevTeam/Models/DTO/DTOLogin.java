@@ -7,8 +7,8 @@ import lombok.Setter;
 
 @Getter @Setter
 public class DTOLogin {
-    @NotBlank @Email
-    private String email;
+    @NotBlank
+    private String credentials;
 
     @NotBlank
     private String password;

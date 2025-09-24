@@ -27,14 +27,14 @@ public class ControllerAuth {
     @PostMapping("/login")
     private ResponseEntity<String> login(@Valid @RequestBody DTOLogin dtoLogin, HttpServletResponse response){
         //Validamos con el método creado en el service que las credenciales ingresadas pertenezcan a un usuario válido para dar acceso
-        if(!objServiceA.Login(dtoLogin.getEmail(), dtoLogin.getPassword())){
+        if(!objServiceA.Login(dtoLogin.getCredentials(), dtoLogin.getPassword())){
             //Si no se encuentra un usuario con las credenciales ingresadas manda un 401 (Unauthorized)
             return ResponseEntity.status(401).body("Credenciales incorrectas");
         }
         //Si las credenciales fueron válidas crea una cookie y la agregamos a la respuesta
         //Manda a llamar al método para crear la cookie y manda como argumentos la respuesta para poder crear la cookie
         //El email del empleado que ingresó y el valor booleano de este si desea mantener su sesión con un recuérdame
-        addTokenCookie(response, dtoLogin.getEmail());
+        addTokenCookie(response, dtoLogin.getCredentials());
         return ResponseEntity.ok("Inicio de sesión exitoso");
     }
 
@@ -58,34 +58,19 @@ public class ControllerAuth {
                     employee.getIdBusiness().getIdBusiness()
             );
 
-                    String cookieValue = String.format(
-                            "authToken=%s; " +
-                                    "Path=/; " +
-                                    "HttpOnly; " +
-                                    "Secure; " +
-                                    "SameSite=None; " +
-                                    "MaxAge=86400; " + //Cookie para 1 día
-                                    "Domain=riskor-370e22badbf5.herokuapp.com",
-                            token
-                    );
+            String cookieValue = String.format(
+                    "authToken=%s; " +
+                            "Path=/; " + //Se aplica para toda la api esta cookie creada
+                            "HttpOnly; " +
+                            "Secure; " + //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
+                            "SameSite=None; " +
+                            "MaxAge=86400; " + //Cookie para 1 día
+                            "Domain=riskor-370e22badbf5.herokuapp.com",
+                    token
+            );
 
-                    response.addHeader("Set-Cookie", cookieValue);
-                    response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
-
-
-//
-//            //Usamos long porque eso devuelve el método, luego será convertido a int
-//            //Porque lo necesitamos entero para la creación de la cookie
-//            long maxAgeSeconds = objUtilJWT.getExpiracionMs() / 1000; //Dividimos entre 1000 para convertir de milisegundos a segundos
-//
-//            Cookie cookie = new Cookie("authToken", token);
-//            cookie.setHttpOnly(true);
-//            cookie.setSecure(true);                //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
-//            cookie.setPath("/");                    //Se aplica para toda la api esta cookie creada
-//            cookie.setMaxAge((int) maxAgeSeconds);  //Convertimos de long a entero para colocar el tiempo de vida del token en segundos
-//
-//            //Agregamos la cookie a la respuesta
-//            response.addCookie(cookie);
+            response.addHeader("Set-Cookie", cookieValue);
+            response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
         });
     }
 

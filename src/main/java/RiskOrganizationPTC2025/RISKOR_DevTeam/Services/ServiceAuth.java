@@ -23,7 +23,7 @@ public class ServiceAuth {
 
     public boolean Login(String email, String password){
         //Se busca al empleado que le pertenece el correo recibido como argumento
-        Optional<EntityEmployee> employeeFounded = repoE.findActiveByEmployeeMail(email);
+        Optional<EntityEmployee> employeeFounded = repoE.findActiveByLogin(email);
 
         //Si no fue encontrado directamente se deniega el acceso
         if (employeeFounded.isEmpty()) return false;
@@ -37,6 +37,6 @@ public class ServiceAuth {
     }
 
     public Optional<EntityEmployee> getEmployeeByMail(String mail) {
-        return repoE.findActiveByEmployeeMail(mail);
+        return repoE.findActiveByLogin(mail);
     }
 }

@@ -145,7 +145,7 @@
         </dependency>
     </dependencies>
 
-    <!--Proceso para crear el WaR-->
+    <!--Proceso para crear el War-->
     <build>
         <!--Como se llamara el archivo War-->
         <finalName>Riskor_API</finalName>
@@ -238,6 +238,5 @@
             </releases>
         </pluginRepository>
     </pluginRepositories>
-
 
 </project>

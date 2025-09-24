@@ -93,8 +93,9 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
             JOIN FETCH e.username u
             LEFT JOIN FETCH e.idRole r
             JOIN FETCH e.idBusiness b
-        WHERE UPPER(e.employeeEmail) = UPPER(:email)
-            AND u.status = 'T'
-        """)
-    Optional<EntityEmployee> findActiveByEmployeeMail(String email);
+        WHERE (UPPER(e.employeeEmail) = UPPER(:login)
+            OR UPPER(u.username)   = UPPER(:login))
+        AND u.status = 'T'
+    """)
+    Optional<EntityEmployee> findActiveByLogin(String login);
 }
