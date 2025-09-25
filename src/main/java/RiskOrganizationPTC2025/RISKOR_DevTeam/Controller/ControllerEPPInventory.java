@@ -23,6 +23,14 @@ public class ControllerEPPInventory {
     @Autowired
     private ServiceEPPInventory objServiceEPPInventory;
 
+    @GetMapping("/getEPPInventory/{idEPPInventory}")
+    public ResponseEntity<?> getById(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idEPPInventory
+    ){
+        return ResponseEntity.ok(objServiceEPPInventory.getEPPInventoryById(idBusiness, idEPPInventory));
+    }
+
     //GetMapping para indicar la URL de nuestra API, GET
     @GetMapping("/getEPPInventory")
     public ResponseEntity<?> getData(

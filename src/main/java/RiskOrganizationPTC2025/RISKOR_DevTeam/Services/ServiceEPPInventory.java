@@ -26,6 +26,12 @@ public class ServiceEPPInventory {
     @PersistenceContext
     private EntityManager em;
 
+    @Transactional(readOnly = true)
+    public DTOEPPInventory getEPPInventoryById(String idBusiness, String idEPPInventory) {
+        EntityEPPInventory entityEPPInventory = objRepoEPPInventory.findByIdEPPInventoryAndIdBusiness_IdBusiness(idEPPInventory, idBusiness).orElseThrow(() -> new EntityNotFoundException("EPP no encontrado con ID: " + idEPPInventory));
+        return convertTOEPPInventoryDTO(entityEPPInventory);
+    }
+
     //Método para retornar una lista de todos los registros dentro de la tabla referenciada
     @Transactional(readOnly = true)
     public Page<DTOEPPInventory> getAllEPPInventory(String idBusiness, int page, int size){
@@ -58,6 +64,7 @@ public class ServiceEPPInventory {
         objEntityEPPI.setNameEPP(dtoeppInventory.getNameEPP());
         objEntityEPPI.setDescription(dtoeppInventory.getDescription());
         objEntityEPPI.setTotalQuantity(dtoeppInventory.getTotalQuantity());
+        objEntityEPPI.setAvailableQuantity(dtoeppInventory.getAvailableQuantity());
         objEntityEPPI.setIdTypeEPPControl(em.getReference(EntityTypeEPPControl.class, dtoeppInventory.getIdTypeEPPControl()));
 
         //Retornamos el DTO actualizado
