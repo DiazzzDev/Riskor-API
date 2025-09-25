@@ -54,9 +54,6 @@ public class ServiceInspectionResult {
         EntityInspectionResult result = objRepoInspectionR.findByIdInspectionResultAndIdBusiness_IdBusiness(idInspectionResult, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Resultado de inspección no encontrado con ID: " + idInspectionResult));
 
         //Actualizamos los campos, si no tienen nada permanecen como eran originalmente
-        if (dtoInspectionResult.getIdInspectionItem() != null) {
-            result.setIdInspectionItem(em.getReference(EntityInspectionItem.class, dtoInspectionResult.getIdInspectionItem()));
-        }
         if (dtoInspectionResult.getIdComplianceStatus() != null) {
             result.setIdComplianceStatus(em.getReference(EntityComplianceStatus.class, dtoInspectionResult.getIdComplianceStatus()));        }
 
@@ -78,7 +75,6 @@ public class ServiceInspectionResult {
         DTOInspectionResult objInspectionRDTO = new DTOInspectionResult();
         objInspectionRDTO.setIdInspectionResult(inspectionIResult.getIdInspectionResult());
         objInspectionRDTO.setIdInspection(inspectionIResult.getIdInspection().getIdInspection());
-        objInspectionRDTO.setIdInspectionItem(inspectionIResult.getIdInspectionItem().getIdInspectionItem());
         objInspectionRDTO.setIdComplianceStatus(inspectionIResult.getIdComplianceStatus().getIdComplianceStatus());
         objInspectionRDTO.setIdBusiness(inspectionIResult.getIdBusiness().getIdBusiness());
 
@@ -89,7 +85,6 @@ public class ServiceInspectionResult {
     private EntityInspectionResult convertTOInspectionREntity(DTOInspectionResult dtoInspectionResult, String idBusiness){
         EntityInspectionResult objEntityInspectionR = new EntityInspectionResult();
         objEntityInspectionR.setIdInspection(em.getReference(EntityInspection.class, dtoInspectionResult.getIdInspection()));
-        objEntityInspectionR.setIdInspectionItem(em.getReference(EntityInspectionItem.class, dtoInspectionResult.getIdInspectionItem()));
         objEntityInspectionR.setIdComplianceStatus(em.getReference(EntityComplianceStatus.class, dtoInspectionResult.getIdComplianceStatus()));
         objEntityInspectionR.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
 

@@ -14,9 +14,6 @@ public class DTOInspectionResult {
     private String idInspection;
 
     @NotNull
-    private String idInspectionItem;
-
-    @NotNull
     private String idComplianceStatus;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY) //Se agrega para evitar que un atacante modifique el JSON cambiando el ID y modificando registros de otras empresas

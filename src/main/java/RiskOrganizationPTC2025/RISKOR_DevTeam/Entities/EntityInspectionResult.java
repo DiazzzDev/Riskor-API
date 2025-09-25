@@ -18,10 +18,6 @@ public class EntityInspectionResult {
     private EntityInspection idInspection;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "IDINSPECTIONITEM")
-    private EntityInspectionItem idInspectionItem;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "IDCOMPLIANCESTATUS")
     private EntityComplianceStatus idComplianceStatus;
 
