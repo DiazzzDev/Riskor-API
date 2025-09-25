@@ -16,6 +16,12 @@ public class EntityInspection {
     @Generated(event = EventType.INSERT)
     private String idInspection;
 
+    @Column(name = "INSPECTIONTITLE", length = 75, nullable = false)
+    private String inspectionTitle;
+
+    @Column(name = "INSPECTIONEVIDENCE", length = 1000)
+    private String inspectionEvidence;
+
     @Column(name = "INSPECTIONDATE", insertable = false, updatable = false)
     private LocalDate inspectionDate;
 

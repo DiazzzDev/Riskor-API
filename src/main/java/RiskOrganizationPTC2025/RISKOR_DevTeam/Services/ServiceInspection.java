@@ -1,6 +1,7 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOCloudinary;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOInspection;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryInspection;
 import jakarta.persistence.EntityManager;
@@ -13,6 +14,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.time.LocalDate;
 
 @Service
@@ -21,6 +25,9 @@ public class ServiceInspection {
     //Inyectamos el repositorio
     @Autowired
     private RepositoryInspection objRepoInspection;
+
+    @Autowired
+    private ServiceCloudinary cloudinary;
 
     @PersistenceContext //Anotación que permite usar EntityManager
     private EntityManager em; //Invocamos a EntityManager para la persistencia de datos, haciendo referencia a businessInfo sin cargar todo desde la db
@@ -53,6 +60,8 @@ public class ServiceInspection {
         EntityInspection inspection = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
 
         //Actualizamos los campos
+        inspection.setInspectionTitle(inspection.getInspectionTitle());
+        inspection.setInspectionEvidence(inspection.getInspectionEvidence());
         inspection.setObservation(dtoInspection.getObservation());
 
         //Si las FKs no son modificadas en el PUT se mantendrán en su valor original
@@ -83,6 +92,8 @@ public class ServiceInspection {
     private DTOInspection convertTOInspectionDTO(EntityInspection inspection){
         DTOInspection objInspectionDTO = new DTOInspection();
         objInspectionDTO.setIdInspection(inspection.getIdInspection());
+        objInspectionDTO.setInspectionTitle(inspection.getInspectionTitle());
+        objInspectionDTO.setInspectionEvidence(inspection.getInspectionEvidence());
         objInspectionDTO.setInspectionDate(inspection.getInspectionDate());
         objInspectionDTO.setObservation(inspection.getObservation());
         objInspectionDTO.setIdEmployee(inspection.getIdEmployee().getIdEmployee());
@@ -100,6 +111,8 @@ public class ServiceInspection {
     //Método para conversión de datos de la ENTIDAD hacia el DTO (método de arriba)
     private EntityInspection convertTOInspectionEntity(DTOInspection dtoInspection, String idBusiness){
         EntityInspection objEntityInspection = new EntityInspection();
+        objEntityInspection.setInspectionTitle(dtoInspection.getInspectionTitle());
+        objEntityInspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
         objEntityInspection.setInspectionDate(LocalDate.now());
         objEntityInspection.setObservation(dtoInspection.getObservation());
         objEntityInspection.setIdEmployee(em.getReference(EntityEmployee.class, dtoInspection.getIdEmployee()));
@@ -109,5 +122,60 @@ public class ServiceInspection {
         objEntityInspection.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
 
         return objEntityInspection;
+    }
+
+    //CRUD DE LA EVIDENCIA DE INSPECCIÓN
+    //Post y PUT
+    public DTOInspection updateItemEvidence(String idBusiness, String idInspectionItem, MultipartFile image) throws IOException {
+        //Verificar que el área pertenece a la empresa
+        EntityInspection item = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspectionItem, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
+
+        //Subir a la carpeta de cloudinary
+        String folder = "RISKOR/Inspections/";
+        DTOCloudinary secureUrl = cloudinary.uploadImage(image, folder);
+
+        //Actualizar la URL en el área
+        item.setInspectionEvidence(secureUrl.getUrl());
+        return convertTOInspectionDTO(item); //Devolvemos todo en formato JSON
+    }
+
+    //Eliminar
+    public DTOInspection deleteItemEvidence(String idBusiness, String idInspectionItem) throws IOException {
+        EntityInspection item = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspectionItem, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
+
+        String expectedPublicIdWithFolder = "RISKOR/Inspections/" + idBusiness.toUpperCase() + "/" + idInspectionItem.toUpperCase();
+
+        //Se intenta con la convención oficial (idEvidence como public_id)
+        cloudinary.deleteByPublicId(expectedPublicIdWithFolder);
+
+        //Si alguna vez subiste con nombre aleatorio, intenta extraerlo desde la URL
+        String url = item.getInspectionEvidence();
+        if (url != null) {
+            String fromUrl = extractPublicIdFromUrl(url); // ej: RISKOR/areas-sketches/{biz}/{algo}
+            if (fromUrl != null && !fromUrl.equalsIgnoreCase(expectedPublicIdWithFolder)) {
+                cloudinary.deleteByPublicId(fromUrl);
+            }
+        }
+
+        item.setInspectionEvidence("Sin evidencia"); //Limpiar campo en DB
+        return convertTOInspectionDTO(item);
+    }
+
+    //Método que ayuda a conseguir el ID público que da cloudinary a la img
+    private String extractPublicIdFromUrl(String url) {
+        try {
+            int i = url.indexOf("/upload/");
+            if (i < 0) return null;
+            String after = url.substring(i + 8); // salta "/upload/"
+            if (after.startsWith("v")) { // quita v12345/
+                int slash = after.indexOf("/");
+                if (slash > 0) after = after.substring(slash + 1);
+            }
+            int dot = after.lastIndexOf(".");
+            if (dot > 0) after = after.substring(0, dot);
+            return after; // p.ej. RISKOR/areas-sketches/IDAREA
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
