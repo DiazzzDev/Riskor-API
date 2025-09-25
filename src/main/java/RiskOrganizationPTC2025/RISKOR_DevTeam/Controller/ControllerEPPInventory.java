@@ -36,10 +36,7 @@ public class ControllerEPPInventory {
     public ResponseEntity<?> getData(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "nameEPP") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction,
-            @RequestParam(required = false) String q
+            @RequestParam(defaultValue = "10") int size
     ){
         if(size <= 0 || size > 30) {
             ResponseEntity.badRequest().body(Map.of(
@@ -149,5 +146,4 @@ public class ControllerEPPInventory {
             ));
         }
     }
-
 }

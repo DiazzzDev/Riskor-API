@@ -48,7 +48,7 @@ public class ServiceAccident {
         return pageE.map(this::convertToDTOA);
     }
 
-    public DTOAccident postAccident(@Valid DTOAccident dtoA, String idBusiness) {
+    public DTOAccident postAccident(@Valid DTOAccident dtoA, String idBusiness, String emailEmployee) {
         if (dtoA == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Validación - consistencia entre fechas
@@ -70,6 +70,7 @@ public class ServiceAccident {
         accident.setIdEmployee(em.getReference(EntityEmployee.class, dtoA.getIdEmployee()));
         accident.setIdLocation(em.getReference(EntityLocation.class, dtoA.getIdLocation()));
         accident.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
+        accident.setSentBy(emailEmployee);
 
         EntityAccident saved = objRepoA.save(accident);
         return convertToDTOA(saved);

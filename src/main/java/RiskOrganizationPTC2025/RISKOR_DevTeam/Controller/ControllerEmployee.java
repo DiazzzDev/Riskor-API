@@ -175,7 +175,7 @@ public class ControllerEmployee {
     @PostMapping(value = "/postEmployee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) //{username}
     public ResponseEntity<?> postDataEmployee(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestBody DTOEmployee dtoE,
+            @Valid @RequestPart("dtoE") DTOEmployee dtoE,
             @RequestPart(value = "photo", required = false) MultipartFile photo
     ){
         try {

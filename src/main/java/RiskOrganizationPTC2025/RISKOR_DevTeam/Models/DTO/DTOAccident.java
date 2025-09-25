@@ -48,4 +48,7 @@ public class DTOAccident {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY) //Para no permitir que el cliente cambie empresa por body; la inyectas desde el path.
     private String idBusiness;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String sentBy;
 }

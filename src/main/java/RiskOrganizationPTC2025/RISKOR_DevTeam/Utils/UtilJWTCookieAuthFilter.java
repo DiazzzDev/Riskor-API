@@ -43,6 +43,7 @@ public class UtilJWTCookieAuthFilter extends OncePerRequestFilter {
                 //Guardamos los datos en la request, estos son obtenidos del token, útiles para personalizar el acceso a nuestros endpoints (Empresa/Rol)
                 request.setAttribute("auth.role", jwtUtils.extractRole(token));
                 request.setAttribute("auth.business", jwtUtils.extractBusiness(token));
+                request.setAttribute("auth.email", claims.getSubject());
 
                 //Authorities y autenticación
                 //Convierte a string auth.role y lo guarda en una variable
