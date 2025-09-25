@@ -33,10 +33,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))    //Con esto se esta configurando los CORS
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()             //Permite los preflight requests
-                                .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()     //Esto es para que a este endpoint acceda cualquiera
-                                .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
-                                .requestMatchers("/api/auth/me").authenticated()   // Este endpoint es para ver la info del usuario logeado
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()             //Permite los preflight requests
+                        .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()     //Esto es para que a este endpoint acceda cualquiera
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/me").authenticated()   // Este endpoint es para ver la info del usuario logeado
+                        .anyRequest().authenticated()
                 )
 
                 //Sin estado de sesión: cada request debe traer su JWT (no se guarda nada en servidor) Esto porque usa autenticación por cookies

@@ -21,9 +21,9 @@ public class ServiceAuth {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public boolean Login(String email, String password){
+    public boolean Login(String credentials, String password){
         //Se busca al empleado que le pertenece el correo recibido como argumento
-        Optional<EntityEmployee> employeeFounded = repoE.findActiveByLogin(email);
+        Optional<EntityEmployee> employeeFounded = repoE.findActiveByLogin(credentials);
 
         //Si no fue encontrado directamente se deniega el acceso
         if (employeeFounded.isEmpty()) return false;

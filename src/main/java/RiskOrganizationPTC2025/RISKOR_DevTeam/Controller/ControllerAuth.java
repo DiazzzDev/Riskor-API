@@ -63,7 +63,7 @@ public class ControllerAuth {
                             "Path=/; " + //Se aplica para toda la api esta cookie creada
                             "HttpOnly; " +
                             "Secure; " + //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
-                            "SameSite=None; " +
+                            "SameSite=None; " + //Se va a permitir hacer solicitudes desde otro dominio
                             "MaxAge=86400; " + //Cookie para 1 día
                             "Domain=riskor-370e22badbf5.herokuapp.com",
                     token
