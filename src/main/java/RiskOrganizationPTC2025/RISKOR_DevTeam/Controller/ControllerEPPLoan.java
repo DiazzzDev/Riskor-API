@@ -2,16 +2,19 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoan;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoanSummary;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEPPLoan;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +25,43 @@ public class ControllerEPPLoan {
     //Inyectamos el Service
     @Autowired
     private ServiceEPPLoan objServiceEPPLoan;
+
+    @GetMapping("/getEPPLoan/{idEPPLoan}")
+    public ResponseEntity<?> getById(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idEPPLoan
+    ){
+        return ResponseEntity.ok(objServiceEPPLoan.getEPPLoanById(idBusiness, idEPPLoan));
+    }
+
+    @GetMapping("/summary/{idEmployee}")
+    public ResponseEntity<DTOEPPLoanSummary> getEPPLoanSummary(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idEmployee
+    ) {
+        DTOEPPLoanSummary summary = objServiceEPPLoan.getLoanSummaryByEmployee(idBusiness, idEmployee);
+        return ResponseEntity.ok(summary);
+    }
+
+    //Endpoint para el mostrar todos los préstamos de un empleado
+    @GetMapping("/getAllEPPLoansByEmployee/{idEmployee}")
+    public ResponseEntity<Page<DTOEPPLoan>> getLoanByEmployee(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idEmployee,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "MM/dd/yyyy") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "MM/dd/yyyy") LocalDate endDate
+    ){
+        if(size <= 0 || size > 30){
+            ResponseEntity.badRequest().body(Map.of(
+                    "status", "El tamaño de la página debe estar entre 1 y 30"
+            ));
+            return ResponseEntity.ok(null);
+        }
+
+        return ResponseEntity.ok(objServiceEPPLoan.getAllEPPLoansByEmployee(idBusiness, idEmployee, startDate, endDate, page, size));
+    }
 
     //GetMapping para indicar la URL de nuestra API, GET
     @GetMapping("/getEPPLoan")

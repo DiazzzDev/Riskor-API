@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -53,6 +54,19 @@ public class ControllerTraining {
                     "detail", e.getMessage()
             ));
         }
+    }
+
+    //Método para obtener todas las capacitaciones de un empleado
+    @GetMapping("/employee/{idEmployee}")
+    public ResponseEntity<List<DTOTraining>> getTrainingsByEmployee(
+            @PathVariable String idEmployee,
+            @RequestAttribute("auth.business") String idBusiness
+    ) {
+        List<DTOTraining> trainings = objServiceT.getTrainingsByEmployee(idEmployee, idBusiness);
+        if (trainings.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(trainings);
     }
 
     @GetMapping("/getTraining/{idTraining}")

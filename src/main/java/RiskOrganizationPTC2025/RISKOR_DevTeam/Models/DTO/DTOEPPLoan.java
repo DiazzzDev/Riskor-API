@@ -3,7 +3,9 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -22,6 +24,15 @@ public class DTOEPPLoan {
     @FutureOrPresent(message = "No se puede devolver en el pasado")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate loanReturnDate;
+
+    @NotNull @Min(value = 0, message = "La cantidad entregada no puede ser negativa")
+    private int quantityDelivered;
+
+    @NotNull @Min(value = 0, message = "La cantidad devuelta no puede ser negativa")
+    private int quantityReturned;
+
+    @NotNull
+    private String idEPPInventory;
 
     @NotBlank
     private String idEmployee;

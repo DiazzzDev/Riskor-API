@@ -60,8 +60,8 @@ public class ServiceInspection {
         EntityInspection inspection = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
 
         //Actualizamos los campos
-        inspection.setInspectionTitle(inspection.getInspectionTitle());
-        inspection.setInspectionEvidence(inspection.getInspectionEvidence());
+        inspection.setInspectionTitle(dtoInspection.getInspectionTitle());
+        inspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
         inspection.setObservation(dtoInspection.getObservation());
 
         //Si las FKs no son modificadas en el PUT se mantendrán en su valor original

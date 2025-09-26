@@ -2,9 +2,11 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTraining;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTrainingEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTrainingModality;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOTraining;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryTraining;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryTrainingEmployee;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +28,9 @@ import java.util.stream.Collectors;
 public class ServiceTraining {
     @Autowired
     private RepositoryTraining objRepoT;
+
+    @Autowired
+    private RepositoryTrainingEmployee objRepoTE;
 
     @PersistenceContext
     private EntityManager em; //Ayuda a evitar cargar objetos completos en FK
@@ -44,6 +50,24 @@ public class ServiceTraining {
     public DTOTraining getTrainingById(String idTraining, String idBusiness) {
         EntityTraining training = objRepoT.findByIdTrainingAndIdBusiness_IdBusiness(idTraining, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Capacitación no encontrada con ID: " + idTraining));
         return convertToDTOT(training);
+    }
+
+    //Método para móvil dashboard
+    @Transactional(readOnly = true)
+    public List<DTOTraining> getTrainingsByEmployee(String idEmployee, String idBusiness) {
+        //Primero buscamos todas las capacitaciones asociadas a un empleado
+        List<EntityTrainingEmployee> trainingEmployee = objRepoTE.findByIdEmployee_IdEmployeeAndIdBusiness_IdBusiness(idEmployee, idBusiness);
+
+        if (trainingEmployee.isEmpty()) return Collections.emptyList();
+
+        //Crea una nueva lista que solo contendrá los IDs de las capacitaciones
+        List<String> trainingIds = trainingEmployee.stream().map(te -> te.getIdTraining().getIdTraining()).collect(Collectors.toList());
+
+        //Obtener todas las capacitaciones correspondientes a esos IDs
+        List<EntityTraining> trainings = objRepoT.findAllById(trainingIds);
+
+        //Convertimos la lista de entidades a DTO
+        return trainings.stream().map(this::convertToDTOT).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -146,12 +170,8 @@ public class ServiceTraining {
     }
 
     private void validateTimes(LocalTime start, LocalTime end) {
-        if (start == null || end == null) {
-            throw new IllegalArgumentException("startHour y endHour son obligatorios (HH:mm)");
-        }
-        if (!end.isAfter(start)) {
-            throw new IllegalArgumentException("endHour debe ser mayor que startHour");
-        }
+        if (start == null || end == null) throw new IllegalArgumentException("startHour y endHour son obligatorios (HH:mm)");
+        if (!end.isAfter(start)) throw new IllegalArgumentException("endHour debe ser mayor que startHour");
     }
 
     // Formato INTERVAL DAY(0) TO SECOND que usas en Oracle

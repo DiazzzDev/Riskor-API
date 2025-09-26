@@ -22,6 +22,16 @@ public class EntityEPPLoan {
     @Column(name = "LOANRETURNDATE")
     private LocalDate loanReturnDate;
 
+    @Column(name = "QUANTITYDELIVERED")
+    private int quantityDelivered;
+
+    @Column(name = "QUANTITYRETURNED")
+    private int quantityReturned;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "IDEPPINVENTORY")
+    private EntityEPPInventory idEPPInventory;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "IDEMPLOYEE")
     private EntityEmployee idEmployee;
