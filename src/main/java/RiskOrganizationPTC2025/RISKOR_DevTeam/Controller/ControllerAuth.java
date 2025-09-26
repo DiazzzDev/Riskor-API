@@ -1,5 +1,7 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityUser;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOLogin;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceAuth;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilsJWT;
@@ -7,11 +9,17 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -36,6 +44,71 @@ public class ControllerAuth {
         //El email del empleado que ingresó y el valor booleano de este si desea mantener su sesión con un recuérdame
         addTokenCookie(response, dtoLogin.getCredentials());
         return ResponseEntity.ok("Inicio de sesión exitoso");
+    }
+
+    //Endpoint ME, encargado de realizar GET a variables de entorno de usuario en principio de Login
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of(
+                                "authenticated", false,
+                                "message", "No autenticado"
+                        ));
+            }
+
+            // Manejar diferentes tipos de Principal
+            String username;
+            Collection<? extends GrantedAuthority> authorities;
+
+            if (authentication.getPrincipal() instanceof UserDetails) {
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                username = userDetails.getUsername();
+                authorities = userDetails.getAuthorities();
+            } else {
+                username = authentication.getName();
+                authorities = authentication.getAuthorities();
+            }
+
+            Optional<EntityEmployee> userOpt = objServiceA.getEmployeeByMail(username);
+
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of(
+                                "authenticated", false,
+                                "message", "Usuario no encontrado"
+                        ));
+            }
+
+            EntityEmployee user = userOpt.get();
+
+            return ResponseEntity.ok(Map.of(
+                    "authenticated", true,
+                    "user", Map.of(
+                            "id", user.getIdEmployee(),
+                            "username", user.getUsername(),
+                            "firstName", user.getFirstName(),
+                            "lastName", user.getLastName(),
+                            "employeeMail", user.getEmployeeEmail(),
+                            "DUI", user.getDui(),
+                            "photoEmployee", user.getPhoto(),
+                            "employeePosition", user.getIdEmployeePosition().getEmployeePosition(),
+                            "comitteeRole", user.getIdCommitteeRole().getCommitteRoleName(),
+                            "authorities", authorities.stream()
+                                    .map(GrantedAuthority::getAuthority)
+                                    .collect(Collectors.toList())
+                    )
+            ));
+
+        } catch (Exception e) {
+            //log.error("Error en /me endpoint: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "authenticated", false,
+                            "message", "Error obteniendo datos de usuario"
+                    ));
+        }
     }
 
     @PostMapping("/logout") //Indicamos que en la respuesta no debemos devolver nada con Void
