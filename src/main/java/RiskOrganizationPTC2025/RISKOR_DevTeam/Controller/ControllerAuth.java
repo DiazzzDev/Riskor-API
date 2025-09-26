@@ -122,7 +122,6 @@ public class ControllerAuth {
         objServiceA.getEmployeeByMail(email).ifPresent(employee -> {
             //Del empleado obtiene el nombre de su ROL dentro de la aplicación para manejar su acceso y guardarlo en la cookie
             //Obtiene el ID business para evitar que el usuario realice acciones en una empresa que no corresponde
-
             String token = objUtilJWT.create(
                     employee.getIdEmployee(),
                     employee.getEmployeeEmail(),
@@ -134,14 +133,21 @@ public class ControllerAuth {
             //Porque lo necesitamos entero para la creación de la cookie
             long maxAgeSeconds = objUtilJWT.getExpiracionMs() / 1000; //Dividimos entre 1000 para convertir de milisegundos a segundos
 
-            Cookie cookie = new Cookie("authToken", token);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true);                //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
-            cookie.setPath("/");                    //Se aplica para toda la api esta cookie creada
-            cookie.setMaxAge((int) maxAgeSeconds);  //Convertimos de long a entero para colocar el tiempo de vida del token en segundos
+            //Crear la cookie como un String formateado
+            String cookieValue = String.format(
+                    "authToken=%s; " +
+                            "Path=/; " + //Se aplica para toda la API esta cookie creada
+                            "HttpOnly; " + //Protege la cookie de accesos JavaScript
+                            "Secure; " + //Asegura la cookie cuando el API está en HTTPS (desarrollo debe ser TRUE solo en producción)
+                            "SameSite=None; " + //Desde otro dominio (Ejemplo vercel)
+                            "Max-Age=%d; " + //Duración de la cookie en segundos
+                            "Domain=riskor-370e22badbf5.herokuapp.com", // Asegura que la cookie sea válida solo para el dominio
+                    token, maxAgeSeconds
+            );
 
-            //Agregamos la cookie a la respuesta
-            response.addCookie(cookie);
+            //Agregar la cookie a la respuesta de la cabecera HTTP
+            response.addHeader("Set-Cookie", cookieValue);
+            response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
         });
     }
 
