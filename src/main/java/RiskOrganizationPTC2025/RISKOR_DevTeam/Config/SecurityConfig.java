@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()             //Permite los preflight requests
                         .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()     //Esto es para que a este endpoint acceda cualquiera
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/EPPLoan/getEPPLoan").authenticated()
                         .requestMatchers("/api/auth/me").authenticated()   // Este endpoint es para ver la info del usuario logeado
                         .anyRequest().authenticated()
                 )
