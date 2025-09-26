@@ -1,7 +1,6 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityUser;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOLogin;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceAuth;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilsJWT;
@@ -131,19 +130,18 @@ public class ControllerAuth {
                     employee.getIdBusiness().getIdBusiness()
             );
 
-            String cookieValue = String.format(
-                    "authToken=%s; " +
-                            "Path=/; " + //Se aplica para toda la api esta cookie creada
-                            "HttpOnly; " +
-                            "Secure; " + //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
-                            "SameSite=None; " + //Se va a permitir hacer solicitudes desde otro dominio
-                            "MaxAge=86400; " + //Cookie para 1 día
-                            "Domain=riskor-370e22badbf5.herokuapp.com",
-                    token
-            );
+            //Usamos long porque eso devuelve el método, luego será convertido a int
+            //Porque lo necesitamos entero para la creación de la cookie
+            long maxAgeSeconds = objUtilJWT.getExpiracionMs() / 1000; //Dividimos entre 1000 para convertir de milisegundos a segundos
 
-            response.addHeader("Set-Cookie", cookieValue);
-            response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
+            Cookie cookie = new Cookie("authToken", token);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);                //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
+            cookie.setPath("/");                    //Se aplica para toda la api esta cookie creada
+            cookie.setMaxAge((int) maxAgeSeconds);  //Convertimos de long a entero para colocar el tiempo de vida del token en segundos
+
+            //Agregamos la cookie a la respuesta
+            response.addCookie(cookie);
         });
     }
 
