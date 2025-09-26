@@ -16,6 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 public class ServiceEPPInventory {
@@ -32,12 +35,18 @@ public class ServiceEPPInventory {
         return convertTOEPPInventoryDTO(entityEPPInventory);
     }
 
+    @Transactional(readOnly = true)
+    public List<DTOEPPInventory> getAllEPPInventory(String idBusiness){
+        List<EntityEPPInventory> eppInventoryList = objRepoEPPInventory.findByIdBusiness_IdBusiness(idBusiness.toUpperCase());
+        return eppInventoryList.stream().map(this::convertTOEPPInventoryDTO).collect(Collectors.toList());
+    }
+
     //Método para retornar una lista de todos los registros dentro de la tabla referenciada
     @Transactional(readOnly = true)
     public Page<DTOEPPInventory> getAllEPPInventory(String idBusiness, int page, int size){
         Pageable pageable = PageRequest.of(page, size);
-        Page<EntityEPPInventory> PermissionPage = objRepoEPPInventory.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
-        return PermissionPage.map(this::convertTOEPPInventoryDTO);
+        Page<EntityEPPInventory> eppInventoryList = objRepoEPPInventory.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
+        return eppInventoryList.map(this::convertTOEPPInventoryDTO);
     }
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
@@ -46,9 +55,9 @@ public class ServiceEPPInventory {
         if (DTOEPPInventory == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Caso contrario, se procede con la inserción de datos (POST)
-        EntityEPPInventory objeEPPInventorySaved = objRepoEPPInventory.save(convertTOEPPInventoryEntity(DTOEPPInventory, idBusiness));
+        EntityEPPInventory eppInventory = objRepoEPPInventory.save(convertTOEPPInventoryEntity(DTOEPPInventory, idBusiness));
         //Finalmente, retornamos los valores que reciben como parámetro la entidad, relacionandose con la DB
-        return convertTOEPPInventoryDTO(objeEPPInventorySaved);
+        return convertTOEPPInventoryDTO(eppInventory);
     }
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB

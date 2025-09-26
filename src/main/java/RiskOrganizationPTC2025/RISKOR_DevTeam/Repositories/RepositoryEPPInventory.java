@@ -5,10 +5,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface RepositoryEPPInventory extends JpaRepository<EntityEPPInventory, String> {
+    List<EntityEPPInventory> findByIdBusiness_IdBusiness(String idBusiness);
     Page<EntityEPPInventory> findByIdBusiness_IdBusiness(String idBusiness, Pageable pageable);
     Optional<EntityEPPInventory> findByIdEPPInventoryAndIdBusiness_IdBusiness(String idEPPInventory, String idBusiness);
 
