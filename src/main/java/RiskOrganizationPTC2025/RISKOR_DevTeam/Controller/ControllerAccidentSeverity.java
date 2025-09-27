@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/accidentSeverity")
-@Validated
 public class ControllerAccidentSeverity {
     @Autowired
     private ServiceAccidentSeverity objServiceAS;

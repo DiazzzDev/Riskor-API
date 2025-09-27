@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/trainingModality")
-@Validated
 public class ControllerTrainingModality {
     @Autowired
     private ServiceTrainingModality objServiceTM;

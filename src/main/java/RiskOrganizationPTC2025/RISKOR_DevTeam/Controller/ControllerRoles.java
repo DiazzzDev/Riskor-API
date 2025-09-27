@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/roles")
-@Validated
 public class ControllerRoles {
     @Autowired
     private ServiceRoles objServiceR;

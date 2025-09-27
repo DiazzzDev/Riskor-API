@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/committeePositions")
-@Validated
 public class ControllerComittePosition {
     @Autowired
     private ServiceComittePosition objServiceCommittePosition;

@@ -43,71 +43,6 @@ public class ControllerAuth {
         return ResponseEntity.ok("Inicio de sesión exitoso");
     }
 
-    //Endpoint ME, encargado de realizar GET a variables de entorno de usuario en principio de Login
-    @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
-        try {
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of(
-                                "authenticated", false,
-                                "message", "No autenticado"
-                        ));
-            }
-
-            // Manejar diferentes tipos de Principal
-            String username;
-            Collection<? extends GrantedAuthority> authorities;
-
-            if (authentication.getPrincipal() instanceof UserDetails) {
-                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-                username = userDetails.getUsername();
-                authorities = userDetails.getAuthorities();
-            } else {
-                username = authentication.getName();
-                authorities = authentication.getAuthorities();
-            }
-
-            Optional<EntityEmployee> userOpt = objServiceA.getEmployeeByMail(username);
-
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of(
-                                "authenticated", false,
-                                "message", "Usuario no encontrado"
-                        ));
-            }
-
-            EntityEmployee user = userOpt.get();
-
-            return ResponseEntity.ok(Map.of(
-                    "authenticated", true,
-                    "user", Map.of(
-                            "id", user.getIdEmployee(),
-                            "username", user.getUsername(),
-                            "firstName", user.getFirstName(),
-                            "lastName", user.getLastName(),
-                            "employeeMail", user.getEmployeeEmail(),
-                            "DUI", user.getDui(),
-                            "photoEmployee", user.getPhoto(),
-                            "employeePosition", user.getIdEmployeePosition().getEmployeePosition(),
-                            "comitteeRole", user.getIdCommitteeRole().getCommitteRoleName(),
-                            "authorities", authorities.stream()
-                                    .map(GrantedAuthority::getAuthority)
-                                    .collect(Collectors.toList())
-                    )
-            ));
-
-        } catch (Exception e) {
-            //log.error("Error en /me endpoint: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "authenticated", false,
-                            "message", "Error obteniendo datos de usuario"
-                    ));
-        }
-    }
-
     @PostMapping("/logout") //Indicamos que en la respuesta no debemos devolver nada con Void
     private ResponseEntity<Void> login(HttpServletResponse response){
         //Manda a llamar al método que eliminará la cookie
@@ -116,8 +51,14 @@ public class ControllerAuth {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     *  IMPORTANTE:
+     *  La razón por la que hay métodos que no son endpoints dentro del controller y no el service es por el parámetro HttpServletResponse
+     *  ya que pertenecen al ciclo de vida del request/response (se menciona por el método de abajo) y si se coloca en el service se pierde
+     *  el principio de separación de capas
+     */
     private void addTokenCookie(HttpServletResponse response, String email) {
-        objServiceA.getEmployeeByMail(email).ifPresent(employee -> {
+        objServiceA.getEmployeeByCredentials(email).ifPresent(employee -> {
             //Del empleado obtiene el nombre de su ROL dentro de la aplicación para manejar su acceso y guardarlo en la cookie
             //Obtiene el ID business para evitar que el usuario realice acciones en una empresa que no corresponde
             String token = objUtilJWT.create(
@@ -149,6 +90,12 @@ public class ControllerAuth {
         });
     }
 
+    /**
+     *  IMPORTANTE:
+     *  La razón por la que hay métodos que no son endpoints dentro del controller y no el service es por el parámetro HttpServletResponse
+     *  ya que pertenecen al ciclo de vida del request/response (se menciona por el método de abajo) y si se coloca en el service se pierde
+     *  el principio de separación de capas
+     */
     private void clearCookie(HttpServletResponse response) {
         //Creamos la cookie con el mismo nombre y dominio que la cookie original
         String cookieValue = String.format(
@@ -164,5 +111,69 @@ public class ControllerAuth {
         //Agregamos la cabecera para eliminar la cookie
         response.addHeader("Set-Cookie", cookieValue);
         response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
+    }
+
+    //Endpoint ME, encargado de realizar GET a variables de entorno de usuario en principio de Login
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of(
+                                "authenticated", false,
+                                "message", "No autenticado"
+                        ));
+            }
+
+            // Manejar diferentes tipos de Principal
+            String username;
+            Collection<? extends GrantedAuthority> authorities;
+
+            if (authentication.getPrincipal() instanceof UserDetails) {
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                username = userDetails.getUsername();
+                authorities = userDetails.getAuthorities();
+            } else {
+                username = authentication.getName();
+                authorities = authentication.getAuthorities();
+            }
+
+            Optional<EntityEmployee> userOpt = objServiceA.getEmployeeByCredentials(username);
+
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of(
+                                "authenticated", false,
+                                "message", "Usuario no encontrado"
+                        ));
+            }
+
+            EntityEmployee user = userOpt.get();
+
+            return ResponseEntity.ok(Map.of(
+                    "authenticated", true,
+                    "user", Map.of(
+                            "id", user.getIdEmployee(),
+                            "username", user.getUsername(),
+                            "firstName", user.getFirstName(),
+                            "lastName", user.getLastName(),
+                            "employeeMail", user.getEmployeeEmail(),
+                            "DUI", user.getDui(),
+                            "photoEmployee", user.getPhoto(),
+                            "employeePosition", user.getIdEmployeePosition().getEmployeePosition(),
+                            "committeeRole", user.getIdCommitteeRole().getCommitteRoleName(),
+                            "authorities", authorities.stream()
+                                    .map(GrantedAuthority::getAuthority)
+                                    .collect(Collectors.toList())
+                    )
+            ));
+        } catch (Exception e) {
+            //log.error("Error en /me endpoint: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "authenticated", false,
+                            "message", "Error obteniendo datos de usuario"
+                    ));
+        }
     }
 }

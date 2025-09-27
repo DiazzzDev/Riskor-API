@@ -15,7 +15,7 @@ public class EntityEvidence {
     @Generated(event = EventType.INSERT)
     private String idEvidence;
 
-    @Column(name = "ACCIDENTEVIDENCE", nullable = false, length = 1000)
+    @Column(name = "ACCIDENTEVIDENCE", length = 1000)
     private String accidentEvidence;
 
     @ManyToOne(fetch = FetchType.LAZY)

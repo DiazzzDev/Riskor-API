@@ -36,7 +36,7 @@ public class ServiceAuth {
         return passwordEncoder.matches(password, hash); //Si todo sale bien dará true otorgando acceso, caso contrario se negará el login
     }
 
-    public Optional<EntityEmployee> getEmployeeByMail(String mail) {
-        return repoE.findActiveByLogin(mail);
+    public Optional<EntityEmployee> getEmployeeByCredentials(String credentials) {
+        return repoE.findActiveByLogin(credentials);
     }
 }

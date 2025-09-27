@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/accidentCategory")
-@Validated
 public class ControllerAccidentCategory {
     @Autowired
     private ServiceAccidentCategory objServiceAC;
