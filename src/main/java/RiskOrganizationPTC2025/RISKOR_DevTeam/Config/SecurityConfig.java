@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                //Sin estado de sesión: cada request debe traer su JWT (no se guarda nada en servidor) Esto porque usa autenticación por cookies
+                //Sin estado de sesión: cada request debe traer su JWT porque usa autenticación por cookies
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 //Será agregado primero el filtro de cookies de la clase UtilJWTCookieAuthFilter antes que el filtro por formulario por defecto

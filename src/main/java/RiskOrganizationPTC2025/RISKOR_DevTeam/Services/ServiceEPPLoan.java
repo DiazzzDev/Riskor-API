@@ -144,7 +144,7 @@ public class ServiceEPPLoan {
         objEntityEPPLoan.setLoanStartDate(LocalDate.now()); //Asignamos que se crea desde hoy la fecha de inicio del prestamo
         objEntityEPPLoan.setLoanReturnDate(DTOEPPLoan.getLoanReturnDate());
         objEntityEPPLoan.setQuantityDelivered(DTOEPPLoan.getQuantityDelivered());
-        objEntityEPPLoan.setQuantityReturned(DTOEPPLoan.getQuantityReturned());
+        objEntityEPPLoan.setQuantityReturned(0); //No vamos a tomar del JSON en el POST, por defecto no se ha retornado nada de lo prestado
         objEntityEPPLoan.setIdEPPInventory(em.getReference(EntityEPPInventory.class, DTOEPPLoan.getIdEPPInventory()));
         objEntityEPPLoan.setIdEmployee(em.getReference(EntityEmployee.class, DTOEPPLoan.getIdEmployee()));
         objEntityEPPLoan.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));

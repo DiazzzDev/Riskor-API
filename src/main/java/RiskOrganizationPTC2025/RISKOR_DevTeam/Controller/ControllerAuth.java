@@ -4,7 +4,6 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOLogin;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceAuth;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilsJWT;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -152,13 +150,19 @@ public class ControllerAuth {
     }
 
     private void clearCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie("authToken", "");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);                //Aquí se cambiará a TRUE hasta que se haga consumo de la api en HTTPS (Producción) no HTTP (desarrollo)
-        cookie.setPath("/");                    //Se aplica para toda la api esta cookie creada
-        cookie.setMaxAge(0);  //Convertimos de long a entero para colocar el tiempo de vida del token en segundos
+        //Creamos la cookie con el mismo nombre y dominio que la cookie original
+        String cookieValue = String.format(
+                "authToken=; " +             //Valor vacío para eliminar
+                        "Path=/; " +
+                        "HttpOnly; " +
+                        "Secure; " +
+                        "SameSite=None; " +
+                        "Max-Age=0; " +              //Expiración inmediata
+                        "Domain=riskor-370e22badbf5.herokuapp.com" // Mismo dominio que la cookie original
+        );
 
-        //Agregamos la cookie a la respuesta
-        response.addCookie(cookie);
+        //Agregamos la cabecera para eliminar la cookie
+        response.addHeader("Set-Cookie", cookieValue);
+        response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
     }
 }
