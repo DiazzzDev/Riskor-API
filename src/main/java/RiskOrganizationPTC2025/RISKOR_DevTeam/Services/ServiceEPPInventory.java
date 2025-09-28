@@ -96,6 +96,7 @@ public class ServiceEPPInventory {
         objEPPInventoryDTO.setTotalQuantity(eppInventory.getTotalQuantity());
         objEPPInventoryDTO.setAvailableQuantity(eppInventory.getAvailableQuantity());
         objEPPInventoryDTO.setIdTypeEPPControl(eppInventory.getIdTypeEPPControl().getIdTypeEPPControl());
+        objEPPInventoryDTO.setTypeEPPControl(eppInventory.getIdTypeEPPControl().getTypeEPPControl());
 
         objEPPInventoryDTO.setIdBusiness(eppInventory.getIdBusiness().getIdBusiness());
         return objEPPInventoryDTO;
