@@ -34,6 +34,8 @@ public class DTOEPPLoan {
     @NotNull
     private String idEPPInventory;
 
+    private String nameEPP;
+
     @NotBlank
     private String idEmployee;
 
