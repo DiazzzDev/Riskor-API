@@ -130,7 +130,7 @@ public class ServiceEPPLoan {
         objEPPLoanDTO.setLoanReturnDate(eppLoan.getLoanReturnDate());
         objEPPLoanDTO.setQuantityDelivered(eppLoan.getQuantityDelivered());
         objEPPLoanDTO.setQuantityReturned(eppLoan.getQuantityReturned());
-        objEPPLoanDTO.setIdEPPInventory(eppLoan.getIdEPPInventory().getIdEPPInventory());
+        objEPPLoanDTO.setIdEPPInventory(eppLoan.getIdEPPInventory().getNameEPP());
         objEPPLoanDTO.setIdEmployee(eppLoan.getIdEmployee().getIdEmployee());
         //Si el objeto idBusiness existe en la entidad area, obtén su ID; si no, simplemente asigna null - Esto por el uso de FETCH LAZY
         objEPPLoanDTO.setIdBusiness(eppLoan.getIdBusiness() != null ? eppLoan.getIdBusiness().getIdBusiness() : null);

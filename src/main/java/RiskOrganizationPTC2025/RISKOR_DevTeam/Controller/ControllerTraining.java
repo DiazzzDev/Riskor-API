@@ -56,7 +56,7 @@ public class ControllerTraining {
         }
     }
 
-    //Método para obtener todas las capacitaciones de un empleado
+    //Método para obtener todas las capacitaciones de un empleado - Agregar paginación
     @GetMapping("/employee/{idEmployee}")
     public ResponseEntity<List<DTOTraining>> getTrainingsByEmployee(
             @PathVariable String idEmployee,
