@@ -129,10 +129,10 @@ public class ControllerAuth {
             String username;
             Collection<? extends GrantedAuthority> authorities;
 
-            if (authentication.getPrincipal() instanceof UserDetails) {
-                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-                username = userDetails.getUsername();
-                authorities = userDetails.getAuthorities();
+            if (authentication.getPrincipal() instanceof UserDetails ud) {
+                //UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                username = ud.getUsername();
+                authorities = ud.getAuthorities();
             } else {
                 username = authentication.getName();
                 authorities = authentication.getAuthorities();
@@ -155,7 +155,7 @@ public class ControllerAuth {
                     "authenticated", true,
                     "user", Map.of(
                             "id", user.getIdEmployee(),
-                            "username", user.getUsername(),
+                            "username", user.getUsername().getUsername(),
                             "firstName", user.getFirstName(),
                             "lastName", user.getLastName(),
                             "employeeMail", user.getEmployeeEmail(),
@@ -164,12 +164,11 @@ public class ControllerAuth {
                             "employeePosition", user.getIdEmployeePosition().getEmployeePosition(),
                             "committeeRole", user.getIdCommitteeRole().getCommitteRoleName(),
                             "authorities", authorities.stream()
-                                    .map(GrantedAuthority::getAuthority)
-                                    .collect(Collectors.toList())
+                                            .map(GrantedAuthority::getAuthority)
+                                            .collect(Collectors.toList())
                     )
             ));
         } catch (Exception e) {
-            //log.error("Error en /me endpoint: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
                             "authenticated", false,
