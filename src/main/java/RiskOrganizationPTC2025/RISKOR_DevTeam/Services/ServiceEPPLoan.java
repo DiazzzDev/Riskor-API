@@ -6,6 +6,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEPPLoan;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoan;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoanSummary;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEPPInventory;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEPPLoan;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,6 +27,10 @@ public class ServiceEPPLoan {
     //Inyectamos el repositorio
     @Autowired
     private RepositoryEPPLoan objRepoEPPLoan;
+
+    //Inyectamos repo de inventario para modificar los epp disponibles
+    @Autowired
+    private RepositoryEPPInventory objRepoEPPInventory;
 
     @PersistenceContext //Anotación que permite usar EntityManager
     private EntityManager em; //Invocamos a EntityManager para la persistencia de datos, haciendo referencia a businessInfo sin cargar todo desde la db
@@ -82,19 +87,16 @@ public class ServiceEPPLoan {
         if (dtoEppLoan == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
         validateLoanNumbers(dtoEppLoan.getQuantityDelivered(), dtoEppLoan.getQuantityReturned());
 
-        //Bloqueamos el elemento del inventario
-        EntityEPPInventory inventory = lockInventory(dtoEppLoan.getIdEPPInventory());
-
         int delivered = dtoEppLoan.getQuantityDelivered();
-        int adjustment = -delivered; //Se aplica el valor negativo para realizar el ajuste en el inventario
 
-        applyAvailability(inventory, adjustment);
+        int updated = objRepoEPPInventory.decrementAvailable(idBusiness.toUpperCase(), dtoEppLoan.getIdEPPInventory(), delivered);
+
+        //Si no hubo suficiente stock UPDATED lanzará 0, significa que no pudo descontar la cantidad del inventario
+        if (updated == 0) throw new IllegalArgumentException("Inventario insuficiente."); //Lanzando excepción por falta de stock
 
         //Caso contrario, se procede con la inserción de datos (POST)
-        EntityEPPLoan loanSaved = objRepoEPPLoan.save(convertTOEPPLoanEntity(dtoEppLoan, idBusiness));
-
-        //Finalmente, retornamos los valores que reciben como parámetro la entidad, relacionandose con la DB
-        return convertTOEPPLoanDTO(loanSaved);
+        EntityEPPLoan saved = objRepoEPPLoan.save(convertTOEPPLoanEntity(dtoEppLoan, idBusiness));
+        return convertTOEPPLoanDTO(saved); //Convertimos a DTO/JSON para mostrar al frontend
     }
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
@@ -104,67 +106,76 @@ public class ServiceEPPLoan {
         if(dtoEppL == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Verifica si existe el Registro que se va a actualizar, si no existe lanza error
-        EntityEPPLoan eppLoan = objRepoEPPLoan.findByIdEPPLoanAndIdBusiness_IdBusiness(idEPPL, idBusiness).orElseThrow(() -> new EntityNotFoundException("Equipo EPP no encontrado con ID: " + idEPPL));
+        EntityEPPLoan loan = objRepoEPPLoan.findByIdEPPLoanAndIdBusiness_IdBusiness(idEPPL, idBusiness).orElseThrow(() -> new EntityNotFoundException("Equipo EPP no encontrado con ID: " + idEPPL));
 
-        //Valores antiguos -> Entidad
-        int oldDelivered = eppLoan.getQuantityDelivered();
-        int oldReturned  = eppLoan.getQuantityReturned();
-        String oldInvId  = eppLoan.getIdEPPInventory().getIdEPPInventory();
+        int oldDelivered = loan.getQuantityDelivered();
+        int oldReturned  = loan.getQuantityReturned();
+        String oldInvId  = loan.getIdEPPInventory().getIdEPPInventory();
 
-        //Nuevos valores -> JSON/DTO
         int newDelivered = dtoEppL.getQuantityDelivered();
         int newReturned  = dtoEppL.getQuantityReturned();
         validateLoanNumbers(newDelivered, newReturned);
 
-        String newInvId = dtoEppL.getIdEPPInventory() != null ? dtoEppL.getIdEPPInventory() : oldInvId;
+        String newInvId  = (dtoEppL.getIdEPPInventory() != null) ? dtoEppL.getIdEPPInventory() : oldInvId;
 
-        //Bloqueos en orden consistente para evitar interbloqueo <- Falta revisión
-        String firstId  = oldInvId.compareTo(newInvId) <= 0 ? oldInvId : newInvId;
-        String secondId = oldInvId.compareTo(newInvId) <= 0 ? newInvId : oldInvId;
+        //Evitamos actualizar si el PAYLOAD del JSON es el mismo, optimización y rendimiento
+        boolean sameDate = java.util.Objects.equals(loan.getLoanReturnDate(), dtoEppL.getLoanReturnDate());
+        if (oldInvId.equals(newInvId)
+                && oldDelivered == newDelivered
+                && oldReturned == newReturned
+                && sameDate) {
+            return convertTOEPPLoanDTO(loan);
+        }
 
-        EntityEPPInventory firstInv  = lockInventory(firstId);
-        EntityEPPInventory secondInv = secondId.equals(firstId) ? firstInv : lockInventory(secondId);
-
-        EntityEPPInventory oldInv = oldInvId.equals(firstId) ? firstInv : secondInv;
-        EntityEPPInventory newInv = newInvId.equals(firstId) ? firstInv : secondInv;
+        int oldPending = oldDelivered - oldReturned;
+        int newPending = newDelivered - newReturned;
 
         if (oldInvId.equals(newInvId)) {
-            // Mismo inventario: delta neto
-            // disponibilidad += (oldDelivered - newDelivered) + (newReturned - oldReturned)
-            int delta = (oldDelivered - newDelivered) + (newReturned - oldReturned);
-            applyAvailability(oldInv, delta);
+            //MISMO INVENTARIO: ajustar por diferencia de pendientes
+            int deltaInv = oldPending - newPending; // + => regresa stock, - => toma stock
+
+            if (deltaInv > 0) {
+                int rows = objRepoEPPInventory.incrementAvailable(idBusiness.toUpperCase(), oldInvId, deltaInv);
+                if (rows == 0) throw new IllegalArgumentException("Devolución inválida: excede el total del inventario.");
+            } else if (deltaInv < 0) {
+                int rows = objRepoEPPInventory.decrementAvailable(idBusiness.toUpperCase(), oldInvId, -deltaInv);
+                if (rows == 0) throw new IllegalArgumentException("Inventario insuficiente para aumentar el pendiente del préstamo.");
+            }
         } else {
-            // Inventario cambió:
-            // 1) Revertir efecto viejo: +(oldDelivered - oldReturned)
-            int revertOld = (oldDelivered - oldReturned);
-            applyAvailability(oldInv, revertOld);
-
-            // 2) Aplicar efecto nuevo: -(newDelivered - newReturned)
-            int applyNew = - (newDelivered - newReturned);
-            applyAvailability(newInv, applyNew);
-
-            eppLoan.setIdEPPInventory(newInv);
+            //CAMBIO DE INVENTARIO → revertir pendientes al viejo y aplicar pendientes al nuevo
+            if (oldPending > 0) {
+                int rows = objRepoEPPInventory.incrementAvailable(idBusiness.toUpperCase(), oldInvId, oldPending);
+                if (rows == 0) throw new IllegalStateException("Inconsistencia de stock al revertir en inventario anterior.");
+            }
+            if (newPending > 0) {
+                int rows = objRepoEPPInventory.decrementAvailable(idBusiness.toUpperCase(), newInvId, newPending);
+                if (rows == 0) throw new IllegalArgumentException("Inventario insuficiente en el nuevo EPP.");
+            }
+            //Actualiza referencia SOLO si cambió
+            loan.setIdEPPInventory(em.getReference(EntityEPPInventory.class, newInvId));
         }
 
         //Actualizar préstamo
-        eppLoan.setLoanReturnDate(dtoEppL.getLoanReturnDate());
-        eppLoan.setQuantityDelivered(newDelivered);
-        eppLoan.setQuantityReturned(newReturned);
-
-        if (dtoEppL.getIdEPPInventory() != null) {
-            eppLoan.setIdEPPInventory(em.getReference(EntityEPPInventory.class, dtoEppL.getIdEPPInventory()));
-        }
+        loan.setLoanReturnDate(dtoEppL.getLoanReturnDate());
+        loan.setQuantityDelivered(newDelivered);
+        loan.setQuantityReturned(newReturned);
 
         //No vamos a permitir que se modifique el empleado que realizó el cambio
-
-        return convertTOEPPLoanDTO(eppLoan);
+        return convertTOEPPLoanDTO(loan); //Convertimos a DTO/JSON para mandarlo al frontend
     }
 
-    //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
     //Indicamos que en el DELETE se especificará UNICAMENTE el ID
     public boolean deleteEPPLoan(String idEPPL, String idBusiness){
-        if (!objRepoEPPLoan.existsByIdEPPLoanAndIdBusiness_IdBusiness(idEPPL, idBusiness.toUpperCase())) { return false; }
+        //Este método devolverá a STOCK los equipos prestados al inventario
+        //Buscará el prestamo por ID, si no lo encuentra null
+        EntityEPPLoan loan = objRepoEPPLoan.findByIdEPPLoanAndIdBusiness_IdBusiness(idEPPL, idBusiness.toUpperCase()).orElse(null);
+        if (loan == null) return false; //Si es nulo no lo puede eliminar porque no existe o no lo encontró
 
+        int pending = loan.getQuantityDelivered() - loan.getQuantityReturned();
+        //Si el pendiente es mayor a 0 devolverá a la tabla INVENTARIO su cantidad correspondiente con una consulta personalizada de la JPA
+        if (pending > 0) objRepoEPPInventory.incrementAvailable(idBusiness.toUpperCase(), loan.getIdEPPInventory().getIdEPPInventory(), pending);
+
+        //Finalmente eliminará el registro del préstamo por su ID y por el ID de la empresa para evitar eliminar datos de otra empresa
         objRepoEPPLoan.deleteByIdEPPLoanAndIdBusiness_IdBusiness(idEPPL, idBusiness.toUpperCase());
         return true;
     }
@@ -200,32 +211,8 @@ public class ServiceEPPLoan {
         return objEntityEPPLoan;
     }
 
-    //region Validaciones para el préstamo
     //Validación para evitar valores que sobrepasen
     private void validateLoanNumbers(int delivered, int returned) {
         if (returned > delivered) throw new IllegalArgumentException("La cantidad devuelta no puede ser mayor que la entregada.");
     }
-
-    //Validación para verificar que exista cantidad disponible luego de realizar ajustes a la disponibilidad
-    private void applyAvailability(EntityEPPInventory inv, int adjustment) {
-        int availability = inv.getAvailableQuantity() + adjustment;
-        //Reglas básicas: 0 <= available <= total
-        if (availability < 0) throw new IllegalArgumentException("Inventario insuficiente. Disponibles: " + inv.getAvailableQuantity());
-        if (availability > inv.getTotalQuantity()) throw new IllegalArgumentException("La disponibilidad no puede exceder el total.");
-
-        inv.setAvailableQuantity(availability);
-    }
-
-    /**
-     * Validación que evita que un mismo epp se pueda prestar más de lo que existe
-     * Se puede prestar a varias personas siempre y cuando haya suficiente cantidad disponible en el inventario
-     */
-    private EntityEPPInventory lockInventory(String idEPPInventory) {
-        //Bloqueo pesimista -> Evitar que la db cometa un error al momento que se hagan préstamos
-        EntityEPPInventory inv = em.find(EntityEPPInventory.class, idEPPInventory, LockModeType.PESSIMISTIC_WRITE);
-        //En caso no se haya encontrado 404
-        if (inv == null) throw new EntityNotFoundException("Inventario EPP no encontrado: " + idEPPInventory);
-        return inv;
-    }
-    //endregion
 }

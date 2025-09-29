@@ -87,7 +87,7 @@ public class ControllerEPPLoan {
     public ResponseEntity<?> postLoan(
             @RequestAttribute("auth.business") String idBusiness,
             @Valid @RequestBody DTOEPPLoan dtoEPPLoan
-        ){
+    ){
         try {
             dtoEPPLoan.setIdBusiness(idBusiness);
             DTOEPPLoan out = objServiceEPPLoan.postEPPLoan(dtoEPPLoan, idBusiness);
@@ -95,7 +95,7 @@ public class ControllerEPPLoan {
                     "status", "Préstamo registrado correctamente, Success",
                     "data", out
             ));
-        } catch (IllegalArgumentException e) { // <-- tu regla de negocio
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "status", "Error de validación",
                     "message", e.getMessage()
@@ -120,7 +120,7 @@ public class ControllerEPPLoan {
             @Valid @RequestBody DTOEPPLoan dtoEPPLoan,
             BindingResult dataResult,
             @PathVariable String idEPPLoan
-        ){
+    ){
         //Validamos si existen errores ANTES de proceder con el PUT dentro de los datos solicitados (método de seguridad)
         if (dataResult.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
@@ -131,7 +131,7 @@ public class ControllerEPPLoan {
             dtoEPPLoan.setIdBusiness(idBusiness);
             DTOEPPLoan updated = objServiceEPPLoan.putEPPLoan(dtoEPPLoan, idEPPLoan, idBusiness);
             if (updated == null) {
-                // Por si tu service llegara a devolver null (no debería con @Transactional)
+                //Por si tu service llegara a devolver null (no debería con @Transactional)
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al actualizar los datos",
                         "errorType", "VALIDATION_ERROR",
@@ -143,20 +143,20 @@ public class ControllerEPPLoan {
                     "data", updated
             ));
         } catch (IllegalArgumentException e) {
-            // Reglas de negocio: p.ej. returned > delivered, inventario insuficiente, etc.
+            //Reglas: returned > delivered, inventario insuficiente, etc.
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "status", "Error de validación",
                     "message", e.getMessage()
             ));
 
         } catch (EntityNotFoundException e) {
-            // IDs inexistentes (préstamo/EPP/empleado/negocio)
+            //IDs inexistentes (préstamo/EPP/empleado/negocio)
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                     "status", "Recurso no encontrado",
                     "message", e.getMessage()
             ));
         } catch (Exception e) {
-            // Cualquier otra excepción: 500
+            //Cualquier otra excepción: 500
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al actualizar el préstamo",
