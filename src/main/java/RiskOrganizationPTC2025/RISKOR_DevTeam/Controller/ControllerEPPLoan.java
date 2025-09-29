@@ -4,6 +4,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoan;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoanSummary;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEPPLoan;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -89,19 +90,20 @@ public class ControllerEPPLoan {
         ){
         try {
             dtoEPPLoan.setIdBusiness(idBusiness);
-            //Indicamos los valores del DTO indicarán la respuesta dirigiéndose al Service, recibiendo como parámetros los valores de los campos
-            DTOEPPLoan objAnswerEPPL = objServiceEPPLoan.postEPPLoan(dtoEPPLoan, idBusiness);
-            if (objAnswerEPPL == null) {
-                //Si la respuesta fue nula, se arrojará una badRequest con datos inválidos
-                return ResponseEntity.badRequest().body(Map.of(
-                        "status", "Error al guardar los datos",
-                        "errorType", "VALIDATION_ERROR",
-                        "message", "Datos inválidos, vuelva a intentarlo"
-                ));
-            }
+            DTOEPPLoan out = objServiceEPPLoan.postEPPLoan(dtoEPPLoan, idBusiness);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "status", "Préstamo registrado correctamente, Success",
-                    "data", objAnswerEPPL
+                    "data", out
+            ));
+        } catch (IllegalArgumentException e) { // <-- tu regla de negocio
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", "Error de validación",
+                    "message", e.getMessage()
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "Recurso no encontrado",
+                    "message", e.getMessage()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
@@ -127,21 +129,34 @@ public class ControllerEPPLoan {
         }
         try {
             dtoEPPLoan.setIdBusiness(idBusiness);
-            DTOEPPLoan objAnswerEPPLoan = objServiceEPPLoan.putEPPLoan(dtoEPPLoan, idEPPLoan, idBusiness);
-            if (objAnswerEPPLoan == null) {
+            DTOEPPLoan updated = objServiceEPPLoan.putEPPLoan(dtoEPPLoan, idEPPLoan, idBusiness);
+            if (updated == null) {
+                // Por si tu service llegara a devolver null (no debería con @Transactional)
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al actualizar los datos",
                         "errorType", "VALIDATION_ERROR",
                         "message", "Datos inválidos, vuelva a intentarlo"
                 ));
             }
-            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+            return ResponseEntity.ok(Map.of(
                     "status", "Préstamo de equipo de protección personal modificado correctamente, Success",
-                    "data", objAnswerEPPLoan
+                    "data", updated
             ));
-        } catch (ExceptionDataNotFound e) {
-            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            // Reglas de negocio: p.ej. returned > delivered, inventario insuficiente, etc.
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", "Error de validación",
+                    "message", e.getMessage()
+            ));
+
+        } catch (EntityNotFoundException e) {
+            // IDs inexistentes (préstamo/EPP/empleado/negocio)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "Recurso no encontrado",
+                    "message", e.getMessage()
+            ));
         } catch (Exception e) {
+            // Cualquier otra excepción: 500
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al actualizar el préstamo",
