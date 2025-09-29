@@ -20,7 +20,7 @@ public class DTOEPPLoan {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate loanStartDate;
 
-    @NonNull
+    @NotNull
     @FutureOrPresent(message = "No se puede devolver en el pasado")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate loanReturnDate;
