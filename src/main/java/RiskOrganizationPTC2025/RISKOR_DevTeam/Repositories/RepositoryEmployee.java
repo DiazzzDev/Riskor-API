@@ -102,14 +102,14 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
 
     //Método para mandar a llamar para el AUTH ME (Por las cargas perezosas - LAZY FETCH)
     @Query("""
-        SELECT e
-        FROM EntityEmployee e
-        JOIN FETCH e.idEmployeePosition p
-        JOIN FETCH e.idCommitteeRole  c
-        JOIN FETCH e.username         u
+        SELECT e FROM EntityEmployee e
+            JOIN FETCH e.idEmployeePosition p
+            LEFT JOIN FETCH e.idCommitteeRole  c
+            LEFT JOIN FETCH e.idCommitteePosition cp
+            JOIN FETCH e.username u
         WHERE (LOWER(e.employeeEmail) = LOWER(:login)
             OR LOWER(u.username)      = LOWER(:login))
-          AND e.active = 1
+        AND u.status = 'T'
     """)
-    Optional<EntityEmployee> findActiveByLoginWithJoins(@Param("login") String login);
+    Optional<EntityEmployee> findMyInfo(@Param("login") String login);
 }

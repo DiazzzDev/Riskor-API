@@ -44,8 +44,8 @@ public class ServiceAuth {
 
     //Indicamos que solamente se hará lectura en este método, garantizando que no habrá modificaciones a la DB
     @Transactional(readOnly = true) //También funciona para optimizar lectura de datos
-    public Optional<EntityEmployee> getEmployeeForMe(String login) {
+    public Optional<EntityEmployee> getMyInfo(String login) {
         //Mandamos a llamar al método que va a obtener toda la info del empleado
-        return repoE.findActiveByLoginWithJoins(login);
+        return repoE.findMyInfo(login);
     }
 }

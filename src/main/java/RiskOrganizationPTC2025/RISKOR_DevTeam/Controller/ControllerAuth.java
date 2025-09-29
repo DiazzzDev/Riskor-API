@@ -139,7 +139,7 @@ public class ControllerAuth {
             }
 
             //Si se usaba getEmployeeByCredentials() iba a lanzar LazyInitializationException y el auth/me no iba a funcionar
-            Optional<EntityEmployee> userOpt = objServiceA.getEmployeeForMe(username);
+            Optional<EntityEmployee> userOpt = objServiceA.getMyInfo(username);
 
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
