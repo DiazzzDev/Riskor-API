@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -98,4 +99,17 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
         AND u.status = 'T'
     """)
     Optional<EntityEmployee> findActiveByLogin(String login);
+
+    //Método para mandar a llamar para el AUTH ME (Por las cargas perezosas - LAZY FETCH)
+    @Query("""
+        SELECT e
+        FROM EntityEmployee e
+        JOIN FETCH e.idEmployeePosition p
+        JOIN FETCH e.idCommitteeRole  c
+        JOIN FETCH e.username         u
+        WHERE (LOWER(e.employeeEmail) = LOWER(:login)
+            OR LOWER(u.username)      = LOWER(:login))
+          AND e.active = 1
+    """)
+    Optional<EntityEmployee> findActiveByLoginWithJoins(@Param("login") String login);
 }

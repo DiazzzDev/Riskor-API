@@ -77,7 +77,7 @@ public class ControllerAuth {
                     "authToken=%s; " +
                             "Path=/; " + //Se aplica para toda la API esta cookie creada
                             "HttpOnly; " + //Protege la cookie de accesos JavaScript
-                            //"Secure; " + //Asegura la cookie cuando el API está en HTTPS (desarrollo debe ser TRUE solo en producción)
+                            "Secure; " + //Asegura la cookie cuando el API está en HTTPS (desarrollo debe ser TRUE solo en producción)
                             "SameSite=None; " + //Desde otro dominio (Ejemplo vercel)
                             "Max-Age=%d; " + //Duración de la cookie en segundos
                             "Domain=riskor-370e22badbf5.herokuapp.com", // Asegura que la cookie sea válida solo para el dominio
@@ -138,7 +138,8 @@ public class ControllerAuth {
                 authorities = authentication.getAuthorities();
             }
 
-            Optional<EntityEmployee> userOpt = objServiceA.getEmployeeByCredentials(username);
+            //Si se usaba getEmployeeByCredentials() iba a lanzar LazyInitializationException y el auth/me no iba a funcionar
+            Optional<EntityEmployee> userOpt = objServiceA.getEmployeeForMe(username);
 
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
