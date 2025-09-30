@@ -9,6 +9,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -149,7 +150,7 @@ public class ControllerRegulationBusiness {
         }
     }
 
-    @PostMapping("/postRegulationBusiness")
+    @PostMapping(value = "/postRegulationBusiness", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
