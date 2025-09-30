@@ -33,10 +33,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))    //Con esto se esta configurando los CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()             //Permite los preflight requests
-                        .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()     //Esto es para que a este endpoint acceda cualquiera
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //Permite los preflight requests
+                        //Preflights: Navegador pregunta al servidor sobre los métodos y cabeceras permitidos, indicando si la solicitud es segura
+                        .requestMatchers(HttpMethod.POST,"/api/auth/login", "/api/businessInfo/postBusinessInfo").permitAll() //Esto es para que a este endpoint acceda cualquiera
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
-                        .requestMatchers("/api/auth/me").authenticated()   // Este endpoint es para ver la info del usuario logeado
+                        .requestMatchers("/api/auth/me").authenticated() // Este endpoint es para ver la info del usuario logeado
                         .anyRequest().authenticated()
                 )
 
@@ -48,6 +49,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+    //Borrar luego si no se usa
     //Usamos el AuthenticationManager como bean, esto si se decide aplicar autenticación de manera manual (No es obligatorio)
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

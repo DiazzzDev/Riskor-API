@@ -46,6 +46,8 @@ public class DTOInspection {
     @NotBlank(message = "El estatus de inspección es obligatorio")
     private String idInspectionStatus;
 
+    private String inspectionStatus;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY) //Se agrega para evitar que un atacante modifique el JSON cambiando el ID y modificando registros de otras empresas
     private String idBusiness;
 }

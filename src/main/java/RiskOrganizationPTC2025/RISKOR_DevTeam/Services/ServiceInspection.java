@@ -4,6 +4,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOCloudinary;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOInspection;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryInspection;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryInspectionStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -15,10 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -26,6 +25,9 @@ public class ServiceInspection {
     //Inyectamos el repositorio
     @Autowired
     private RepositoryInspection objRepoInspection;
+
+    @Autowired
+    private RepositoryInspectionStatus repoStatus;
 
     @Autowired
     private ServiceCloudinary cloudinary;
@@ -47,12 +49,12 @@ public class ServiceInspection {
     }
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
-    public DTOInspection postInspection(@Valid DTOInspection DTOInspection, String idBusiness){
+    public DTOInspection postInspection(@Valid DTOInspection dtoInspection, String idBusiness){
         //Si los datos recibidos en el DTO (dependiendo de la base de datos, las restricciones) ES NULL, se mandará un mensaje de error indicando campos vacíos
-        if (DTOInspection == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+        if (dtoInspection == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Caso contrario, se procede con la inserción de datos (POST)
-        EntityInspection objeInspectionSaved = objRepoInspection.save(convertTOInspectionEntity(DTOInspection, idBusiness));
+        EntityInspection objeInspectionSaved = objRepoInspection.save(convertTOInspectionEntity(dtoInspection, idBusiness));
         return convertTOInspectionDTO(objeInspectionSaved); //Finalmente, retornamos los valores en formato JSON con 201 CREATED
     }
 
@@ -96,40 +98,47 @@ public class ServiceInspection {
 
     //Método para conversión de datos del DTO hacia la Entidad (método de arriba)
     private DTOInspection convertTOInspectionDTO(EntityInspection inspection){
-        DTOInspection objInspectionDTO = new DTOInspection();
-        objInspectionDTO.setIdInspection(inspection.getIdInspection());
-        objInspectionDTO.setInspectionTitle(inspection.getInspectionTitle());
-        objInspectionDTO.setInspectionEvidence(inspection.getInspectionEvidence());
-        objInspectionDTO.setInspectionDate(inspection.getInspectionDate());
-        objInspectionDTO.setObservation(inspection.getObservation());
-        objInspectionDTO.setIdEmployee(inspection.getIdEmployee().getIdEmployee());
-        objInspectionDTO.setFirstName(inspection.getIdEmployee().getFirstName());
-        objInspectionDTO.setLastName(inspection.getIdEmployee().getLastName());
-        objInspectionDTO.setIdArea(inspection.getIdArea().getIdArea());
-        objInspectionDTO.setIdArea(inspection.getIdArea().getAreaName());
-        objInspectionDTO.setIdInspectionType(inspection.getIdInspectionType().getIdInspectionType());
-        objInspectionDTO.setInspectionType(inspection.getIdInspectionType().getInspectionType());
-        objInspectionDTO.setIdInspectionStatus(inspection.getIdInspectionStatus().getIdInspectionStatus());
-        objInspectionDTO.setIdInspectionStatus(inspection.getIdInspectionStatus().getInspectionStatus());
-        objInspectionDTO.setIdBusiness(inspection.getIdBusiness().getIdBusiness());
+        DTOInspection dtoInspection = new DTOInspection();
+        dtoInspection.setIdInspection(inspection.getIdInspection());
+        dtoInspection.setInspectionTitle(inspection.getInspectionTitle());
+        dtoInspection.setInspectionEvidence(inspection.getInspectionEvidence());
+        dtoInspection.setInspectionDate(inspection.getInspectionDate());
+        dtoInspection.setObservation(inspection.getObservation());
 
-        return objInspectionDTO;
+        dtoInspection.setIdEmployee(inspection.getIdEmployee().getIdEmployee());
+        dtoInspection.setFirstName(inspection.getIdEmployee().getFirstName());
+        dtoInspection.setLastName(inspection.getIdEmployee().getLastName());
+
+        dtoInspection.setIdArea(inspection.getIdArea().getIdArea());
+        dtoInspection.setIdArea(inspection.getIdArea().getAreaName());
+
+        dtoInspection.setIdInspectionType(inspection.getIdInspectionType().getIdInspectionType());
+        dtoInspection.setInspectionType(inspection.getIdInspectionType().getInspectionType());
+
+        dtoInspection.setIdInspectionStatus(inspection.getIdInspectionStatus().getIdInspectionStatus());
+        dtoInspection.setInspectionStatus(inspection.getIdInspectionStatus().getInspectionStatus());
+
+        dtoInspection.setIdBusiness(inspection.getIdBusiness().getIdBusiness());
+
+        return dtoInspection;
     }
 
     //Método para conversión de datos de la ENTIDAD hacia el DTO (método de arriba)
     private EntityInspection convertTOInspectionEntity(DTOInspection dtoInspection, String idBusiness){
-        EntityInspection objEntityInspection = new EntityInspection();
-        objEntityInspection.setInspectionTitle(dtoInspection.getInspectionTitle());
-        objEntityInspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
-        objEntityInspection.setInspectionDate(LocalDate.now());
-        objEntityInspection.setObservation(dtoInspection.getObservation());
-        objEntityInspection.setIdEmployee(em.getReference(EntityEmployee.class, dtoInspection.getIdEmployee()));
-        objEntityInspection.setIdArea(em.getReference(EntityArea.class, dtoInspection.getIdArea()));
-        objEntityInspection.setIdInspectionType(em.getReference(EntityInspectionType.class, dtoInspection.getIdInspectionType()));
-        objEntityInspection.setIdInspectionStatus(em.getReference(EntityInspectionStatus.class, dtoInspection.getIdInspectionStatus()));
-        objEntityInspection.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
+        EntityInspection entityInspection = new EntityInspection();
+        entityInspection.setInspectionTitle(dtoInspection.getInspectionTitle());
+        entityInspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
+        entityInspection.setInspectionDate(LocalDate.now());
+        entityInspection.setObservation(dtoInspection.getObservation());
+        entityInspection.setIdEmployee(em.getReference(EntityEmployee.class, dtoInspection.getIdEmployee()));
+        entityInspection.setIdArea(em.getReference(EntityArea.class, dtoInspection.getIdArea()));
+        entityInspection.setIdInspectionType(em.getReference(EntityInspectionType.class, dtoInspection.getIdInspectionType()));
 
-        return objEntityInspection;
+        String pendingStatusId = repoStatus.findPendingId("PENDIENTE").orElseThrow(() -> new EntityNotFoundException("El estado 'PENDIENTE' no fue encontrado en la base de datos."));
+        entityInspection.setIdInspectionStatus(em.getReference(EntityInspectionStatus.class, pendingStatusId));
+        entityInspection.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
+
+        return entityInspection;
     }
 
     //CRUD DE LA EVIDENCIA DE INSPECCIÓN
