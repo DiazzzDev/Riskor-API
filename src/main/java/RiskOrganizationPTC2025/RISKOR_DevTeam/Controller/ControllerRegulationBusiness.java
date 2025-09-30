@@ -150,6 +150,7 @@ public class ControllerRegulationBusiness {
         }
     }
 
+    //No funca aún
     @PostMapping(value = "/postRegulationBusiness", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
     //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postRegulationBusiness(

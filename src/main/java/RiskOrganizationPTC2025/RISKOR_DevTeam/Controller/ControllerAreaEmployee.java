@@ -27,7 +27,7 @@ public class ControllerAreaEmployee {
         return objServiceAE.getAreaEmployees(idBusiness);
     }
 
-    @PostMapping
+    @PostMapping("/postAreaEmployee")
     public ResponseEntity<?> postEAreaEmployee(
             @RequestAttribute("auth.business") String idBusiness,
             @Valid @RequestBody DTOAreaEmployee dto
