@@ -26,6 +26,14 @@ public class ControllerInspection {
     @Autowired
     private ServiceInspection objServiceInspection;
 
+    @GetMapping("/getInspections/{idInspection}")
+    public ResponseEntity<?> getById(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idInspection
+    ){
+        return ResponseEntity.ok(objServiceInspection.getInspectionById(idBusiness, idInspection));
+    }
+
     //GetMapping para indicar la URL de nuestra API, GET
     @GetMapping("/getInspections")
     public ResponseEntity<Page<DTOInspection>> getTypeEPPC(

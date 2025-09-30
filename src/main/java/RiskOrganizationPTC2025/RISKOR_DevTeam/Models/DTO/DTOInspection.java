@@ -1,6 +1,7 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -30,11 +31,17 @@ public class DTOInspection {
     @NotNull(message = "El empleado que realizó la inspección es obligatorio")
     private String idEmployee;
 
+    private String firstName;
+
+    private String lastName;
+
     @NotNull(message = "El área es obligatorio")
     private String idArea;
 
     @NotBlank(message = "El tipo de inspección es obligatorio")
     private String idInspectionType;
+
+    private String inspectionType;
 
     @NotBlank(message = "El estatus de inspección es obligatorio")
     private String idInspectionStatus;

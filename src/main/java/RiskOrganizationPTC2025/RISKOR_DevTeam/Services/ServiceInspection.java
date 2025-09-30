@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -31,6 +32,11 @@ public class ServiceInspection {
 
     @PersistenceContext //Anotación que permite usar EntityManager
     private EntityManager em; //Invocamos a EntityManager para la persistencia de datos, haciendo referencia a businessInfo sin cargar todo desde la db
+
+    public DTOInspection getInspectionById(String idBusiness, String idInspection) {
+        EntityInspection inspection = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspection.toUpperCase(), idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
+        return convertTOInspectionDTO(inspection);
+    }
 
     //Método para retornar una lista de todos los registros dentro de la tabla referenciada
     @Transactional(readOnly = true)
@@ -97,10 +103,12 @@ public class ServiceInspection {
         objInspectionDTO.setInspectionDate(inspection.getInspectionDate());
         objInspectionDTO.setObservation(inspection.getObservation());
         objInspectionDTO.setIdEmployee(inspection.getIdEmployee().getIdEmployee());
+        objInspectionDTO.setFirstName(inspection.getIdEmployee().getFirstName());
+        objInspectionDTO.setLastName(inspection.getIdEmployee().getLastName());
         objInspectionDTO.setIdArea(inspection.getIdArea().getIdArea());
         objInspectionDTO.setIdArea(inspection.getIdArea().getAreaName());
         objInspectionDTO.setIdInspectionType(inspection.getIdInspectionType().getIdInspectionType());
-        objInspectionDTO.setIdInspectionType(inspection.getIdInspectionType().getInspectionType());
+        objInspectionDTO.setInspectionType(inspection.getIdInspectionType().getInspectionType());
         objInspectionDTO.setIdInspectionStatus(inspection.getIdInspectionStatus().getIdInspectionStatus());
         objInspectionDTO.setIdInspectionStatus(inspection.getIdInspectionStatus().getInspectionStatus());
         objInspectionDTO.setIdBusiness(inspection.getIdBusiness().getIdBusiness());
