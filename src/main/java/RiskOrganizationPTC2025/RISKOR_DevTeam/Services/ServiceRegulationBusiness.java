@@ -48,15 +48,35 @@ public class ServiceRegulationBusiness {
         return regulationBusinessPage.map(this::convertToDTORB);
     }
 
-    public DTORegulationBusiness postResgulationBusiness(@Valid DTORegulationBusiness dto, String idBusiness) {
-        if (dto == null){ throw new IllegalArgumentException("No pueden haber campos vacíos");}
+    //POST Principal al crear una regulación empresarial
+    //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un REGISTRO FLOTANTE
+    @Transactional(rollbackFor = Exception.class)
+    public DTORegulationBusiness postRegulationBusiness(@Valid DTORegulationBusiness dto, MultipartFile file, String idBusiness) {
+        DTOCloudinary up = null;
+        try{
+            if (dto == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+            if (file == null || file.isEmpty()) throw new IllegalArgumentException("Documento pendiente");
 
-        //Ligeras validaciones
-        dto.setIdBusiness(idBusiness); //Asignamos desde antes el negocio - Evitamos que el cliente elija en que negocio registrar
-        validateAreaBelongsToBusiness(dto.getIdArea(), idBusiness); //Validamos que el área que se va a registrar corresponda a la empresa
+            //Ligeras validaciones
+            dto.setIdBusiness(idBusiness); //Asignamos desde antes el negocio - Evitamos que el cliente elija en que negocio registrar
+            validateAreaBelongsToBusiness(dto.getIdArea(), idBusiness); //Validamos que el área que se va a registrar corresponda a la empresa
 
-        EntityRegulationBusiness saved = objRepoRB.save(convertToERB(dto));
-        return convertToDTORB(saved);
+            up = cloudinary.uploadImage(file, "RISKOR/Regulations-Documents/");
+            dto.setRegulationDocument(up.getUrl());                 // guardar URL en la entidad
+
+            EntityRegulationBusiness saved = objRepoRB.save(convertToERB(dto));
+
+            return convertToDTORB(saved);
+        } catch (RuntimeException | IOException e) {
+            // si ya subimos la imagen, borrarla para no dejar basura
+            if (up != null && up.getPublicId() != null) {
+                try {
+                    cloudinary.deleteByPublicId(up.getPublicId());
+                } catch (Exception ignore) {
+                }
+            }
+            return null;
+        }
     }
 
     public DTORegulationBusiness putRegulationBusiness(@Valid DTORegulationBusiness dtoRB, String idRegulation, String idBusiness) {

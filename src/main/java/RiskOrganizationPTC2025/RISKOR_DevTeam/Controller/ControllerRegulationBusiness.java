@@ -153,7 +153,8 @@ public class ControllerRegulationBusiness {
     //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestBody DTORegulationBusiness dto,
+            @Valid @RequestPart("dto") DTORegulationBusiness dto,
+            @RequestPart(value = "file") MultipartFile file,
             BindingResult dataResult
     ) {
         if (dataResult.hasErrors()) {
@@ -161,7 +162,7 @@ public class ControllerRegulationBusiness {
         }
         try {
             dto.setIdBusiness(idBusiness); //Se coloca desde aquí el negocio para...
-            DTORegulationBusiness answer = objServiceRB.postResgulationBusiness(dto, idBusiness);
+            DTORegulationBusiness answer = objServiceRB.postRegulationBusiness(dto, file, idBusiness);
             if (answer == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al guardar los datos",

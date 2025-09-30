@@ -129,7 +129,7 @@ public class ServiceEmployee {
 
     //Si algo en el proceso cambió y luego salió mal se revierte lo que si funcionó para evitar problemas (Se hace rollback)
     @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee putEmployee(@Valid DTOEmployee dtoE, String idEmployee, String idBusiness, MultipartFile image) throws IOException{
+    public DTOEmployee putEmployee(@Valid DTOEmployee dtoE, String idEmployee, String idBusiness, MultipartFile image) throws IOException {
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         EntityEmployee employee = objRepoE.findByIdEmployeeAndIdBusiness_IdBusiness(idEmployee, idBusiness).orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con ID: " + idEmployee));
@@ -170,7 +170,10 @@ public class ServiceEmployee {
 
                 String oldPid = extractPublicIdFromUrl(oldUrl);
                 if (oldPid != null && !oldPid.equalsIgnoreCase(up.getPublicId())) {
-                    try { cloudinary.deleteByPublicId(oldPid); } catch (Exception ignore) {}
+                    try {
+                        cloudinary.deleteByPublicId(oldPid);
+                    } catch (Exception ignore) {
+                    }
                 }
             }
             // No hace falta save(); @Transactional hará flush
@@ -179,7 +182,10 @@ public class ServiceEmployee {
         } catch (Exception ex) {
             // Si ya subimos imagen nueva y la transacción falla luego, limpia en Cloudinary
             if (up != null && up.getPublicId() != null) {
-                try { cloudinary.deleteByPublicId(up.getPublicId()); } catch (Exception ignore) {}
+                try {
+                    cloudinary.deleteByPublicId(up.getPublicId());
+                } catch (Exception ignore) {
+                }
             }
             throw ex;
         }
@@ -200,11 +206,10 @@ public class ServiceEmployee {
         try {
             //Verificamos que el JSON recibido sea el indicado
             if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
-
-            String username = dtoE.getUsername(); //Facilitamos legibilidad
+            if (image == null) throw new IllegalArgumentException("La imagen no puede estar vacia");
 
             //Si el usuario ya existe es porque otro empleado ya lo posee, en ese caso lanzamos excepción
-            if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(username, idBusiness.toUpperCase())) {
+            if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
                 throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");
             }
 
@@ -212,7 +217,7 @@ public class ServiceEmployee {
             EntityUser user = new EntityUser();
 
             //El nuevo usuario tendrá el nombre que el JSON trajo (El que fue llenado en el formulario de empleados)
-            user.setUsername(username);
+            user.setUsername(dtoE.getUsername());
 
             //Genera una contraseña por defecto segura de 12 carácteres
             String secureRandomPassword = passwordGenerator.generateSecureRandomString();
@@ -225,10 +230,8 @@ public class ServiceEmployee {
             objRepoU.save(user); //No se usa en if != de null por que siempre da true
 
 
-            if (image != null && !image.isEmpty()) {
-                up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
-                dtoE.setPhoto(up.getUrl());                 // guardar URL en la entidad
-            }
+            up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
+            dtoE.setPhoto(up.getUrl());                 // guardar URL en la entidad
 
             //Guardamos ahora la información del empleado
             EntityEmployee employee = objRepoE.save(convertToEntityE(dtoE, idBusiness.toUpperCase()));
@@ -293,16 +296,8 @@ public class ServiceEmployee {
         dtoE.setStatus(em.getReference(EntityUser.class, employee.getUsername().getUsername()).getStatus());
 
         // NOMBRES (null-safe, sin getReference)
-        dtoE.setCommittePosition(
-                employee.getIdCommitteePosition() != null
-                        ? employee.getIdCommitteePosition().getCommittePositionName()
-                        : null
-        );
-        dtoE.setCommitteRole(
-                employee.getIdCommitteeRole() != null
-                        ? employee.getIdCommitteeRole().getCommitteRoleName()
-                        : null
-        );
+        dtoE.setCommittePosition(employee.getIdCommitteePosition() != null ? employee.getIdCommitteePosition().getCommittePositionName() : null);
+        dtoE.setCommitteRole(employee.getIdCommitteeRole() != null ? employee.getIdCommitteeRole().getCommitteRoleName() : null);
 
         //Los siguientes campos son FKs, por lo cual vamos a verificar si tienen un valor con operador ternario
         //Si en la entidad hay un valor en esos campos va a buscar su ID
