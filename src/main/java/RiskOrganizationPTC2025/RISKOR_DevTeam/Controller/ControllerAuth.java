@@ -129,10 +129,9 @@ public class ControllerAuth {
             String username;
             Collection<? extends GrantedAuthority> authorities;
 
-            if (authentication.getPrincipal() instanceof UserDetails) {
-                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-                username = userDetails.getUsername();
-                authorities = userDetails.getAuthorities();
+            if (authentication.getPrincipal() instanceof UserDetails ud) {
+                username = ud.getUsername();
+                authorities = ud.getAuthorities();
             } else {
                 username = authentication.getName();
                 authorities = authentication.getAuthorities();
@@ -149,23 +148,23 @@ public class ControllerAuth {
             }
 
             EntityEmployee user = userOpt.get();
+            String committeeRole = (user.getIdCommitteeRole() != null) ? user.getIdCommitteeRole().getCommitteRoleName() : "No posee un rol en el CSSO";
 
             return ResponseEntity.ok(Map.of(
                     "authenticated", true,
                     "user", Map.of(
                             "id", user.getIdEmployee(),
-                            "username", user.getUsername(),
+                            "username", user.getUsername().getUsername(),
                             "firstName", user.getFirstName(),
                             "lastName", user.getLastName(),
                             "employeeMail", user.getEmployeeEmail(),
                             "DUI", user.getDui(),
                             "photoEmployee", user.getPhoto(),
                             "employeePosition", user.getIdEmployeePosition().getEmployeePosition(),
-                            "committeeRole", user.getIdCommitteeRole().getCommitteRoleName(),
+                            "committeeRole", committeeRole,
                             "authorities", authorities.stream()
                                     .map(GrantedAuthority::getAuthority)
-                                    .collect(Collectors.toList())
-                    )
+                                    .collect(Collectors.toList()))
             ));
         } catch (Exception e) {
             //log.error("Error en /me endpoint: ", e);
