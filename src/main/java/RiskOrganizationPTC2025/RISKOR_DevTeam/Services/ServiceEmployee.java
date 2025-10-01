@@ -206,7 +206,7 @@ public class ServiceEmployee {
         try {
             //Verificamos que el JSON recibido sea el indicado
             if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
-            if (image == null) throw new IllegalArgumentException("La imagen no puede estar vacia");
+            if (image == null) throw new IllegalArgumentException("La imagen no puede estar vacía");
 
             //Si el usuario ya existe es porque otro empleado ya lo posee, en ese caso lanzamos excepción
             if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {

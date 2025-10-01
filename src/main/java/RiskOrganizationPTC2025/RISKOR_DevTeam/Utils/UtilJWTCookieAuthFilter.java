@@ -35,39 +35,59 @@ public class UtilJWTCookieAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         //Extraer token de la cookie
         String token = extractTokenFromCookie(request);
-        if (token != null && !token.isBlank()) {
-            try{
-                //Obtenemos los claims mandando a llamar el método parsetoken() del JWTUtils
-                Claims claims = jwtUtils.parseToken(token);
 
-                //Guardamos los datos en la request, estos son obtenidos del token, útiles para personalizar el acceso a nuestros endpoints (Empresa/Rol)
-                request.setAttribute("auth.role", jwtUtils.extractRole(token));
-                request.setAttribute("auth.business", jwtUtils.extractBusiness(token));
-                request.setAttribute("auth.email", claims.getSubject());
-
-                //Authorities y autenticación
-                //Convierte a string auth.role y lo guarda en una variable
-                String role = (String) request.getAttribute("auth.role");
-
-                //Construye Authentication con el rol del token, se agrega el prefijo "ROLE_" porque spring así lo espera
-                var authority = new SimpleGrantedAuthority("ROLE_" + role);
-
-                //Construimos el token de autenticación de Spring Security.
-                //Usamos el "subject" del token (email del empleado)
-                //Credentials: null porque ya validamos el JWT
-                //Colocamos al último argumento como lista porque UsernamePasswordAuthenticationToken espera un Colletion...
-                var authentication = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, List.of(authority));
-
-                //A partir de aquí @PreAuthorize(...) podrá evaluar roles que hemos asignado en UsernamePasswordAuthenticationToken
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }catch (ExpiredJwtException | MalformedJwtException e){
-                // Token inválido/expirado: no autenticamos y dejamos que Security responda
-                SecurityContextHolder.clearContext();
-            }
+        if (token == null || token.isBlank()) {
+            SecurityContextHolder.clearContext();
+            sendError(response, "Token no encontrado", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
-        //Se continua con el resto de filtros por cada solicitud HTTP
-        filterChain.doFilter(request, response);
+        try{
+            //Obtenemos los claims mandando a llamar el método parsetoken() del JWTUtils
+            Claims claims = jwtUtils.parseToken(token);
+
+            //Guardamos los datos en la request, estos son obtenidos del token, útiles para personalizar el acceso a nuestros endpoints (Empresa/Rol)
+            request.setAttribute("auth.role", jwtUtils.extractRole(token));
+            request.setAttribute("auth.business", jwtUtils.extractBusiness(token));
+            request.setAttribute("auth.email", claims.getSubject());
+
+            //Authorities y autenticación
+            //Convierte a string auth.role y lo guarda en una variable
+            String role = (String) request.getAttribute("auth.role");
+
+            //Construye Authentication con el rol del token, se agrega el prefijo "ROLE_" porque spring así lo espera
+            var authority = new SimpleGrantedAuthority("ROLE_" + role);
+
+            //Construimos el token de autenticación de Spring Security.
+            //Usamos el "subject" del token (email del empleado)
+            //Credentials: null porque ya validamos el JWT
+            //Colocamos al último argumento como lista porque UsernamePasswordAuthenticationToken espera un Colletion...
+            var authentication = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, List.of(authority));
+
+            //A partir de aquí @PreAuthorize(...) podrá evaluar roles que hemos asignado en UsernamePasswordAuthenticationToken
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            //Se continua con el resto de filtros por cada solicitud HTTP
+            filterChain.doFilter(request, response);
+
+        } catch (ExpiredJwtException e) {
+            SecurityContextHolder.clearContext();
+            sendError(response, "Token expirado", HttpServletResponse.SC_UNAUTHORIZED);
+        } catch (MalformedJwtException e) {
+            SecurityContextHolder.clearContext();
+            sendError(response, "Token inválido", HttpServletResponse.SC_UNAUTHORIZED);
+        } catch (Exception e) {
+            SecurityContextHolder.clearContext();
+            sendError(response, "Error de autenticación", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    private void sendError(HttpServletResponse response, String message, int status) throws IOException {
+        if (response.isCommitted()) return;
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.getWriter().write(String.format("{\"error\":\"%s\",\"status\":%d}", message, status));
     }
 
     //Busca la cookie "authToken" y extrae su JWT o devuelve null si no fue encontrado (Ej. No hubo login, cookie expirada, etc)

@@ -12,10 +12,10 @@ public class DTOTraining {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String idTraining;
 
-    @NotBlank @Size(min = 3, max = 100)
+    @NotBlank @Size(min = 3, max = 100, message = "El título debe contener de 3 a 100 carácteres")
     private String title;
 
-    @NotBlank @Size(min = 10, max = 255)
+    @NotBlank @Size(min = 10, max = 255, message = "La descripción debe contener de 10 a 255 carácteres")
     private String description;
 
     @NotBlank @Size(min = 10, max = 125)
@@ -37,7 +37,7 @@ public class DTOTraining {
     private String durationHour;
 
     @NotBlank
-    @Size(min = 4, max = 100)
+    @Size(min = 4, max = 100, message = "La ubicación de la capacitación debe contener de 4 a 100 carácteres")
     private String trainingLocation;
 
     @NotBlank

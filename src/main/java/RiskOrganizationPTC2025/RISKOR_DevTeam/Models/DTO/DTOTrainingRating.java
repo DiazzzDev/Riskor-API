@@ -12,7 +12,7 @@ public class DTOTrainingRating {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String idTrainingRating;
 
-    @NotNull
+    @NotNull(message = "La calificación es obligatoria")
     @Min(value = 1) @Max(value = 5)
     private Integer ratingTraining;
 

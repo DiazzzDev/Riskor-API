@@ -17,7 +17,10 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
+        //Uso de cookies
         config.setAllowCredentials(true);
+
+        //Orígenes desde donde se pueden hacer solicitudes
         config.addAllowedOrigin("http://127.0.0.1:5501");
         config.addAllowedOrigin("http://127.0.0.1:5502");
         config.addAllowedOrigin("https://riskor.app");
@@ -37,11 +40,9 @@ public class CorsConfig {
         config.addAllowedHeader("Cookie");
         config.addAllowedHeader("Set-Cookie");
 
-        config.setExposedHeaders(Arrays.asList(
-                "Set-Cookie", "Cookie", "Authorization", "Content-Disposition"
-        ));
+        config.setExposedHeaders(Arrays.asList("Set-Cookie", "Cookie", "Authorization", "Content-Disposition"));
 
-        // Tiempo de cache para preflight requests
+        //Tiempo de cache para preflight requests
         config.setMaxAge(3600L);
 
         source.registerCorsConfiguration("/**", config);
@@ -52,7 +53,11 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        //Uso de cookies
         configuration.setAllowCredentials(true);
+
+        //Orígenes desde donde se pueden hacer solicitudes
         configuration.addAllowedOrigin("http://127.0.0.1:5501");
         configuration.addAllowedOrigin("http://127.0.0.1:5502");
         configuration.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");

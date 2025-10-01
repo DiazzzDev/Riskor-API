@@ -70,13 +70,6 @@ public class UtilsJWT {
         return parseToken(token).get("business", String.class);
     }
 
-    public String getValue(String jwt){          //Sujeto (email del empleado)
-        return parseClaims(jwt).getSubject();
-    }
-
-    public String getKey(String jwt){
-        return parseClaims(jwt).getId();
-    }
 
     //Método para obtener los valores del token que necesitemos en otros métodos como "extractBusiness()"
     public Claims parseToken(String jwt) throws ExpiredJwtException, MalformedJwtException {

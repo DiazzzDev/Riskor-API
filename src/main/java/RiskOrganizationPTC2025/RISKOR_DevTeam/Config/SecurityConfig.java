@@ -48,11 +48,4 @@ public class SecurityConfig {
                 .addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-
-    //Borrar luego si no se usa
-    //Usamos el AuthenticationManager como bean, esto si se decide aplicar autenticación de manera manual (No es obligatorio)
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
 }
