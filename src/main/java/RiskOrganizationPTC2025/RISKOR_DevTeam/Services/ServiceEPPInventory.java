@@ -108,10 +108,11 @@ public class ServiceEPPInventory {
         objEntityEPPInventory.setNameEPP(DTOEPPInventory.getNameEPP());
         objEntityEPPInventory.setDescription(DTOEPPInventory.getDescription());
         objEntityEPPInventory.setTotalQuantity(DTOEPPInventory.getTotalQuantity());
-        objEntityEPPInventory.setAvailableQuantity(DTOEPPInventory.getAvailableQuantity());
+        //Repetimos el setter del campo porque un nuevo elemento al inventario debe tener todo disponible en un inicio
+        objEntityEPPInventory.setAvailableQuantity(DTOEPPInventory.getTotalQuantity());
         objEntityEPPInventory.setIdTypeEPPControl(em.getReference(EntityTypeEPPControl.class, DTOEPPInventory.getIdTypeEPPControl()));
 
-        objEntityEPPInventory.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness));
+        objEntityEPPInventory.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
         return objEntityEPPInventory;
     }
 }

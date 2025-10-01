@@ -2,10 +2,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
@@ -28,7 +25,7 @@ public class DTOTraining {
 
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @Future(message = "La fecha de la capacitación debe ser en el futuro.")
+    @FutureOrPresent(message = "La fecha de la capacitación debe ser el día actual o en el futuro.")
     private LocalDate trainingDate;
 
     @NotBlank
