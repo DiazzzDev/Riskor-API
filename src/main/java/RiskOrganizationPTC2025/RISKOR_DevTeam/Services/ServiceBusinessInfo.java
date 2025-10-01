@@ -25,12 +25,6 @@ public class ServiceBusinessInfo {
         return convertToDTO(information);
     }
 
-    @Transactional(readOnly = true)
-    public List<DTOBusinessInfo> getBusinessInfo(){
-        List<EntityBusinessInfo> information = objRepoBI.findAll();
-        return information.stream().map(this::convertToDTO).collect(Collectors.toList());
-    }
-
     public DTOBusinessInfo insertBusinessInfo(@Valid DTOBusinessInfo dtoBI){ //El método pide el DTO para saber que va a enviar a la entidad
         if(dtoBI == null) throw new IllegalArgumentException("No pueden haber campos vacios");
 

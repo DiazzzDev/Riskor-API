@@ -124,7 +124,6 @@ public class ControllerEmployee {
         return ResponseEntity.ok(devices);
     }
 
-    @PreAuthorize("hasRole('Gerente')")
     @GetMapping("/getEmployees")
     public ResponseEntity<Page<DTOEmployee>> getEmployees(
             @RequestAttribute("auth.business") String idBusiness,

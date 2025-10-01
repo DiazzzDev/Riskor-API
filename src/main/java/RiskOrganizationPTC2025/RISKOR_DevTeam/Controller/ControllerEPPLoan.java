@@ -1,6 +1,5 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoan;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoanSummary;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEPPLoan;
@@ -176,7 +175,7 @@ public class ControllerEPPLoan {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).header(
                         "Error, ID no encontrado", "ID del Prestamo EPP no encontrado").body(Map.of(
                         "status", "No encontrado, Error",
-                        "message", "El ID del Prestamo EPP no ha sido encontrado",
+                        "message", "El ID del Préstamo EPP no ha sido encontrado",
                         "timeStamp", Instant.now().toString()
                 ));
             }

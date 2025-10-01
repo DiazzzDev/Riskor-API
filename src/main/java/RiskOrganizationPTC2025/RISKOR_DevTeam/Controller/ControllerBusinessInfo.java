@@ -28,11 +28,6 @@ public class ControllerBusinessInfo {
         return objServiceBI.getBusinessById(idBusiness);
     }
 
-    @GetMapping("/getBusinessInfo")
-    public List<DTOBusinessInfo> getBusinessInfo(){
-        return objServiceBI.getBusinessInfo();
-    }
-
     @PostMapping("/postBusinessInfo") //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postBusinessInfo(@Valid @RequestBody DTOBusinessInfo dto) { //Requestbody transforma el valor obtenido a un obj de Java //Valid se encarga de validar un obj recibido en el controller
         try {
@@ -96,6 +91,7 @@ public class ControllerBusinessInfo {
         }
     }
 
+    //Preguntar si lo borro o armo trigger
     @DeleteMapping("/deleteBusinessInfo/{idBusiness}")
     public ResponseEntity<?> deleteBusinessInfo(@Valid @PathVariable String idBusiness) {
         try {

@@ -1,6 +1,7 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEPPInventory;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,7 +18,7 @@ public interface RepositoryEPPInventory extends JpaRepository<EntityEPPInventory
     Page<EntityEPPInventory> findByIdBusiness_IdBusiness(String idBusiness, Pageable pageable);
     Optional<EntityEPPInventory> findByIdEPPInventoryAndIdBusiness_IdBusiness(String idEPPInventory, String idBusiness);
 
-    boolean existsByIdEPPInventoryAndIdBusiness_IdBusiness(String idEPPInventory, String upperCase);
+    boolean existsByIdEPPInventoryAndIdBusiness_IdBusiness(String idEPPInventory, String idBusiness);
 
     void deleteByIdEPPInventoryAndIdBusiness_IdBusiness(String idEPPInventory, String upperCase);
 
@@ -47,4 +48,5 @@ public interface RepositoryEPPInventory extends JpaRepository<EntityEPPInventory
     int incrementAvailable(@Param("idBusiness") String idBusiness,
                            @Param("id") String idEPPInventory,
                            @Param("qty") int qty);
+
 }

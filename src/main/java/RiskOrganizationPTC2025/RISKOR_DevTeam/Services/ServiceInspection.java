@@ -71,6 +71,7 @@ public class ServiceInspection {
         inspection.setInspectionTitle(dtoInspection.getInspectionTitle());
         inspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
         inspection.setObservation(dtoInspection.getObservation());
+        inspection.setInspectionDate(dtoInspection.getInspectionDate());
 
         //Si las FKs no son modificadas en el PUT se mantendrán en su valor original
         if (dtoInspection.getIdArea() != null) {

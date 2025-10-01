@@ -85,7 +85,6 @@ public class ServiceEPPLoan {
     public DTOEPPLoan postEPPLoan(@Valid DTOEPPLoan dtoEppLoan, String idBusiness){
         //Si los datos recibidos en el DTO (dependiendo de la base de datos, las restricciones) ES NULL, se mandará un mensaje de error indicando campos vacíos
         if (dtoEppLoan == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
-        validateLoanNumbers(dtoEppLoan.getQuantityDelivered(), dtoEppLoan.getQuantityReturned());
 
         int delivered = dtoEppLoan.getQuantityDelivered();
 

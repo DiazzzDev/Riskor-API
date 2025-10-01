@@ -15,17 +15,16 @@ public class DTOInspection {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String idInspection;
 
-    @NotBlank @Size(min = 3, max = 75, message = "Se requiere un título")
+    @NotBlank @Size(min = 5, max = 75, message = "El título debe contener de 5 a 75 carácteres")
     private String inspectionTitle;
 
     @Nullable
     @Size(max = 1000, message = "Evidencia es requerida para la inspección")
     private String inspectionEvidence;
 
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDate inspectionDate;
 
-    @NotBlank
+    @NotBlank @Size(min = 10, max = 250, message = "El título debe contener de 10 a 250 carácteres")
     private String observation;
 
     @NotNull(message = "El empleado que realizó la inspección es obligatorio")
