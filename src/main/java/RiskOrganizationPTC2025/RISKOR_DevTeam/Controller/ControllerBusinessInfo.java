@@ -23,7 +23,7 @@ public class ControllerBusinessInfo {
     @Autowired
     private ServiceBusinessInfo objServiceBI;
 
-    @GetMapping("/{idBusiness}")
+    @GetMapping("/getMyBusiness")
     public DTOBusinessInfo getBusinessById(@RequestAttribute("auth.business") String idBusiness){
         return objServiceBI.getBusinessById(idBusiness);
     }
