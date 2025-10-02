@@ -250,15 +250,6 @@ public class ServiceEmployee {
             return convertToDTOE(employee);
 
         } catch (Exception ex) {
-            // Lógica de limpieza idéntica a la de putEmployee:
-            // Si ya subimos imagen y la transacción falla luego (ej. error en la DB), limpia en Cloudinary
-            if (up != null && up.getPublicId() != null) {
-                try {
-                    cloudinary.deleteByPublicId(up.getPublicId());
-                } catch (Exception ignore) {
-                    // Ignoramos el error de limpieza para no ocultar la excepción original.
-                }
-            }
             // Relanzamos la excepción original para que @Transactional haga el rollback
             return null;
         }

@@ -45,7 +45,8 @@ public class EntityEmployee {
     @Column(name = "PERSONALPHONE", length = 15, nullable = false)
     private String personalPhone;
 
-    @Column(name = "PHOTO")
+    @Column(name = "PHOTO"
+    )
     private String photo;
 
     @Column(name = "EMPLOYEEMAIL", length = 125, nullable = false)
