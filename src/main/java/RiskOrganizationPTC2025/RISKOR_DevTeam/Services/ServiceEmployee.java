@@ -202,7 +202,7 @@ public class ServiceEmployee {
 //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
     //POST Principal al crear un empleado
     @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) throws IOException {
+    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
         // Verificaciones iniciales
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
         if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
@@ -241,10 +241,6 @@ public class ServiceEmployee {
 
             employee = objRepoE.save(employee);
 
-            // --- 4. Enviar Correo ---
-            serviceEmailSender.sendEmail(dtoE.getEmployeeMail(),
-                    "Bienvenido a RISKOR, tu cuenta ha sido creada",
-                    "Hola " + dtoE.getFirstName() + " Tu contraseña es: " + secureRandomPassword);
 
             // --- 5. Retornar DTO ---
             return convertToDTOE(employee);
