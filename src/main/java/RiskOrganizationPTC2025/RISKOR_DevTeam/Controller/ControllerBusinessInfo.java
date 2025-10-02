@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ public class ControllerBusinessInfo {
     @Autowired
     private ServiceBusinessInfo objServiceBI;
 
+    @PreAuthorize("hasRole('Administrado')")
     @GetMapping("/getMyBusiness")
     public DTOBusinessInfo getBusinessById(@RequestAttribute("auth.business") String idBusiness){
         return objServiceBI.getBusinessById(idBusiness);
@@ -52,8 +54,12 @@ public class ControllerBusinessInfo {
         }
     }
 
-    @PutMapping("/putBusinessInfo/{idBusiness}")
-    public ResponseEntity<?> putBusinessInfo(@Valid @RequestBody DTOBusinessInfo dto, @PathVariable String idBusiness, BindingResult dataResult) {
+    @PreAuthorize("hasRole('Administrador')")
+    @PutMapping("/putBusinessInfo")
+    public ResponseEntity<?> putBusinessInfo(
+            @Valid @RequestBody DTOBusinessInfo dto,
+            BindingResult dataResult,
+            @RequestAttribute("auth.business") String idBusiness){
 
         //Validamos si existen errores ANTES de proceder con el PUT dentro de los datos solicitados (método de seguridad)
         if (dataResult.hasErrors()) {
