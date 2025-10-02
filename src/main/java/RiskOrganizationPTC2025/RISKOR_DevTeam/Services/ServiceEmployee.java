@@ -202,7 +202,7 @@ public class ServiceEmployee {
 //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
     //POST Principal al crear un empleado
     @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
+    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) throws IOException {
         // Verificaciones iniciales
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
         if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
@@ -241,11 +241,19 @@ public class ServiceEmployee {
 
             employee = objRepoE.save(employee);
 
-
             // --- 5. Retornar DTO ---
             return convertToDTOE(employee);
 
         } catch (Exception ex) {
+            // Lógica de limpieza idéntica a la de putEmployee:
+            // Si ya subimos imagen y la transacción falla luego (ej. error en la DB), limpia en Cloudinary
+            if (up != null && up.getPublicId() != null) {
+                try {
+                    cloudinary.deleteByPublicId(up.getPublicId());
+                } catch (Exception ignore) {
+                    // Ignoramos el error de limpieza para no ocultar la excepción original.
+                }
+            }
             // Relanzamos la excepción original para que @Transactional haga el rollback
             return null;
         }
