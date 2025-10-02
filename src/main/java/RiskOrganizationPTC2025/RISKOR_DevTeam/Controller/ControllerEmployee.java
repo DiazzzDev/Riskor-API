@@ -112,7 +112,7 @@ public class ControllerEmployee {
     }
 
     //Método para obtener todos los empleados ACTIVOS de la empresa - GET PRINCIPAL
-    @PreAuthorize("hasRole('Administrador')")
+    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getEmployees/activeEmployees")
     public ResponseEntity<Page<DTOEmployee>> getActiveEmployees(
             @RequestAttribute("auth.business") String idBusiness,
@@ -130,6 +130,7 @@ public class ControllerEmployee {
     }
 
     @GetMapping("/getEmployees")
+    @PreAuthorize("hasRole('Administrador')")
     public ResponseEntity<Page<DTOEmployee>> getEmployees(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
@@ -145,6 +146,7 @@ public class ControllerEmployee {
     }
 
     //Método para buscar empleados que NO están dentro de una capacitación
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getEmployees/notInTraining/{idTraining}")
     public ResponseEntity<?> getEmployeesNotInTraining(
             @RequestAttribute("auth.business") String idBusiness,
@@ -160,8 +162,9 @@ public class ControllerEmployee {
         return ResponseEntity.ok(objServiceE.getEmployeesNotInTraining(idBusiness, idTraining, page, size));
     }
 
+    @PreAuthorize("hasRole('Administrador')") //Mantenimiento negociable jajs
     @GetMapping("/getEmployees/{idTraining}")
-    public ResponseEntity<?> getTraininEmployees(
+    public ResponseEntity<?> getTrainingEmployees(
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idTraining,
             @RequestParam(defaultValue = "0") int page,
@@ -176,11 +179,13 @@ public class ControllerEmployee {
     }
 
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
-    @PostMapping(value = "/postEmployee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) //{username}
+    @PreAuthorize("hasRole('Administrador')")
+    @PostMapping(value = "/postEmployee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> postDataEmployee(
             @RequestAttribute("auth.business") String idBusiness,
             @Valid @RequestPart("dtoE") DTOEmployee dtoE,
-            @RequestPart(value = "photo") MultipartFile photo
+            BindingResult dataResult,
+            @RequestPart(value = "photo", required = false) MultipartFile photo
     ){
         try {
             dtoE.setIdBusiness(idBusiness);
@@ -199,6 +204,7 @@ public class ControllerEmployee {
     }
 
     //Método para actualizar la información principal del empleado - No podrá cambiar detalles de usuario aquí
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping(value = "/putEmployee/{idEmployee}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> putEmployee(
             @RequestAttribute("auth.business") String idBusiness,
@@ -245,6 +251,7 @@ public class ControllerEmployee {
     }
 
     //Put para añadir o actualizar committe
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putCommitteeEmployees/{idEmployee}")
     public ResponseEntity<?> putCommittee(
             @RequestAttribute("auth.business") String idBusiness,
@@ -288,6 +295,7 @@ public class ControllerEmployee {
     }
 
     // Quitar al empleado del comité (solo limpia idComittePosition e idComitteRole)
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/removeCommitteeEmployee/{idEmployee}")
     public ResponseEntity<?> removeFromCommittee(
             @RequestAttribute("auth.business") String idBusiness,

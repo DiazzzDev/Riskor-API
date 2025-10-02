@@ -199,61 +199,71 @@ public class ServiceEmployee {
     }
 
     //POST Principal al crear un empleado
-    //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
+//Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
     @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
+    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) throws IOException {
+        //Verificamos que el JSON recibido sea el indicado
+        if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+        // Aunque ya no es necesario lanzar la excepción aquí si manejas la imagen en el try/catch,
+        // es buena práctica mantener las validaciones de entrada al principio.
+        if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
+
+        //Si el usuario ya existe es porque otro empleado ya lo posee, en ese caso lanzamos excepción
+        if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
+            throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");
+        }
+
+        // El objeto DTOCloudinary para limpieza si algo falla luego, declarado fuera del try
         DTOCloudinary up = null;
+
         try {
-            //Verificamos que el JSON recibido sea el indicado
-            if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
-            if (image == null) throw new IllegalArgumentException("La imagen no puede estar vacía");
+            // --- 1. Subir la imagen a Cloudinary ---
+            up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
+            dtoE.setPhoto(up.getUrl()); // guardar URL en el DTO para el mapeo a entidad
 
-            //Si el usuario ya existe es porque otro empleado ya lo posee, en ese caso lanzamos excepción
-            if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
-                throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");
-            }
-
-            //Creamos la entidad del usuario que vamos a registrar en la DB
+            // --- 2. Crear y guardar la EntidadUser ---
             EntityUser user = new EntityUser();
-
-            //El nuevo usuario tendrá el nombre que el JSON trajo (El que fue llenado en el formulario de empleados)
             user.setUsername(dtoE.getUsername());
 
-            //Genera una contraseña por defecto segura de 12 carácteres
+            // Genera una contraseña por defecto segura de 12 carácteres
             String secureRandomPassword = passwordGenerator.generateSecureRandomString();
 
-            //Se aplica hash a la contraseña (No se encripta, se hace hash)
+            // Se aplica hash a la contraseña (No se encripta, se hace hash)
             user.setPassword(argon2id.encode(secureRandomPassword));
 
-            //Status por defecto (El usuario por defecto estará activo un usuario apenas creado)
+            // Status por defecto (El usuario por defecto estará activo)
             user.setStatus("T");
-            objRepoU.save(user); //No se usa en if != de null por que siempre da true
+            objRepoU.save(user);
+
+            // --- 3. Guardar la información del empleado ---
+            // Guardamos ahora la información del empleado
+            // El DTO convertido a entidad debería usar el EntityUser creado
+            EntityEmployee employee = convertToEntityE(dtoE, idBusiness.toUpperCase());
+            employee.setUsername(user); // Asegúrate de asignar la referencia al usuario
+            employee = objRepoE.save(employee);
 
 
-            up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
-            dtoE.setPhoto(up.getUrl());                 // guardar URL en la entidad
-
-            //Guardamos ahora la información del empleado
-            EntityEmployee employee = objRepoE.save(convertToEntityE(dtoE, idBusiness.toUpperCase()));
-
-            //Una vez registrado el usuario y el empleado correctamente se le será enviado un correo con su información para que tenga acceso a la aplicación
-            //Donde ahí se le enviará la contraseña generada segura para que decida si quiere cambiarla o mantenerla, será decisión del usuario
+            // --- 4. Enviar Correo ---
+            // Una vez registrado el usuario y el empleado correctamente se le será enviado un correo
             serviceEmailSender.sendEmail(dtoE.getEmployeeMail(),
                     "Bienvenido a RISKOR, tu cuenta ha sido creada",
                     "Hola " + dtoE.getFirstName() + " Tu contraseña es: " + secureRandomPassword);
 
-            //En el caso del empleado es mucho más breve, convertimos en entidad el JSON, lo guardamos en la DB
-            //Y como el controller espera DTO convertimos el "save" a DTO para mostrar si funcionó el registro
+            // --- 5. Retornar DTO ---
             return convertToDTOE(employee);
-        } catch (RuntimeException | IOException e) {
-            // si ya subimos la imagen, borrarla para no dejar basura
+
+        } catch (Exception ex) {
+            // Si ya subimos imagen nueva y la transacción falla luego (ej. error en DB), limpia en Cloudinary
             if (up != null && up.getPublicId() != null) {
                 try {
+                    // Se registra una advertencia o se ignora el error de borrado
                     cloudinary.deleteByPublicId(up.getPublicId());
                 } catch (Exception ignore) {
+                    // Simplemente ignoramos el error de limpieza para no ocultar la excepción original.
                 }
             }
-            throw new RuntimeException("Fallo", e);
+            // Relanzamos la excepción original para que @Transactional haga el rollback
+            throw ex;
         }
     }
 
