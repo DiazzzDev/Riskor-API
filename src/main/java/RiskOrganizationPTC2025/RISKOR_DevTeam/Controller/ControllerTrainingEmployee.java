@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -63,6 +64,7 @@ public class ControllerTrainingEmployee {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postTrainingEmployee")
     public ResponseEntity<?> postTrainingEmployee(
             @RequestAttribute("auth.business") String idBusiness,
@@ -101,6 +103,7 @@ public class ControllerTrainingEmployee {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putTrainingEmployee/{idTrainingEmployee}")
     public ResponseEntity<?> putTrainingEmployee(
             @RequestAttribute("auth.business") String idBusiness,
@@ -155,6 +158,7 @@ public class ControllerTrainingEmployee {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("{idTraining}/put/{idEmployee}")
     public ResponseEntity<?> takeAttendance(
             @RequestAttribute("auth.business") String idBusiness,
@@ -210,6 +214,7 @@ public class ControllerTrainingEmployee {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("{idTraining}/delete/{idEmployee}")
     public ResponseEntity<?> deleteTrainingEmployeeFromTraining(
             @RequestAttribute("auth.business") String idBusiness,
@@ -250,7 +255,7 @@ public class ControllerTrainingEmployee {
         }
     }
 
-
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deleteTrainingEmployee/{idTrainingEmployee}")
     public ResponseEntity<?> deleteTrainingEmployee(
             @RequestAttribute("auth.business") String idBusiness,

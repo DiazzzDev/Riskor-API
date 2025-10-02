@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ public class ControllerEvidence {
     @Autowired
     private ServiceEvidence objServiceEvidence;
 
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getEvidence")
     public ResponseEntity<?> getEvidence(@RequestAttribute("auth.business") String idBusiness){
         try {
@@ -75,6 +77,7 @@ public class ControllerEvidence {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putEvidence/{idEvidence}")
     public ResponseEntity<?> putEvidence(
             @RequestAttribute("auth.business") String idBusiness,

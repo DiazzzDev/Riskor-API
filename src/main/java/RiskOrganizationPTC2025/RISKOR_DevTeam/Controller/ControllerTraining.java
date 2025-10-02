@@ -48,7 +48,6 @@ public class ControllerTraining {
 //        }
 //    }
 
-    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getTraining/getTrainingByTitle/{title}")
     public ResponseEntity<?> getTrainingByTitle(
             @RequestAttribute("auth.business") String idBusiness,
@@ -138,6 +137,7 @@ public class ControllerTraining {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postTraining")
     public ResponseEntity<?> postTraining(
             @RequestAttribute("auth.business") String idBusiness,
@@ -166,6 +166,7 @@ public class ControllerTraining {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putTraining/{idTraining}")
     public ResponseEntity<?> putTraining(
             @RequestAttribute("auth.business") String idBusiness,

@@ -9,6 +9,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ public class ControllerAccident {
     @Autowired
     private ServiceAccident objServiceA;
 
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getAccident/{idAccident}")
     public ResponseEntity<?> getAccidentById(
             @RequestAttribute("auth.business") String idBusiness,
@@ -48,6 +50,7 @@ public class ControllerAccident {
 
     //MAIN GET del apartado - No hay request obligatorios pero al mandarlos especifica la precisión del resultado
     //Útil en accidentes reportados y verificamos
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getAccidents")
     public ResponseEntity<?> getAccidents(
             @RequestAttribute("auth.business") String idBusiness,
@@ -123,6 +126,7 @@ public class ControllerAccident {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putAccident/{idAccident}")
     public ResponseEntity<?> putAccident(
             @RequestAttribute("auth.business") String idBusiness,
@@ -176,6 +180,7 @@ public class ControllerAccident {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deleteAccident/{idAccident}")
     public ResponseEntity<?> deleteAccident(
             @RequestAttribute("auth.business") String idBusiness,
