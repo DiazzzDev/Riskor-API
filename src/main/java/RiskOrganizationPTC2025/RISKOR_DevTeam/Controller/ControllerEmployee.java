@@ -112,7 +112,6 @@ public class ControllerEmployee {
     }
 
     //Método para obtener todos los empleados ACTIVOS de la empresa - GET PRINCIPAL
-    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getEmployees/activeEmployees")
     public ResponseEntity<Page<DTOEmployee>> getActiveEmployees(
             @RequestAttribute("auth.business") String idBusiness,
@@ -130,7 +129,6 @@ public class ControllerEmployee {
     }
 
     @GetMapping("/getEmployees")
-    @PreAuthorize("hasRole('Administrador')")
     public ResponseEntity<Page<DTOEmployee>> getEmployees(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
