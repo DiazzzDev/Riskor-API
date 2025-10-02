@@ -23,7 +23,7 @@ public class CorsConfig {
         //Orígenes desde donde se pueden hacer solicitudes
         config.addAllowedOrigin("http://127.0.0.1:5501");
         config.addAllowedOrigin("http://127.0.0.1:5502");
-        config.addAllowedOrigin("https://riskor.app");
+        config.addAllowedOrigin("https://riskor.vercel.app");
         config.addAllowedOrigin("https://localhost");
         config.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
 
@@ -61,7 +61,7 @@ public class CorsConfig {
         configuration.addAllowedOrigin("http://127.0.0.1:5501");
         configuration.addAllowedOrigin("http://127.0.0.1:5502");
         configuration.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
-        configuration.addAllowedOrigin("https://riskor.app");
+        configuration.addAllowedOrigin("https://riskor.vercel.app");
         configuration.addAllowedOrigin("https://localhost");
 
         configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));

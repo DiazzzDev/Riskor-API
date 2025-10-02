@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +48,7 @@ public class ControllerTraining {
 //        }
 //    }
 
+    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getTraining/getTrainingByTitle/{title}")
     public ResponseEntity<?> getTrainingByTitle(
             @RequestAttribute("auth.business") String idBusiness,
@@ -202,6 +204,7 @@ public class ControllerTraining {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deleteTraining/{idTraining}")
     public ResponseEntity<?> deleteTraining(
             @RequestAttribute("auth.business") String idBusiness,

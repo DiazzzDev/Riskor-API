@@ -198,7 +198,8 @@ public class ControllerEmployee {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al registrar el empleado",
-                    "detail", e.getMessage()
+                    "detail", e.getMessage(),
+                    "data",dataResult
             ));
         }
     }
