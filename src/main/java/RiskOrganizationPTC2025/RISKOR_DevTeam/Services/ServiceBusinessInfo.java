@@ -46,20 +46,6 @@ public class ServiceBusinessInfo {
         return convertToDTO(businessInfo);
     }
 
-    public boolean removeBusinessInfo(String idBusiness) {
-        if (idBusiness == null || idBusiness.trim().isEmpty()) {
-            throw new IllegalArgumentException("El ID del negocio no puede ser nulo o vacío");
-        }
-
-        boolean exists = objRepoBI.existsById(idBusiness);
-        if (!exists) {
-            throw new EntityNotFoundException("No se encontró el negocio con ID: " + idBusiness);
-        }
-
-        objRepoBI.deleteById(idBusiness);
-        return true;
-    }
-
     private DTOBusinessInfo convertToDTO(EntityBusinessInfo businessInfo) {
         DTOBusinessInfo dtoBI = new DTOBusinessInfo();
         dtoBI.setIdBusiness(businessInfo.getIdBusiness());

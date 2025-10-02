@@ -61,7 +61,6 @@ public class ControllerBusinessInfo {
             dataResult.getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
             return ResponseEntity.badRequest().body(errors);
         }
-
         try {
             DTOBusinessInfo answer = objServiceBI.putBusinessInfo(dto, idBusiness);
             if (answer == null) {
@@ -86,31 +85,6 @@ public class ControllerBusinessInfo {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al actualizar el negocio",
-                    "detail", e.getMessage()
-            ));
-        }
-    }
-
-    //Preguntar si lo borro o armo trigger
-    @DeleteMapping("/deleteBusinessInfo/{idBusiness}")
-    public ResponseEntity<?> deleteBusinessInfo(@Valid @PathVariable String idBusiness) {
-        try {
-            if (!objServiceBI.removeBusinessInfo(idBusiness)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).header(
-                        "Error, ID no encontrado", "ID del negocio no encontrado").body(Map.of(
-                        "status", "No encontrado, Error",
-                        "message", "El ID del negocio no ha sido encontrado",
-                        "timeStamp", Instant.now().toString()
-                ));
-            }
-            return ResponseEntity.ok(Map.of(
-                    "status", "Proceso completado correctamente",
-                    "message", "Negocio eliminado correctamente, Success"
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "status", "Error crítico no controlado",
-                    "message", "Error al eliminar el negocio",
                     "detail", e.getMessage()
             ));
         }
