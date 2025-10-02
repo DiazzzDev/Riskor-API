@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +46,7 @@ public class ControllerEmployeePosition {
         return ResponseEntity.ok(objServiceEP.getEmployeePosition(idBusiness, page, size));
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postEmployeePosition") //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postEmployeePosition(
             @RequestAttribute("auth.business") String idBusiness,
@@ -74,6 +76,7 @@ public class ControllerEmployeePosition {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putEmployeePosition/{idEmployeePosition}")
     public ResponseEntity<?> putEmployeePosition(
             @RequestAttribute("auth.business") String idBusiness,
@@ -114,6 +117,7 @@ public class ControllerEmployeePosition {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deleteEmployeePosition/{idEmployeePosition}")
     public ResponseEntity<?> deleteEmployeePosition(
             @RequestAttribute("auth.business") String idBusiness,

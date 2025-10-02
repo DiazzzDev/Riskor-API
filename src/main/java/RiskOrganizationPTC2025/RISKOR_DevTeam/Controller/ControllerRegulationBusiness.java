@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +42,7 @@ public class ControllerRegulationBusiness {
         return ResponseEntity.ok(objServiceRB.getRegulations(idBusiness, page, size));
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/{idRegulation}/document")
     public ResponseEntity<?> replaceDocument(
             @RequestAttribute("auth.business") String idBusiness,
@@ -80,6 +82,7 @@ public class ControllerRegulationBusiness {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/{idRegulation}/document/upload")
     public ResponseEntity<?> uploadDocument(
             @RequestAttribute("auth.business") String idBusiness,
@@ -120,6 +123,7 @@ public class ControllerRegulationBusiness {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postRegulationBusiness")
     //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postRegulationBusiness(
@@ -154,6 +158,7 @@ public class ControllerRegulationBusiness {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putRegulationBusiness/{idRegulation}")
     public ResponseEntity<?> putRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
@@ -191,6 +196,7 @@ public class ControllerRegulationBusiness {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deleteRegulationBusiness/{idRegulation}")
     public ResponseEntity<?> deleteRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
@@ -219,6 +225,7 @@ public class ControllerRegulationBusiness {
     }
 
     //Delete de la imágen de los planos del área
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/{idRegulation}/document")
     public ResponseEntity<?> deleteDocument(
             @RequestAttribute("auth.business") String idBusiness,

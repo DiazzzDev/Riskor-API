@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +48,7 @@ public class ControllerTypeControlSafetyDevice {
         return ResponseEntity.ok(objServiceTCSD.getAllTypeControlSD(idBusiness, page, size));
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postTypeControlSD") //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postTypeEPPC(
             @RequestAttribute("auth.business") String idBusiness,
@@ -76,6 +78,7 @@ public class ControllerTypeControlSafetyDevice {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putTypeControlSD/{idTypeControlSD}")
     public ResponseEntity<?> putTypeEPPC(
             @RequestAttribute("auth.business") String idBusiness,
@@ -115,6 +118,7 @@ public class ControllerTypeControlSafetyDevice {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deletetypeControlSD/{idTypeControlSD}")
     public ResponseEntity<?> deleteTypeControlSD(
             @RequestAttribute("auth.business") String idBusiness,

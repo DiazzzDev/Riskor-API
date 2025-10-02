@@ -253,7 +253,7 @@ public class ServiceEmployee {
                 } catch (Exception ignore) {
                 }
             }
-            return null;
+            throw new RuntimeException("Fallo", e);
         }
     }
 

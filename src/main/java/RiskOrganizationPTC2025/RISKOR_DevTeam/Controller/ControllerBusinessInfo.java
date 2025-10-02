@@ -24,7 +24,7 @@ public class ControllerBusinessInfo {
     @Autowired
     private ServiceBusinessInfo objServiceBI;
 
-    @PreAuthorize("hasRole('Administrado')")
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getMyBusiness")
     public DTOBusinessInfo getBusinessById(@RequestAttribute("auth.business") String idBusiness){
         return objServiceBI.getBusinessById(idBusiness);

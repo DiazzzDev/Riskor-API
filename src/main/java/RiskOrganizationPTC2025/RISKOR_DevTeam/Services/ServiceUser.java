@@ -23,12 +23,6 @@ public class ServiceUser {
     @Autowired
     private PasswordEncoder argon2id;
 
-    @Transactional(readOnly = true)
-    public List<DTOUser> getAllUsers(){
-        List<EntityUser> users = objRepoU.findAll();
-        return users.stream().map(this::convertToDTOU).collect(Collectors.toList());
-    }
-
     public DTOUser postUser(@Valid DTOUser dtoU){
         if (dtoU == null){ throw new IllegalArgumentException("No pueden haber campos vacíos"); }
         try{

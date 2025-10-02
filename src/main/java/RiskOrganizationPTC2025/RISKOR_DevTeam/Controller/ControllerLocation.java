@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ public class ControllerLocation {
     @Autowired
     private ServiceLocation objServiceL;
 
+    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getLocations") //Response entity<?> Es una forma flexible de lo que vamos a mostrar en la respuesta HTTP
     public ResponseEntity<?> getLocations(@RequestAttribute("auth.business") String idBusiness) {
         try {
@@ -37,6 +39,7 @@ public class ControllerLocation {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postLocation")
     public ResponseEntity<?> postLocation(
             @RequestAttribute("auth.business") String idBusiness,
@@ -78,6 +81,7 @@ public class ControllerLocation {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putLocation/{idLocation}")
     public ResponseEntity<?> putLocation(
             @RequestAttribute("auth.business") String idBusiness,
@@ -133,6 +137,7 @@ public class ControllerLocation {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deleteLocation/{idLocation}")
     public ResponseEntity<?> deleteLocation(
             @RequestAttribute("auth.business") String idBusiness,

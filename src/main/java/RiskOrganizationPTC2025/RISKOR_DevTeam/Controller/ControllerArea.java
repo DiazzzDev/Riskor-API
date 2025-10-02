@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ public class ControllerArea {
     @Autowired
     private ServiceArea objServiceA;
 
+    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getAreas")
     public ResponseEntity<Page<DTOArea>> getAreas(
             @RequestAttribute("auth.business") String idBusiness,
@@ -41,6 +43,7 @@ public class ControllerArea {
         return ResponseEntity.ok(objServiceA.getAllAreas(idBusiness, page, size));
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postArea") //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postArea(
             @RequestAttribute("auth.business") String idBusiness,
@@ -69,6 +72,7 @@ public class ControllerArea {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/{idArea}/sketch/upload")
     public ResponseEntity<?> uploadAreaSketch(
             @RequestAttribute("auth.business") String idBusiness,
@@ -109,6 +113,7 @@ public class ControllerArea {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putArea/{idArea}")
     public ResponseEntity<?> putArea(
             @RequestAttribute("auth.business") String idBusiness,
@@ -148,6 +153,7 @@ public class ControllerArea {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/{idArea}/sketch")
     public ResponseEntity<?> replaceAreaSketch(
             @RequestAttribute("auth.business") String idBusiness,
@@ -187,6 +193,7 @@ public class ControllerArea {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deleteArea/{idArea}")
     public ResponseEntity<?> deleteArea(
             @RequestAttribute("auth.business") String idBusiness,
@@ -215,6 +222,7 @@ public class ControllerArea {
     }
 
     //Delete de la imágen de los planos del área
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/{idArea}/sketch")
     public ResponseEntity<?> deleteAreaSketch(
             @RequestAttribute("auth.business") String idBusiness,

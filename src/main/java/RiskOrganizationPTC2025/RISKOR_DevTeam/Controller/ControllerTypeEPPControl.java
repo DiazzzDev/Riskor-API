@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -57,6 +58,7 @@ public class ControllerTypeEPPControl {
         return ResponseEntity.ok(objServiceTEPPC.getAllTypeEPPControl(idBusiness, page, size));
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postTypeEPPC") //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postTypeEPPC(
             @RequestAttribute("auth.business") String idBusiness,
@@ -86,6 +88,7 @@ public class ControllerTypeEPPControl {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @PutMapping("/putTypeEPPC/{idTypeEPPControl}")
     public ResponseEntity<?> putTypeEPPC(
             @RequestAttribute("auth.business") String idBusiness,
@@ -125,6 +128,7 @@ public class ControllerTypeEPPControl {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/deleteTypeEPPC/{idTypeEPPControl}")
     public ResponseEntity<?> deleteTypeEPPC(
             @RequestAttribute("auth.business") String idBusiness,

@@ -37,6 +37,7 @@ public class ControllerEmployee {
     }
 
     //Método para obtener todos los empleados de la empresa que no pertenecen al comité
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("getEmployeesWithoutCommittee")
     public ResponseEntity<Page<DTOEmployee>> getWithoutCommittee(
             @RequestAttribute("auth.business") String idBusiness,
@@ -54,6 +55,7 @@ public class ControllerEmployee {
     }
 
     //Obtener todos los empleados que pertenecen al comité de la empresa
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getCommitteeEmployees")
     public ResponseEntity<Page<DTOEmployee>> getCommittee(
             @RequestAttribute("auth.business") String idBusiness,
@@ -71,6 +73,7 @@ public class ControllerEmployee {
     }
 
     //Método para obtener un empleado de comité específico
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getCommitteeById/{idEmployee}")
     public ResponseEntity<DTOEmployee> getEmployeeCommitteeById(
             @RequestAttribute("auth.business") String idBusiness,
@@ -91,6 +94,7 @@ public class ControllerEmployee {
     }
 
     //Obtenemos todos los empleados inactivos
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getEmployees/inactiveEmployees")
     public ResponseEntity<Page<DTOEmployee>> getInactiveEmployees(
             @RequestAttribute("auth.business") String idBusiness,
@@ -108,6 +112,7 @@ public class ControllerEmployee {
     }
 
     //Método para obtener todos los empleados ACTIVOS de la empresa - GET PRINCIPAL
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getEmployees/activeEmployees")
     public ResponseEntity<Page<DTOEmployee>> getActiveEmployees(
             @RequestAttribute("auth.business") String idBusiness,
@@ -180,13 +185,6 @@ public class ControllerEmployee {
         try {
             dtoE.setIdBusiness(idBusiness);
             DTOEmployee answer = objServiceE.postEmployee(dtoE, idBusiness, photo);
-            if (answer == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "status", "Error al guardar los datos",
-                        "errorType", "VALIDATION_ERROR",
-                        "message", "Datos inválidos, vuelva a intentarlo"
-                ));
-            }
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "status", "Empleado creado correctamente, Success",
                     "data", answer
