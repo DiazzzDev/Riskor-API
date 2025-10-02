@@ -58,15 +58,19 @@ public class UtilsJWT {
                 .compact();                                                 //Convierte a String compacto
     }
 
+    public String getId(String jwt){
+        return parseClaims(jwt).getId();
+    }
+
     //Método para obtener el rol del usuario desde su token
-    public String extractRole(String token){
+    public String getRole(String token){
         //Para obtener el rol mandamos a llamar parseToken (Creado más abajo) y agregamos get() para conseguir el claim que necesitemos
         //Dentro de ese get, agrega el nombre del claim y String.class para el formato que es necesario devolver
         return parseToken(token).get("role", String.class);
     }
 
     //Método para obtener la empresa del usuario desde el token
-    public String extractBusiness(String token){
+    public String getBusiness(String token){
         return parseToken(token).get("business", String.class);
     }
 

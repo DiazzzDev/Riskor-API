@@ -18,15 +18,20 @@ public class ControllerDashboard {
     private ServiceDashboard objServiceD;
 
     //Capacitaciones asistidas/Inicio
-    @GetMapping("/employee/{idEmployee}/attendance")
+    @GetMapping("/employee/attendance")
     public DTOAttendanceSummary getAttendance(
-            @RequestAttribute("auth.business") String idBusiness, @PathVariable String idEmployee){
+            @RequestAttribute("auth.business") String idBusiness,
+            @RequestAttribute("auth.id") String idEmployee
+        ){
         return objServiceD.attendance(idBusiness, idEmployee);
     }
 
     //Calendario
-    @GetMapping("/employee/{idEmployee}/calendar")
-    public List<DTOCalendarItem> getCalendar(@RequestAttribute("auth.business") String idBusiness, @PathVariable String idEmployee){
+    @GetMapping("/employee/calendar")
+    public List<DTOCalendarItem> getCalendar(
+            @RequestAttribute("auth.business") String idBusiness,
+            @RequestAttribute("auth.id") String idEmployee
+        ){
         return objServiceD.calendar(idBusiness, idEmployee);
     }
 

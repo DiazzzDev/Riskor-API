@@ -24,6 +24,29 @@ public class ControllerTraining {
     @Autowired
     private ServiceTraining objServiceT;
 
+//    //Nuevo endpoint para el dashboard SIGUIENTE CAPACITACIÓN
+//    @GetMapping("/getMyNextTraining")
+//    public ResponseEntity<?> getMyNextTraining(
+//            @RequestAttribute("auth.business") String idBusiness,
+//            @RequestAttribute("auth.id") String idEmployee
+//    ){
+//        try {
+//            DTOTraining training = objServiceT.getNextTraining(idBusiness, idEmployee);
+//            return ResponseEntity.ok(training);
+//        } catch (EntityNotFoundException e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+//                    "status", "No encontrado",
+//                    "message", e.getMessage()
+//            ));
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+//                    "status", "Error crítico no controlado",
+//                    "message", "Error al consultar capacitación",
+//                    "detail", e.getMessage()
+//            ));
+//        }
+//    }
+
     @GetMapping("/getTraining/getTrainingByTitle/{title}")
     public ResponseEntity<?> getTrainingByTitle(
             @RequestAttribute("auth.business") String idBusiness,

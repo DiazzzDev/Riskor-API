@@ -201,60 +201,43 @@ public class ServiceEmployee {
     //POST Principal al crear un empleado
     //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
     @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
-        DTOCloudinary up = null;
-        try {
-            //Verificamos que el JSON recibido sea el indicado
-            if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
-            if (image == null) throw new IllegalArgumentException("La imagen no puede estar vacía");
+    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness) {
+        //Verificamos que el JSON recibido sea el indicado
+        if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
-            //Si el usuario ya existe es porque otro empleado ya lo posee, en ese caso lanzamos excepción
-            if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
-                throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");
-            }
-
-            //Creamos la entidad del usuario que vamos a registrar en la DB
-            EntityUser user = new EntityUser();
-
-            //El nuevo usuario tendrá el nombre que el JSON trajo (El que fue llenado en el formulario de empleados)
-            user.setUsername(dtoE.getUsername());
-
-            //Genera una contraseña por defecto segura de 12 carácteres
-            String secureRandomPassword = passwordGenerator.generateSecureRandomString();
-
-            //Se aplica hash a la contraseña (No se encripta, se hace hash)
-            user.setPassword(argon2id.encode(secureRandomPassword));
-
-            //Status por defecto (El usuario por defecto estará activo un usuario apenas creado)
-            user.setStatus("T");
-            objRepoU.save(user); //No se usa en if != de null por que siempre da true
-
-
-            up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
-            dtoE.setPhoto(up.getUrl());                 // guardar URL en la entidad
-
-            //Guardamos ahora la información del empleado
-            EntityEmployee employee = objRepoE.save(convertToEntityE(dtoE, idBusiness.toUpperCase()));
-
-            //Una vez registrado el usuario y el empleado correctamente se le será enviado un correo con su información para que tenga acceso a la aplicación
-            //Donde ahí se le enviará la contraseña generada segura para que decida si quiere cambiarla o mantenerla, será decisión del usuario
-            serviceEmailSender.sendEmail(dtoE.getEmployeeMail(),
-                    "Bienvenido a RISKOR, tu cuenta ha sido creada",
-                    "Hola " + dtoE.getFirstName() + " Tu contraseña es: " + secureRandomPassword);
-
-            //En el caso del empleado es mucho más breve, convertimos en entidad el JSON, lo guardamos en la DB
-            //Y como el controller espera DTO convertimos el "save" a DTO para mostrar si funcionó el registro
-            return convertToDTOE(employee);
-        } catch (RuntimeException | IOException e) {
-            // si ya subimos la imagen, borrarla para no dejar basura
-            if (up != null && up.getPublicId() != null) {
-                try {
-                    cloudinary.deleteByPublicId(up.getPublicId());
-                } catch (Exception ignore) {
-                }
-            }
-            return null;
+        //Si el usuario ya existe es porque otro empleado ya lo posee, en ese caso lanzamos excepción
+        if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
+            throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");
         }
+
+        //Creamos la entidad del usuario que vamos a registrar en la DB
+        EntityUser user = new EntityUser();
+
+        //El nuevo usuario tendrá el nombre que el JSON trajo (El que fue llenado en el formulario de empleados)
+        user.setUsername(dtoE.getUsername());
+
+        //Genera una contraseña por defecto segura de 12 carácteres
+        String secureRandomPassword = passwordGenerator.generateSecureRandomString();
+
+        //Se aplica hash a la contraseña (No se encripta, se hace hash)
+        user.setPassword(argon2id.encode(secureRandomPassword));
+
+        //Status por defecto (El usuario por defecto estará activo un usuario apenas creado)
+        user.setStatus("T");
+        objRepoU.save(user); //No se usa en if != de null por que siempre da true
+
+        //Guardamos ahora la información del empleado
+        EntityEmployee employee = objRepoE.save(convertToEntityE(dtoE, idBusiness.toUpperCase()));
+
+        //Una vez registrado el usuario y el empleado correctamente se le será enviado un correo con su información para que tenga acceso a la aplicación
+        //Donde ahí se le enviará la contraseña generada segura para que decida si quiere cambiarla o mantenerla, será decisión del usuario
+        serviceEmailSender.sendEmail(dtoE.getEmployeeMail(),
+                "Bienvenido a RISKOR, tu cuenta ha sido creada",
+                "Hola " + dtoE.getFirstName() + " Tu contraseña es: " + secureRandomPassword);
+
+        //En el caso del empleado es mucho más breve, convertimos en entidad el JSON, lo guardamos en la DB
+        //Y como el controller espera DTO convertimos el "save" a DTO para mostrar si funcionó el registro
+        return convertToDTOE(employee);
     }
 
     //PUT para agregar un empleado a un comité con su posición respectiva

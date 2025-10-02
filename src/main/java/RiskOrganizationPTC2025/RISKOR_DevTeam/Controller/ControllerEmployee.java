@@ -171,15 +171,14 @@ public class ControllerEmployee {
     }
 
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
-    @PostMapping(value = "/postEmployee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) //{username}
+    @PostMapping("/postEmployee")
     public ResponseEntity<?> postDataEmployee(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestPart("dtoE") DTOEmployee dtoE,
-            @RequestPart(value = "photo", required = false) MultipartFile photo
+            @Valid @RequestBody DTOEmployee dtoE
     ){
         try {
             dtoE.setIdBusiness(idBusiness);
-            DTOEmployee answer = objServiceE.postEmployee(dtoE, idBusiness, photo);
+            DTOEmployee answer = objServiceE.postEmployee(dtoE, idBusiness);
             if (answer == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al guardar los datos",

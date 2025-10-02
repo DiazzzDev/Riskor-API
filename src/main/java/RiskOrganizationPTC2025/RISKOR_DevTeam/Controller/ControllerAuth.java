@@ -44,7 +44,7 @@ public class ControllerAuth {
     }
 
     @PostMapping("/logout") //Indicamos que en la respuesta no debemos devolver nada con Void
-    private ResponseEntity<Void> login(HttpServletResponse response){
+    private ResponseEntity<Void> logout(HttpServletResponse response){
         //Manda a llamar al método que eliminará la cookie
         clearCookie(response);
         //Devolvemos un 204, de que el cierre de sesión fue realizado correctamente

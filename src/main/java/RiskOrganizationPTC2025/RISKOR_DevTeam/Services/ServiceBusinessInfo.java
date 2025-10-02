@@ -10,9 +10,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @Transactional
 public class ServiceBusinessInfo {
@@ -26,7 +23,7 @@ public class ServiceBusinessInfo {
     }
 
     public DTOBusinessInfo insertBusinessInfo(@Valid DTOBusinessInfo dtoBI){ //El método pide el DTO para saber que va a enviar a la entidad
-        if(dtoBI == null) throw new IllegalArgumentException("No pueden haber campos vacios");
+        if(dtoBI == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Crea un objEntidad donde se convierte el argumento (JSON) a entidad
         EntityBusinessInfo saved = objRepoBI.save(convertToEntity(dtoBI)); //Se crea otro objEntidad donde enviará objEntidad anterior a la db con el Repository
@@ -35,39 +32,32 @@ public class ServiceBusinessInfo {
     }
 
     public DTOBusinessInfo putBusinessInfo(@Valid DTOBusinessInfo dtoBI, String idBusiness){
-        if(dtoBI == null){
-            throw new IllegalArgumentException("No pueden haber campos vacios");
-        }
-        EntityBusinessInfo businessInfoExists = objRepoBI.findById(idBusiness).orElseThrow(() -> new EntityNotFoundException("Negocio no encontrado con ID: " + idBusiness));
+        if(dtoBI == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
-        businessInfoExists.setNameBusiness(dtoBI.getNameBusiness());
-        businessInfoExists.setAddressBusiness(dtoBI.getAddressBusiness());
-        businessInfoExists.setEmailBusiness(dtoBI.getEmailBusiness());
-        businessInfoExists.setCreationDate(dtoBI.getCreationDate());
-        businessInfoExists.setPhoneBusiness(dtoBI.getPhoneBusiness());
-        businessInfoExists.setPbxBusiness(dtoBI.getPbxBusiness());
+        EntityBusinessInfo businessInfo = objRepoBI.findById(idBusiness).orElseThrow(() -> new EntityNotFoundException("Negocio no encontrado con ID: " + idBusiness));
 
-        EntityBusinessInfo businessInfo = objRepoBI.save(businessInfoExists);
+        businessInfo.setNameBusiness(dtoBI.getNameBusiness());
+        businessInfo.setAddressBusiness(dtoBI.getAddressBusiness());
+        businessInfo.setEmailBusiness(dtoBI.getEmailBusiness());
+        businessInfo.setCreationDate(dtoBI.getCreationDate());
+        businessInfo.setPhoneBusiness(dtoBI.getPhoneBusiness());
+        businessInfo.setPbxBusiness(dtoBI.getPbxBusiness());
+
         return convertToDTO(businessInfo);
     }
 
     public boolean removeBusinessInfo(String idBusiness) {
-        try{
-            if (idBusiness == null || idBusiness.trim().isEmpty()) {
-                throw new IllegalArgumentException("El ID del negocio no puede ser nulo o vacío");
-            }
-
-            boolean exists = objRepoBI.existsById(idBusiness);
-            if (!exists) {
-                throw new EntityNotFoundException("No se encontró el negocio con ID: " + idBusiness);
-            }
-
-            objRepoBI.deleteById(idBusiness);
-            return true;
+        if (idBusiness == null || idBusiness.trim().isEmpty()) {
+            throw new IllegalArgumentException("El ID del negocio no puede ser nulo o vacío");
         }
-        catch (EmptyResultDataAccessException e){
-            throw new EntityNotFoundException("No se encontró el negocio");
+
+        boolean exists = objRepoBI.existsById(idBusiness);
+        if (!exists) {
+            throw new EntityNotFoundException("No se encontró el negocio con ID: " + idBusiness);
         }
+
+        objRepoBI.deleteById(idBusiness);
+        return true;
     }
 
     private DTOBusinessInfo convertToDTO(EntityBusinessInfo businessInfo) {

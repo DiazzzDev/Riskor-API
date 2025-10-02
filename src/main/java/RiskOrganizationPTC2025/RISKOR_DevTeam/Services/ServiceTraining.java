@@ -37,6 +37,12 @@ public class ServiceTraining {
 
     private static final DateTimeFormatter HH_MM = DateTimeFormatter.ofPattern("HH:mm");
 
+//    @Transactional(readOnly = true)
+//    public DTOTraining getNextTraining(String idBusiness, String idEmployee) {
+//        EntityTraining training = objRepoT.findNextTraining(idBusiness.toUpperCase(), idEmployee.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("No hay capacitaciones próximas"));
+//        return convertToDTOT(training);
+//    }
+
     @Transactional(readOnly = true) //Validación de transactional que va a evitar que se pueda llegar a realizar un ataque al escribir en los datos que se mandan
     public Page<DTOTraining> getTrainingByTitle(int page, int size, String title, String idBusiness) {
         if (title == null || title.isBlank()) throw new IllegalArgumentException("El título es requerido");

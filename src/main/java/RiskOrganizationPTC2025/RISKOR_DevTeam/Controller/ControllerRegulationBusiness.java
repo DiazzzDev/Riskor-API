@@ -26,9 +26,6 @@ public class ControllerRegulationBusiness {
     @Autowired
     private ServiceRegulationBusiness objServiceRB;
 
-    @PersistenceContext
-    private EntityManager em; //Ayuda a evitar cargar objetos completos en FK
-
     @GetMapping("/getRegulationBusiness")
     public ResponseEntity<?> getRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness, //Se coloca PathVariable por semántica y evitar problemas de mezcla de datos con el cliente-empresa
@@ -42,33 +39,6 @@ public class ControllerRegulationBusiness {
         }
 
         return ResponseEntity.ok(objServiceRB.getRegulations(idBusiness, page, size));
-    }
-
-    //Delete de la imágen de los planos del área
-    @DeleteMapping("/{idRegulation}/document")
-    public ResponseEntity<?> deleteDocument(
-            @RequestAttribute("auth.business") String idBusiness,
-            @PathVariable String idRegulation
-    ) {
-        try {
-            DTORegulationBusiness updated = objServiceRB.deleteDocument(idBusiness, idRegulation);
-            return ResponseEntity.ok(Map.of(
-                    "status", "Regulación eliminada correctamente, Success",
-                    "data", updated
-            ));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "status", "No encontrado",
-                    "message", "La regulación no pertenece a esta empresa o no existe",
-                    "detail", e.getMessage()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "status", "Error crítico no controlado",
-                    "message", "Error al eliminar la regulación del área",
-                    "detail", e.getMessage()
-            ));
-        }
     }
 
     @PutMapping("/{idRegulation}/document")
@@ -150,8 +120,7 @@ public class ControllerRegulationBusiness {
         }
     }
 
-    //No funca aún
-    @PostMapping(value = "/postRegulationBusiness", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    @PostMapping("/postRegulationBusiness")
     //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
@@ -244,6 +213,33 @@ public class ControllerRegulationBusiness {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al eliminar la regulación empresarial",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    //Delete de la imágen de los planos del área
+    @DeleteMapping("/{idRegulation}/document")
+    public ResponseEntity<?> deleteDocument(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idRegulation
+    ) {
+        try {
+            DTORegulationBusiness updated = objServiceRB.deleteDocument(idBusiness, idRegulation);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Regulación eliminada correctamente, Success",
+                    "data", updated
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", "La regulación no pertenece a esta empresa o no existe",
+                    "detail", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al eliminar la regulación del área",
                     "detail", e.getMessage()
             ));
         }
