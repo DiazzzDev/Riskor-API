@@ -240,7 +240,7 @@ public class ServiceEmployee {
             employee.setUsername(user);
 
             employee = objRepoE.save(employee);
-            
+
             // --- 4. Enviar Correo ---
             serviceEmailSender.sendEmail(dtoE.getEmployeeMail(),
                     "Bienvenido a RISKOR, tu cuenta ha sido creada",
@@ -260,7 +260,7 @@ public class ServiceEmployee {
                 }
             }
             // Relanzamos la excepción original para que @Transactional haga el rollback
-            throw ex;
+            return null;
         }
     }
 
