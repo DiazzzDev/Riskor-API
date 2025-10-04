@@ -27,36 +27,34 @@ public class ServiceCloudinary {
     public DTOCloudinary uploadImage(MultipartFile file, String folder) throws IOException {
         validateImage(file);
 
-        String originalFileName = file.getOriginalFilename();
-        String ext = originalFileName.substring(originalFileName.lastIndexOf(".")).toLowerCase();
-        String ct = file.getContentType() != null ? file.getContentType() : "";
+        String name = file.getOriginalFilename();
+        String ext  = name != null ? name.substring(name.lastIndexOf(".")).toLowerCase() : "";
+        String ct   = file.getContentType() != null ? file.getContentType() : "";
         boolean isPdf = "application/pdf".equalsIgnoreCase(ct) || ".pdf".equals(ext);
 
-        String unique = "file_" + UUID.randomUUID();
-        //CLAVE: para PDF, public_id con extensión .pdf
-        String publicId = isPdf ? (unique + ".pdf") : unique;
+        String base = "file_" + java.util.UUID.randomUUID();
+        // ⬇ clave: para PDF ponemos extensión en el public_id
+        String publicId = isPdf ? (base + ".pdf") : base;
 
-        Map<String, Object> options = ObjectUtils.asMap(
+        Map<String,Object> options = ObjectUtils.asMap(
                 "folder", folder,
                 "public_id", publicId,
                 "use_filename", false,
                 "unique_filename", false,
-                "resource_type", isPdf ? "raw" : "image"
+                "resource_type", isPdf ? "raw" : "image",
+                "type", "upload" // público
         );
-        if (!isPdf) {
-            options.put("quality", "auto:good");
-        }
+        if (!isPdf) options.put("quality", "auto:good");
 
-        Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
-        String url      = (String) uploadResult.get("secure_url");  // …/raw/upload/.../file_xxx.pdf
-        String publicIdOut = (String) uploadResult.get("public_id");
-        return new DTOCloudinary(url, publicIdOut);
+        Map<?,?> r = cloudinary.uploader().upload(file.getBytes(), options);
+        String url = (String) r.get("secure_url");  // p.ej. .../raw/upload/.../file_xxx.pdf
+        String pid = (String) r.get("public_id");
+        return new DTOCloudinary(url, pid);
     }
-
 
     //Método para la eliminación de imágenes en caso la tabla requiera eliminar sus datos, exigiendo el nombre/carpeta de la img
     public void deleteByPublicId(String publicIdWithFolder) throws IOException {
-        cloudinary.uploader().destroy(publicIdWithFolder, ObjectUtils.emptyMap()); //Eliminamos la imágen deseada de
+        cloudinary.uploader().destroy(publicIdWithFolder, ObjectUtils.emptyMap()); //Eliminamos la el archivo deseado según su ID público
     }
 
     public void validateImage(MultipartFile file){
