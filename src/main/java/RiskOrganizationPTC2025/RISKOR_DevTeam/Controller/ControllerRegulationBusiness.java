@@ -124,11 +124,11 @@ public class ControllerRegulationBusiness {
     }
 
     @PreAuthorize("hasRole('Administrador')")
-    @PostMapping(value = "/postRegulationBusiness", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/postRegulationBusiness", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestPart("dto") DTORegulationBusiness dto,
+            @RequestPart("dto") DTORegulationBusiness dto,
             @RequestPart(value = "file", required = false) MultipartFile file
     ) {
         try {
