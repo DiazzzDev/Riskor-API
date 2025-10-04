@@ -24,23 +24,32 @@ public class ServiceCloudinary {
     private final Cloudinary cloudinary;
 
     //Método para enviar la imágen deseada a la carpeta que se especifique
-    public DTOCloudinary uploadImage(MultipartFile file, String folder) throws IOException{
+    public DTOCloudinary uploadImage(MultipartFile file, String folder) throws IOException {
         validateImage(file);
+
         String originalFileName = file.getOriginalFilename();
-        String fileExtension = originalFileName.substring(originalFileName.lastIndexOf(".")).toLowerCase();
-        String uniqueFileName = "file_" + UUID.randomUUID(); // + fileExtension; Nombre público sin extensión
+        String ext = originalFileName.substring(originalFileName.lastIndexOf(".")).toLowerCase();
+        String ct = file.getContentType() != null ? file.getContentType() : "";
+        boolean isPdf = "application/pdf".equalsIgnoreCase(ct) || ".pdf".equals(ext);
+
+        String uniqueFileName = "file_" + UUID.randomUUID(); // sin extensión
 
         Map<String, Object> options = ObjectUtils.asMap(
-                "folder", folder,       //Ej: "RISKOR/areas/{idBusiness}"
+                "folder", folder,
                 "public_id", uniqueFileName,
                 "use_filename", false,
                 "unique_filename", false,
-                "resource_type", "auto",
-                "quality", "auto:good"
+                // CLAVE: PDFs como RAW, imágenes como IMAGE
+                "resource_type", isPdf ? "raw" : "image"
         );
 
+        // Solo tiene sentido quality para imágenes
+        if (!isPdf) {
+            options.put("quality", "auto:good");
+        }
+
         Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
-        String url = (String) uploadResult.get("secure_url");
+        String url = (String) uploadResult.get("secure_url");   // p.ej. .../raw/upload/...pdf
         String publicId = (String) uploadResult.get("public_id");
         return new DTOCloudinary(url, publicId);
     }
