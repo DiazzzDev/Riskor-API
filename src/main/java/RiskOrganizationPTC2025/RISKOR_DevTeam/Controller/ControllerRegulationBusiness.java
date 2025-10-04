@@ -3,6 +3,8 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegulationBusiness;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceRegulationBusiness;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -26,6 +28,8 @@ import java.util.Map;
 public class ControllerRegulationBusiness {
     @Autowired
     private ServiceRegulationBusiness objServiceRB;
+
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()); // Soporta LocalDate en el dto
 
     @GetMapping("/getRegulationBusiness")
     public ResponseEntity<?> getRegulationBusiness(
@@ -124,26 +128,34 @@ public class ControllerRegulationBusiness {
     }
 
     @PreAuthorize("hasRole('Administrador')")
-    @PostMapping(value = "/postRegulationBusiness", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
+    @PostMapping(
+            value = "/postRegulationBusiness",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<?> postRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
-            @RequestPart("dto") DTORegulationBusiness dto,
-            @RequestPart(value = "file", required = false) MultipartFile file
+            // A propósito lo recibimos como String para tolerar text/plain o application/json
+            @RequestPart("dto") String dtoJson,
+            @RequestPart("file") MultipartFile file
     ) {
         try {
-            dto.setIdBusiness(idBusiness); //Se coloca desde aquí el negocio para...
-            DTORegulationBusiness answer = objServiceRB.postRegulationBusiness(dto, file, idBusiness);
+            // Parseamos el JSON manualmente (tolerante a content-type del part)
+            DTORegulationBusiness dto = mapper.readValue(dtoJson, DTORegulationBusiness.class);
+            dto.setIdBusiness(idBusiness);
+
+            // El Service ya valida extensión/tamaño y sube a Cloudinary
+            DTORegulationBusiness out = objServiceRB.postRegulationBusiness(dto, file, idBusiness);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "status", "Regulación empresarial registrada correctamente, Success",
-                    "data", answer
+                    "data", out
             ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "status", "Error de validación de datos",
                     "errorType", "VALIDATION_ERROR",
-                    "message", e.getMessage() // El mensaje de la excepción es lo que le interesa al cliente
+                    "message", e.getMessage()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(

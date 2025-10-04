@@ -49,8 +49,6 @@ public class ServiceRegulationBusiness {
     }
 
     //POST Principal al crear una regulación empresarial
-    //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un REGISTRO FLOTANTE
-    @Transactional(rollbackFor = Exception.class)
     public DTORegulationBusiness postRegulationBusiness(@Valid DTORegulationBusiness dto, MultipartFile file, String idBusiness) {
         DTOCloudinary up = null; //Limpieza en caso falla luego
         try{
