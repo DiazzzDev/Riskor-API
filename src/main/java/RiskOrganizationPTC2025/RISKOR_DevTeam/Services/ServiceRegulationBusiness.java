@@ -76,27 +76,51 @@ public class ServiceRegulationBusiness {
         }
     }
 
-    public DTORegulationBusiness putRegulationBusiness(@Valid DTORegulationBusiness dtoRB, String idRegulation, String idBusiness) {
-        if (dtoRB == null){ throw new IllegalArgumentException("No pueden haber campos vacíos");}
+    public DTORegulationBusiness putRegulationBusiness(@Valid DTORegulationBusiness dtoRB, String idRegulation, String idBusiness, MultipartFile file) {
+        DTOCloudinary up = null; //Limpieza en caso falla luego
 
-        EntityRegulationBusiness regulation = objRepoRB.findByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness).orElseThrow(() -> new EntityNotFoundException("Regulación no encontrada con ID: " + idRegulation));
+        try {
+            if (dtoRB == null){ throw new IllegalArgumentException("No pueden haber campos vacíos");}
 
-        //Verifica que el área del DTO pertenezca a la empresa del path
-        validateAreaBelongsToBusiness(dtoRB.getIdArea(), idBusiness);
+            EntityRegulationBusiness regulation = objRepoRB.findByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness).orElseThrow(() -> new EntityNotFoundException("Regulación no encontrada con ID: " + idRegulation));
 
-        regulation.setRegulationTitle(dtoRB.getRegulationTitle());
-        regulation.setRegulationDescription(dtoRB.getRegulationDescription());
-        regulation.setCreationDate(dtoRB.getCreationDate());
-        regulation.setRegulationDocument(dtoRB.getRegulationDocument());
+            //Verifica que el área del DTO pertenezca a la empresa del path
+            validateAreaBelongsToBusiness(dtoRB.getIdArea(), idBusiness);
+
+            regulation.setRegulationTitle(dtoRB.getRegulationTitle());
+            regulation.setRegulationDescription(dtoRB.getRegulationDescription());
+            regulation.setCreationDate(dtoRB.getCreationDate());
+
+            String oldUrl = regulation.getRegulationDocument();
+            up = cloudinary.uploadImage(file, "RISKOR/Regulations-Documents/");
+            regulation.setRegulationDocument(up.getUrl());
+
+            regulation.setRegulationDocument(dtoRB.getRegulationDocument());
 
 
-        regulation.setIdRiskStatus(em.getReference(EntityRiskStatus.class, dtoRB.getIdRiskStatus()));
-        regulation.setIdRegulationCategory(em.getReference(EntityRegulationCategory.class, dtoRB.getIdRegulationCategory()));
-        regulation.setIdArea(em.getReference(EntityArea.class, dtoRB.getIdArea()));
-        regulation.setIdRiskLevel(em.getReference(EntityRiskLevel.class, dtoRB.getIdRiskLevel()));
+            regulation.setIdRiskStatus(em.getReference(EntityRiskStatus.class, dtoRB.getIdRiskStatus()));
+            regulation.setIdRegulationCategory(em.getReference(EntityRegulationCategory.class, dtoRB.getIdRegulationCategory()));
+            regulation.setIdArea(em.getReference(EntityArea.class, dtoRB.getIdArea()));
+            regulation.setIdRiskLevel(em.getReference(EntityRiskLevel.class, dtoRB.getIdRiskLevel()));
 
-        //EntityRegulationBusiness regulation = objRepoRB.save(regulation); Ya no se necesita porque se usa transactional
-        return convertToDTORB(regulation);
+            //Limpieza de la imágen anterior
+            try {
+                if (oldUrl != null && !oldUrl.isBlank() && !"Sin documento".equalsIgnoreCase(oldUrl)) {
+                    cloudinary.deleteByUrl(oldUrl);
+                }
+            } catch (Exception ignore) {}
+
+            return convertToDTORB(regulation);
+        } catch (RuntimeException | IOException e) {
+            // si ya subimos la imagen, borrarla para no dejar basura
+            if (up != null && up.getPublicId() != null) {
+                try {
+                    cloudinary.deleteByPublicId(up.getPublicId());
+                } catch (Exception ignore) {
+                }
+            }
+            return null;
+        }
     }
 
     public boolean removeRegulationBusiness(String idRegulation, String idBusiness){

@@ -167,12 +167,15 @@ public class ControllerRegulationBusiness {
     }
 
     @PreAuthorize("hasRole('Administrador')")
-    @PutMapping("/putRegulationBusiness/{idRegulation}")
+    @PutMapping(value = "/putRegulationBusiness/{idRegulation}",
+                consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+                produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> putRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idRegulation,
-            @Valid @RequestBody DTORegulationBusiness dto,
-            BindingResult dataResult
+            @Valid @RequestPart("dto") DTORegulationBusiness dto,
+            BindingResult dataResult,
+            @RequestPart("file") MultipartFile file
     ) {
 
         //Validamos si existen errores ANTES de proceder con el PUT dentro de los datos solicitados (método de seguridad)
@@ -181,7 +184,7 @@ public class ControllerRegulationBusiness {
         }
         try {
             dto.setIdBusiness(idBusiness); //Se coloca desde aquí el negocio para...
-            DTORegulationBusiness answer = objServiceRB.putRegulationBusiness(dto, idRegulation, idBusiness);
+            DTORegulationBusiness answer = objServiceRB.putRegulationBusiness(dto, idRegulation, idBusiness, file);
             if (answer == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al actualizar los datos",
