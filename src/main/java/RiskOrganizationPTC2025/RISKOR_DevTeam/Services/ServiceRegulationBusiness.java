@@ -52,7 +52,7 @@ public class ServiceRegulationBusiness {
     //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un REGISTRO FLOTANTE
     @Transactional(rollbackFor = Exception.class)
     public DTORegulationBusiness postRegulationBusiness(@Valid DTORegulationBusiness dto, MultipartFile file, String idBusiness) {
-        DTOCloudinary up = null;
+        DTOCloudinary up = null; //Limpieza en caso falla luego
         try{
             if (dto == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
             if (file == null || file.isEmpty()) throw new IllegalArgumentException("Documento pendiente");
@@ -61,7 +61,7 @@ public class ServiceRegulationBusiness {
             validateAreaBelongsToBusiness(dto.getIdArea(), idBusiness); //Validamos que el área que se va a registrar corresponda a la empresa
 
             up = cloudinary.uploadImage(file, "RISKOR/Regulations-Documents/");
-            dto.setRegulationDocument(up.getUrl());                 // guardar URL en la entidad
+            dto.setRegulationDocument(up.getUrl());                 // guardar URL de la img
 
             EntityRegulationBusiness saved = objRepoRB.save(convertToERB(dto));
 

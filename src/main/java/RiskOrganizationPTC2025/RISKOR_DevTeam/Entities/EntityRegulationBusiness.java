@@ -28,7 +28,7 @@ public class EntityRegulationBusiness {
     @Column(name = "CREATIONDATE", nullable = false)
     private LocalDate creationDate;
 
-    @Column(name = "REGULATIONDOCUMENT", length = 1000, nullable = false)
+    @Column(name = "REGULATIONDOCUMENT")
     private String regulationDocument;
 
     //Llaves foráneas (Separadas por legibilidad):

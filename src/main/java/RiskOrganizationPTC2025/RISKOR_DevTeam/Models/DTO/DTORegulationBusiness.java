@@ -25,8 +25,6 @@ public class DTORegulationBusiness {
     @NotNull(message = "La fecha de creación es obligatoria")
     private LocalDate creationDate;
 
-    @NotBlank
-    @Size(min = 5, max = 1000, message = "El enlace del documento de la regulación debe tener de 5 a 1000 carácteres")
     private String regulationDocument;
 
     @NotBlank(message = "idRiskStatus es obligatorio")
