@@ -57,7 +57,6 @@ public class ServiceRegulationBusiness {
             if (dto == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
             if (file == null || file.isEmpty()) throw new IllegalArgumentException("Documento pendiente");
 
-            //Ligeras validaciones
             dto.setIdBusiness(idBusiness); //Asignamos desde antes el negocio - Evitamos que el cliente elija en que negocio registrar
             validateAreaBelongsToBusiness(dto.getIdArea(), idBusiness); //Validamos que el área que se va a registrar corresponda a la empresa
 
@@ -80,7 +79,7 @@ public class ServiceRegulationBusiness {
     }
 
     public DTORegulationBusiness putRegulationBusiness(@Valid DTORegulationBusiness dtoRB, String idRegulation, String idBusiness) {
-        if (dtoRB == null){ throw new IllegalArgumentException("No pueden haber campos vacios");}
+        if (dtoRB == null){ throw new IllegalArgumentException("No pueden haber campos vacíos");}
 
         EntityRegulationBusiness regulation = objRepoRB.findByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness).orElseThrow(() -> new EntityNotFoundException("Regulación no encontrada con ID: " + idRegulation));
 

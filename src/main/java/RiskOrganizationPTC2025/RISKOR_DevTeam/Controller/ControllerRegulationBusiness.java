@@ -124,30 +124,26 @@ public class ControllerRegulationBusiness {
     }
 
     @PreAuthorize("hasRole('Administrador')")
-    @PostMapping("/postRegulationBusiness")
+    @PostMapping(value = "/postRegulationBusiness", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
             @Valid @RequestPart("dto") DTORegulationBusiness dto,
-            @RequestPart(value = "file") MultipartFile file,
-            BindingResult dataResult
+            @RequestPart(value = "file", required = false) MultipartFile file
     ) {
-        if (dataResult.hasErrors()) {
-            return ResponseEntity.badRequest().body(dataResult.getAllErrors());
-        }
         try {
             dto.setIdBusiness(idBusiness); //Se coloca desde aquí el negocio para...
             DTORegulationBusiness answer = objServiceRB.postRegulationBusiness(dto, file, idBusiness);
-            if (answer == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "status", "Error al guardar los datos",
-                        "errorType", "VALIDATION_ERROR",
-                        "message", "Datos inválidos, vuelva a intentarlo"
-                ));
-            }
+
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "status", "Regulación empresarial registrada correctamente, Success",
                     "data", answer
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Error de validación de datos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage() // El mensaje de la excepción es lo que le interesa al cliente
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(

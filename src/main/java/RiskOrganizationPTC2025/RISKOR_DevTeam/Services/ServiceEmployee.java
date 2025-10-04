@@ -202,7 +202,7 @@ public class ServiceEmployee {
 //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
     //POST Principal al crear un empleado
     @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) throws IOException {
+    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
         // Verificaciones iniciales
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
         if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
