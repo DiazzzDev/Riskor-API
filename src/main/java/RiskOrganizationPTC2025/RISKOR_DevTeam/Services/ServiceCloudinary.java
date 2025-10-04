@@ -32,27 +32,27 @@ public class ServiceCloudinary {
         String ct = file.getContentType() != null ? file.getContentType() : "";
         boolean isPdf = "application/pdf".equalsIgnoreCase(ct) || ".pdf".equals(ext);
 
-        String uniqueFileName = "file_" + UUID.randomUUID(); // sin extensión
+        String unique = "file_" + UUID.randomUUID();
+        //CLAVE: para PDF, public_id con extensión .pdf
+        String publicId = isPdf ? (unique + ".pdf") : unique;
 
         Map<String, Object> options = ObjectUtils.asMap(
                 "folder", folder,
-                "public_id", uniqueFileName,
+                "public_id", publicId,
                 "use_filename", false,
                 "unique_filename", false,
-                // CLAVE: PDFs como RAW, imágenes como IMAGE
                 "resource_type", isPdf ? "raw" : "image"
         );
-
-        // Solo tiene sentido quality para imágenes
         if (!isPdf) {
             options.put("quality", "auto:good");
         }
 
         Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
-        String url = (String) uploadResult.get("secure_url");   // p.ej. .../raw/upload/...pdf
-        String publicId = (String) uploadResult.get("public_id");
-        return new DTOCloudinary(url, publicId);
+        String url      = (String) uploadResult.get("secure_url");  // …/raw/upload/.../file_xxx.pdf
+        String publicIdOut = (String) uploadResult.get("public_id");
+        return new DTOCloudinary(url, publicIdOut);
     }
+
 
     //Método para la eliminación de imágenes en caso la tabla requiera eliminar sus datos, exigiendo el nombre/carpeta de la img
     public void deleteByPublicId(String publicIdWithFolder) throws IOException {
