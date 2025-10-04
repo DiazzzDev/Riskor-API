@@ -25,6 +25,7 @@ public class DTORegulationBusiness {
     @NotNull(message = "La fecha de creación es obligatoria")
     private LocalDate creationDate;
 
+    @NotBlank
     private String regulationDocument;
 
     @NotBlank(message = "idRiskStatus es obligatorio")

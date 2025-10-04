@@ -102,10 +102,16 @@ public class ServiceRegulationBusiness {
     public boolean removeRegulationBusiness(String idRegulation, String idBusiness){
         if (idRegulation == null || idRegulation.trim().isEmpty()) return false;
 
-        boolean exists = objRepoRB.existsByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness);
-        if (!exists) { return false; }
-
+        var regulationBusiness = objRepoRB.findByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness).orElseThrow(() -> new EntityNotFoundException("Regulación no encontrada con ID: " + idRegulation));
         objRepoRB.deleteByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness);
+
+        //Intenta borrar el archivo en Cloudinary
+        try {
+            if (regulationBusiness.getRegulationDocument() != null && !regulationBusiness.getRegulationDocument().isBlank() && !"Sin documento".equalsIgnoreCase(regulationBusiness.getRegulationDocument())) {
+                cloudinary.deleteByUrl(regulationBusiness.getRegulationDocument());
+            }
+        } catch (Exception ignore) {}
+
         return true;
     }
 
