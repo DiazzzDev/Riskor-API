@@ -167,38 +167,40 @@ public class ControllerRegulationBusiness {
     }
 
     @PreAuthorize("hasRole('Administrador')")
-    @PutMapping(value = "/putRegulationBusiness/{idRegulation}",
-                consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-                produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> putRegulationBusiness(
+    @PutMapping(
+            value = "/putRegulationBusiness/{idRegulation}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<?> putRegulationBusinessMultipart(
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idRegulation,
-            @Valid @RequestPart("dto") DTORegulationBusiness dto,
-            BindingResult dataResult,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("dto") String dtoJson,                                 // tolera text/plain o app/json
+            @RequestPart(value = "file", required = false) MultipartFile file   // PDF opcional
     ) {
-
-        //Validamos si existen errores ANTES de proceder con el PUT dentro de los datos solicitados (método de seguridad)
-        if (dataResult.hasErrors()) {
-            return ResponseEntity.badRequest().body(dataResult.getAllErrors());
-        }
         try {
-            dto.setIdBusiness(idBusiness); //Se coloca desde aquí el negocio para...
-            DTORegulationBusiness answer = objServiceRB.putRegulationBusiness(dto, idRegulation, idBusiness, file);
-            if (answer == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "status", "Error al actualizar los datos",
-                        "errorType", "VALIDATION_ERROR",
-                        "message", "Datos inválidos, vuelva a intentarlo"
-                ));
-            }
-            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+            DTORegulationBusiness dto = mapper.readValue(dtoJson, DTORegulationBusiness.class);
+            dto.setIdBusiness(idBusiness);
+
+            DTORegulationBusiness out = objServiceRB.putRegulationBusiness(dto, idRegulation, idBusiness, file);
+            return ResponseEntity.ok(Map.of(
                     "status", "Regulación empresarial modificada correctamente, Success",
-                    "data", answer
+                    "data", out
             ));
-        } catch (ExceptionDataNotFound e) {
-            return ResponseEntity.notFound().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", "La regulación no pertenece a esta empresa o no existe",
+                    "detail", e.getMessage()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
+            ));
         } catch (Exception e) {
+            // Aquí entran también UncheckedIOException y cualquier otro fallo
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al actualizar la regulación empresarial",
