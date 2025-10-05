@@ -105,7 +105,7 @@ public class ControllerInspection {
     )
     public ResponseEntity<?> putInspection(
             @RequestAttribute("auth.business") String idBusiness,
-            @RequestPart String dtoJson, //El form data envía texto plano, lo vamos a pasar a DTO con el mapper
+            @RequestPart("dto") String dtoJson, //El form data envía texto plano, lo vamos a pasar a DTO con el mapper
             @PathVariable String idInspection,
             @RequestPart(value = "file", required = false) MultipartFile file
         ){
