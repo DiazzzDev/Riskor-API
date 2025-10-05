@@ -47,87 +47,6 @@ public class ControllerRegulationBusiness {
     }
 
     @PreAuthorize("hasRole('Administrador')")
-    @PutMapping("/{idRegulation}/document")
-    public ResponseEntity<?> replaceDocument(
-            @RequestAttribute("auth.business") String idBusiness,
-            @PathVariable String idRegulation,
-            @RequestParam("image") MultipartFile image
-    ) {
-        try {
-            DTORegulationBusiness updated = objServiceRB.updateRegulation(idBusiness, idRegulation, image);
-            return ResponseEntity.ok(Map.of(
-                    "status", "Documento actualizado correctamente, Success",
-                    "data", updated
-            ));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "status", "No encontrado",
-                    "message", "El documento no pertenece a esta empresa o no existe",
-                    "detail", e.getMessage()
-            ));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "status", "Datos inválidos",
-                    "errorType", "VALIDATION_ERROR",
-                    "message", e.getMessage()
-            ));
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "status", "Error crítico no controlado",
-                    "message", "Error al subir el documento",
-                    "detail", e.getMessage()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "status", "Error crítico no controlado",
-                    "message", "Error al actualizar el documento",
-                    "detail", e.getMessage()
-            ));
-        }
-    }
-
-    @PreAuthorize("hasRole('Administrador')")
-    @PostMapping("/{idRegulation}/document/upload")
-    public ResponseEntity<?> uploadDocument(
-            @RequestAttribute("auth.business") String idBusiness,
-            @PathVariable String idRegulation,
-            @RequestParam("image") MultipartFile image
-    ) {
-        try {
-            DTORegulationBusiness updated = objServiceRB.updateRegulation(idBusiness, idRegulation, image);
-            return ResponseEntity.ok(Map.of(
-                    "status", "Documento agregada correctamente, Success",
-                    "data", updated
-            ));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "status", "No encontrado",
-                    "message", "El documento no pertenece a esta empresa o no existe",
-                    "detail", e.getMessage()
-            ));
-        } catch (IllegalArgumentException e) {
-            // Errores de validación de imagen (tamaño, extensión, content-type, etc.)
-            return ResponseEntity.badRequest().body(Map.of(
-                    "status", "Datos inválidos",
-                    "errorType", "VALIDATION_ERROR",
-                    "message", e.getMessage()
-            ));
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "status", "Error crítico no controlado",
-                    "message", "Error al subir el documento",
-                    "detail", e.getMessage()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "status", "Error crítico no controlado",
-                    "message", "Error al actualizar el documento",
-                    "detail", e.getMessage()
-            ));
-        }
-    }
-
-    @PreAuthorize("hasRole('Administrador')")
     @PostMapping(
             value = "/postRegulationBusiness",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -135,7 +54,7 @@ public class ControllerRegulationBusiness {
     )
     public ResponseEntity<?> postRegulationBusiness(
             @RequestAttribute("auth.business") String idBusiness,
-            // A propósito lo recibimos como String para tolerar text/plain o application/json
+            //A propósito lo recibimos como String para tolerar text/plain o application/json
             @RequestPart("dto") String dtoJson,
             @RequestPart("file") MultipartFile file
     ) {

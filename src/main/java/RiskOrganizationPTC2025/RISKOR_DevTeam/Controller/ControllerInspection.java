@@ -2,21 +2,24 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOInspection;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOTypeEPPControl;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegulationBusiness;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceInspection;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -24,6 +27,8 @@ import java.util.Map;
 @Validated
 @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
 public class ControllerInspection {
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()); // Soporta LocalDate en el dto
+
     //Inyectamos el Service
     @Autowired
     private ServiceInspection objServiceInspection;
@@ -53,16 +58,22 @@ public class ControllerInspection {
     }
 
     //Creación del método POST (HTTP Request API), utilización de PostMapping
-    @PostMapping("/postInspection")
+    @PostMapping(
+            value = "/postInspection",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     //Utilización de ResponseEntity para indicar los parámetros enviados a la Entidad (DB)
+    //RequestPart indica que se debe enviar como FORM DATA
     public ResponseEntity<?> postInspection(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestBody DTOInspection dtoInspection
+            @Valid @RequestPart("dto") DTOInspection dto,
+            @RequestPart(value = "file", required = false) MultipartFile file
         ){
         try {
-            dtoInspection.setIdBusiness(idBusiness);
+            dto.setIdBusiness(idBusiness);
             //Indicamos los valores del DTO indicarán la respuesta dirigiéndose al Service, recibiendo como parámetros los valores de los campos
-            DTOInspection objAnswerI = objServiceInspection.postInspection(dtoInspection, idBusiness);
+            DTOInspection objAnswerI = objServiceInspection.postInspection(dto, idBusiness, file);
             if (objAnswerI == null) {
                 //Si la respuesta fue nula, se arrojará una badRequest con datos inválidos
                 return ResponseEntity.badRequest().body(Map.of(

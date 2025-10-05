@@ -24,7 +24,7 @@ import java.time.LocalDate;
 public class ServiceInspection {
     //Inyectamos el repositorio
     @Autowired
-    private RepositoryInspection objRepoInspection;
+    private RepositoryInspection objRepoI;
 
     @Autowired
     private RepositoryInspectionStatus repoStatus;
@@ -35,8 +35,9 @@ public class ServiceInspection {
     @PersistenceContext //Anotación que permite usar EntityManager
     private EntityManager em; //Invocamos a EntityManager para la persistencia de datos, haciendo referencia a businessInfo sin cargar todo desde la db
 
+    @Transactional(readOnly = true)
     public DTOInspection getInspectionById(String idBusiness, String idInspection) {
-        EntityInspection inspection = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspection.toUpperCase(), idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
+        EntityInspection inspection = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspection.toUpperCase(), idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
         return convertTOInspectionDTO(inspection);
     }
 
@@ -44,18 +45,37 @@ public class ServiceInspection {
     @Transactional(readOnly = true)
     public Page<DTOInspection> getAllInspection(String idBusiness, int page, int size){
         Pageable pageable = PageRequest.of(page, size);
-        Page<EntityInspection> inspections = objRepoInspection.findByIdBusiness_IdBusiness(idBusiness, pageable);
+        Page<EntityInspection> inspections = objRepoI.findByIdBusiness_IdBusiness(idBusiness, pageable);
         return inspections.map(this::convertTOInspectionDTO);
     }
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
-    public DTOInspection postInspection(@Valid DTOInspection dtoInspection, String idBusiness){
-        //Si los datos recibidos en el DTO (dependiendo de la base de datos, las restricciones) ES NULL, se mandará un mensaje de error indicando campos vacíos
-        if (dtoInspection == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+    public DTOInspection postInspection(@Valid DTOInspection dtoInspection, String idBusiness, MultipartFile file){
+        DTOCloudinary up = null; //Limpieza en caso falla luego
+        try {
+            //Si los datos recibidos en el DTO (dependiendo de la base de datos, las restricciones) ES NULL, se mandará un mensaje de error indicando campos vacíos
+            if (dtoInspection == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
-        //Caso contrario, se procede con la inserción de datos (POST)
-        EntityInspection objeInspectionSaved = objRepoInspection.save(convertTOInspectionEntity(dtoInspection, idBusiness));
-        return convertTOInspectionDTO(objeInspectionSaved); //Finalmente, retornamos los valores en formato JSON con 201 CREATED
+            if(file != null){
+                up = cloudinary.uploadImage(file, "RISKOR/Inspections/");
+                dtoInspection.setInspectionEvidence(up.getUrl());                 // guardar URL de la img
+            }else {
+                dtoInspection.setInspectionEvidence("Sin evidencia");
+            }
+
+            //Caso contrario, se procede con la inserción de datos (POST)
+            EntityInspection saved = objRepoI.save(convertTOInspectionEntity(dtoInspection, idBusiness));
+            return convertTOInspectionDTO(saved); //Retornamos los valores en formato JSON con 201 CREATED
+        } catch (Exception e) {
+            // si ya subimos la imagen, borrarla para no dejar basura
+            if (up != null && up.getPublicId() != null) {
+                try {
+                    cloudinary.deleteByPublicId(up.getPublicId());
+                } catch (Exception ignore) {
+                }
+            }
+            return null;
+        }
     }
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
@@ -65,7 +85,7 @@ public class ServiceInspection {
         if (dtoInspection == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Buscamos si existe el registro con el ID proporcionado
-        EntityInspection inspection = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
+        EntityInspection inspection = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
 
         //Actualizamos los campos
         inspection.setInspectionTitle(dtoInspection.getInspectionTitle());
@@ -91,9 +111,19 @@ public class ServiceInspection {
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
     //Indicamos que en el DELETE se especificará UNICAMENTE el ID
     public boolean deleteInspection(String idInspection, String idBusiness){
-        if (!objRepoInspection.existsByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase())) { return false; }
+        if (idInspection == null || idInspection.trim().isEmpty()) return false;
 
-        objRepoInspection.deleteByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase());
+        var inspection = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
+        objRepoI.deleteByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase());
+
+        //Intenta borrar el archivo en Cloudinary
+        try {
+            //Vamos a aplicar una condición que verifica si la evidencia es diferente de null, y no se aplicará si dice "Sin evidencia"
+            if (inspection.getInspectionEvidence() != null && !inspection.getInspectionEvidence().isBlank() && !"Sin evidencia".equalsIgnoreCase(inspection.getInspectionEvidence())) {
+                cloudinary.deleteByUrl(inspection.getInspectionEvidence());
+            }
+        } catch (Exception ignore) {}
+
         return true;
     }
 
@@ -146,7 +176,7 @@ public class ServiceInspection {
     //Post y PUT
     public DTOInspection updateItemEvidence(String idBusiness, String idInspectionItem, MultipartFile image) throws IOException {
         //Verificar que el área pertenece a la empresa
-        EntityInspection item = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspectionItem, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
+        EntityInspection item = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspectionItem, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
 
         //Subir a la carpeta de cloudinary
         String folder = "RISKOR/Inspections/";
@@ -159,7 +189,7 @@ public class ServiceInspection {
 
     //Eliminar
     public DTOInspection deleteItemEvidence(String idBusiness, String idInspectionItem) throws IOException {
-        EntityInspection item = objRepoInspection.findByIdInspectionAndIdBusiness_IdBusiness(idInspectionItem, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
+        EntityInspection item = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspectionItem, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
 
         String expectedPublicIdWithFolder = "RISKOR/Inspections/" + idBusiness.toUpperCase() + "/" + idInspectionItem.toUpperCase();
 

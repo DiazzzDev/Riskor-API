@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.UncheckedIOException;
 import java.io.IOException;
 
 @Service
@@ -53,15 +52,12 @@ public class ServiceRegulationBusiness {
         try{
             if (dto == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
             if (file == null || file.isEmpty()) throw new IllegalArgumentException("Documento pendiente");
-
-            dto.setIdBusiness(idBusiness); //Asignamos desde antes el negocio - Evitamos que el cliente elija en que negocio registrar
             validateAreaBelongsToBusiness(dto.getIdArea(), idBusiness); //Validamos que el área que se va a registrar corresponda a la empresa
 
             up = cloudinary.uploadImage(file, "RISKOR/Regulations-Documents/");
-            dto.setRegulationDocument(up.getUrl());                 // guardar URL de la img
+            dto.setRegulationDocument(up.getUrl());                 // guardar URL del archivo
 
             EntityRegulationBusiness saved = objRepoRB.save(convertToERB(dto));
-
             return convertToDTORB(saved);
         } catch (RuntimeException | IOException e) {
             // si ya subimos la imagen, borrarla para no dejar basura
@@ -126,8 +122,8 @@ public class ServiceRegulationBusiness {
     public boolean removeRegulationBusiness(String idRegulation, String idBusiness){
         if (idRegulation == null || idRegulation.trim().isEmpty()) return false;
 
-        var regulationBusiness = objRepoRB.findByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness).orElseThrow(() -> new EntityNotFoundException("Regulación no encontrada con ID: " + idRegulation));
-        objRepoRB.deleteByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness);
+        var regulationBusiness = objRepoRB.findByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Regulación no encontrada con ID: " + idRegulation));
+        objRepoRB.deleteByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness.toUpperCase());
 
         //Intenta borrar el archivo en Cloudinary
         try {
@@ -170,20 +166,6 @@ public class ServiceRegulationBusiness {
         regulationBusiness.setIdRiskLevel(em.getReference(EntityRiskLevel.class, dtoRB.getIdRiskLevel()));
         regulationBusiness.setIdBusiness(em.getReference(EntityBusinessInfo.class, dtoRB.getIdBusiness()));
         return regulationBusiness;
-    }
-
-    //Post y PUT
-    public DTORegulationBusiness updateRegulation(String idBusiness, String idRegulation, MultipartFile image) throws IOException {
-        //Verificar que el área pertenece a la empresa
-        EntityRegulationBusiness reg = objRepoRB.findByIdRegulationAndIdBusiness_IdBusiness(idRegulation, idBusiness).orElseThrow(() -> new EntityNotFoundException("Regulación no encontrada para esta empresa"));
-
-        //Subir a la carpeta de cloudinary
-        String folder = "RISKOR/Regulations-Documents/";
-        DTOCloudinary secureUrl = cloudinary.uploadImage(image, folder);
-
-        //Actualizar la URL en el área
-        reg.setRegulationDocument(secureUrl.getUrl());
-        return convertToDTORB(reg); //Devolvemos todo en formato JSON
     }
 
     //Eliminar

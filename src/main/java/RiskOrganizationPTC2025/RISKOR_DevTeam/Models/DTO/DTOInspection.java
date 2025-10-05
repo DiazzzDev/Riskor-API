@@ -1,7 +1,6 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -19,7 +18,7 @@ public class DTOInspection {
     private String inspectionTitle;
 
     @Nullable
-    @Size(max = 1000, message = "Evidencia es requerida para la inspección")
+    @Size(max = 1000, message = "Evidencia no puede ser más larga que 1000 carácteres")
     private String inspectionEvidence;
 
     private LocalDate inspectionDate;
