@@ -6,6 +6,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegulationBusiness;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceInspection;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,7 +26,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/inspection")
 @Validated
-@PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
 public class ControllerInspection {
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()); // Soporta LocalDate en el dto
 
@@ -58,6 +58,7 @@ public class ControllerInspection {
     }
 
     //Creación del método POST (HTTP Request API), utilización de PostMapping
+    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @PostMapping(
             value = "/postInspection",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -67,10 +68,11 @@ public class ControllerInspection {
     //RequestPart indica que se debe enviar como FORM DATA
     public ResponseEntity<?> postInspection(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestPart("dto") DTOInspection dto,
+            @RequestPart("dto") String dtoJson,
             @RequestPart(value = "file", required = false) MultipartFile file
         ){
         try {
+            DTOInspection dto = mapper.readValue(dtoJson, DTOInspection.class);
             dto.setIdBusiness(idBusiness);
             //Indicamos los valores del DTO indicarán la respuesta dirigiéndose al Service, recibiendo como parámetros los valores de los campos
             DTOInspection objAnswerI = objServiceInspection.postInspection(dto, idBusiness, file);
@@ -156,6 +158,34 @@ public class ControllerInspection {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al eliminar la inspección",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    //Delete de la imágen de los planos del área
+    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
+    @DeleteMapping("/{idInspection}/image")
+    public ResponseEntity<?> deleteDocument(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idInspection
+    ) {
+        try {
+            DTOInspection deleted = objServiceInspection.deleteEvidence(idBusiness, idInspection);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Regulación eliminada correctamente, Success",
+                    "data", deleted
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", "La regulación no pertenece a esta empresa o no existe",
+                    "detail", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al eliminar la regulación del área",
                     "detail", e.getMessage()
             ));
         }

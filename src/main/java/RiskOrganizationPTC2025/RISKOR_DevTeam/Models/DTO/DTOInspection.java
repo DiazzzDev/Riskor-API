@@ -36,6 +36,8 @@ public class DTOInspection {
     @NotNull(message = "El área es obligatorio")
     private String idArea;
 
+    private String areaName;
+
     @NotBlank(message = "El tipo de inspección es obligatorio")
     private String idInspectionType;
 

@@ -156,7 +156,7 @@ public class ControllerRegulationBusiness {
         }
     }
 
-    //Delete de la imágen de los planos del área
+    //Delete del documento
     @PreAuthorize("hasRole('Administrador')")
     @DeleteMapping("/{idRegulation}/document")
     public ResponseEntity<?> deleteDocument(
@@ -164,10 +164,10 @@ public class ControllerRegulationBusiness {
             @PathVariable String idRegulation
     ) {
         try {
-            DTORegulationBusiness updated = objServiceRB.deleteDocument(idBusiness, idRegulation);
+            DTORegulationBusiness deleted = objServiceRB.deleteDocument(idBusiness, idRegulation);
             return ResponseEntity.ok(Map.of(
                     "status", "Regulación eliminada correctamente, Success",
-                    "data", updated
+                    "data", deleted
             ));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(

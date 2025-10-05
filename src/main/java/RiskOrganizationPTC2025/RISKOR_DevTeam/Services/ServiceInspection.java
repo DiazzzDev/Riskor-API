@@ -3,6 +3,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOCloudinary;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOInspection;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegulationBusiness;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryInspection;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryInspectionStatus;
 import jakarta.persistence.EntityManager;
@@ -141,7 +142,7 @@ public class ServiceInspection {
         dtoInspection.setLastName(inspection.getIdEmployee().getLastName());
 
         dtoInspection.setIdArea(inspection.getIdArea().getIdArea());
-        dtoInspection.setIdArea(inspection.getIdArea().getAreaName());
+        dtoInspection.setAreaName(inspection.getIdArea().getAreaName());
 
         dtoInspection.setIdInspectionType(inspection.getIdInspectionType().getIdInspectionType());
         dtoInspection.setInspectionType(inspection.getIdInspectionType().getInspectionType());
@@ -158,7 +159,6 @@ public class ServiceInspection {
     private EntityInspection convertTOInspectionEntity(DTOInspection dtoInspection, String idBusiness){
         EntityInspection entityInspection = new EntityInspection();
         entityInspection.setInspectionTitle(dtoInspection.getInspectionTitle());
-        entityInspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
         entityInspection.setInspectionDate(LocalDate.now());
         entityInspection.setObservation(dtoInspection.getObservation());
         entityInspection.setIdEmployee(em.getReference(EntityEmployee.class, dtoInspection.getIdEmployee()));
@@ -172,26 +172,11 @@ public class ServiceInspection {
         return entityInspection;
     }
 
-    //CRUD DE LA EVIDENCIA DE INSPECCIÓN
-    //Post y PUT
-    public DTOInspection updateItemEvidence(String idBusiness, String idInspectionItem, MultipartFile image) throws IOException {
-        //Verificar que el área pertenece a la empresa
-        EntityInspection item = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspectionItem, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
-
-        //Subir a la carpeta de cloudinary
-        String folder = "RISKOR/Inspections/";
-        DTOCloudinary secureUrl = cloudinary.uploadImage(image, folder);
-
-        //Actualizar la URL en el área
-        item.setInspectionEvidence(secureUrl.getUrl());
-        return convertTOInspectionDTO(item); //Devolvemos todo en formato JSON
-    }
-
     //Eliminar
-    public DTOInspection deleteItemEvidence(String idBusiness, String idInspectionItem) throws IOException {
-        EntityInspection item = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspectionItem, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
+    public DTOInspection deleteEvidence(String idBusiness, String idInspection) throws IOException {
+        EntityInspection item = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness).orElseThrow(() -> new EntityNotFoundException("Evidencia no encontrada para esta empresa"));
 
-        String expectedPublicIdWithFolder = "RISKOR/Inspections/" + idBusiness.toUpperCase() + "/" + idInspectionItem.toUpperCase();
+        String expectedPublicIdWithFolder = "RISKOR/Inspections/" + idBusiness.toUpperCase() + "/" + idInspection.toUpperCase();
 
         //Se intenta con la convención oficial (idEvidence como public_id)
         cloudinary.deleteByPublicId(expectedPublicIdWithFolder);
@@ -226,4 +211,6 @@ public class ServiceInspection {
             return null;
         }
     }
+
+
 }
