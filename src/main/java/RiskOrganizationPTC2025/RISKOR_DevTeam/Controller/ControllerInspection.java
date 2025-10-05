@@ -97,22 +97,22 @@ public class ControllerInspection {
         }
     }
 
-    @PutMapping("/putInspection/{idInspection}")
+    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
+    @PutMapping(
+            value = "/putInspection/{idInspection}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<?> putInspection(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestBody DTOInspection dtoInspection,
-            BindingResult dataResult,
-            @PathVariable String idInspection
+            @RequestPart String dtoJson, //El form data envía texto plano, lo vamos a pasar a DTO con el mapper
+            @PathVariable String idInspection,
+            @RequestPart(value = "file", required = false) MultipartFile file
         ){
-        //Validamos si existen errores ANTES de proceder con el PUT dentro de los datos solicitados (método de seguridad)
-        if (dataResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            dataResult.getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
-            return ResponseEntity.badRequest().body(errors);
-        }
         try {
-            dtoInspection.setIdBusiness(idBusiness);
-            DTOInspection objAnswerInspection = objServiceInspection.putInspection(dtoInspection, idInspection, idBusiness);
+            DTOInspection dto = mapper.readValue(dtoJson, DTOInspection.class);
+            dto.setIdBusiness(idBusiness);
+            DTOInspection objAnswerInspection = objServiceInspection.putInspection(dto, idInspection, idBusiness, file);
             if (objAnswerInspection == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al actualizar los datos",

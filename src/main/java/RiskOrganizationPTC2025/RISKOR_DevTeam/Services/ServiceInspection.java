@@ -81,32 +81,59 @@ public class ServiceInspection {
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
     //Indicamos para el PUT el DTO de la clase (DB) y el ID para especificar el registro
-    public DTOInspection putInspection(@Valid DTOInspection dtoInspection, String idInspection, String idBusiness) {
-        //Validamos que el DTO no venga vacío
-        if (dtoInspection == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+    public DTOInspection putInspection(@Valid DTOInspection dtoInspection, String idInspection, String idBusiness, MultipartFile file) throws IOException{
+        DTOCloudinary up = null;
+        try {
+            //Validamos que el DTO no venga vacío
+            if (dtoInspection == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
-        //Buscamos si existe el registro con el ID proporcionado
-        EntityInspection inspection = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
+            //Buscamos si existe el registro con el ID proporcionado
+            EntityInspection inspection = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspection, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
 
-        //Actualizamos los campos
-        inspection.setInspectionTitle(dtoInspection.getInspectionTitle());
-        inspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
-        inspection.setObservation(dtoInspection.getObservation());
-        inspection.setInspectionDate(dtoInspection.getInspectionDate());
+            //Actualizamos los campos
+            inspection.setInspectionTitle(dtoInspection.getInspectionTitle());
+            inspection.setObservation(dtoInspection.getObservation());
+            inspection.setInspectionDate(dtoInspection.getInspectionDate());
 
-        //Si las FKs no son modificadas en el PUT se mantendrán en su valor original
-        if (dtoInspection.getIdArea() != null) {
-            inspection.setIdArea(em.getReference(EntityArea.class, dtoInspection.getIdArea()));
+            //Si las FKs no son modificadas en el PUT se mantendrán en su valor original
+            if (dtoInspection.getIdArea() != null) {
+                inspection.setIdArea(em.getReference(EntityArea.class, dtoInspection.getIdArea()));
+            }
+            if (dtoInspection.getIdInspectionType() != null) {
+                inspection.setIdInspectionType(em.getReference(EntityInspectionType.class, dtoInspection.getIdInspectionType()));
+            }
+            if (dtoInspection.getIdInspectionStatus() != null) {
+                inspection.setIdInspectionStatus(em.getReference(EntityInspectionStatus.class, dtoInspection.getIdInspectionStatus()));
+            }
+
+            //Evidencia: solo si mandan un archivo nuevo
+            if (file != null && !file.isEmpty()) {
+                String oldUrl = inspection.getInspectionEvidence();
+
+                up = cloudinary.uploadImage(file, "RISKOR/Inspections/");
+                inspection.setInspectionEvidence(up.getUrl()); // ¡NO sobreescribir con dto!
+
+                // Limpieza del anterior (best-effort)
+                try {
+                    if (oldUrl != null && !oldUrl.trim().isEmpty() && !"Sin evidencia".equalsIgnoreCase(oldUrl)) {
+                        cloudinary.deleteByUrl(oldUrl);
+                    }
+                } catch (Exception ignore) {}
+            } else {
+                if (dtoInspection.getInspectionEvidence() != null && !dtoInspection.getInspectionEvidence().trim().isEmpty()) {
+                    inspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
+                }
+            }
+
+            //Retornamos el DTO actualizado
+            return convertTOInspectionDTO(inspection);
+        } catch (RuntimeException | IOException e) {
+            // si se subió archivo nuevo y falló luego, limpiar en Cloudinary
+            if (up != null && up.getPublicId() != null) {
+                try { cloudinary.deleteByPublicId(up.getPublicId()); } catch (Exception ignore) {}
+            }
+            throw e;
         }
-        if (dtoInspection.getIdInspectionType() != null) {
-            inspection.setIdInspectionType(em.getReference(EntityInspectionType.class, dtoInspection.getIdInspectionType()));
-        }
-        if (dtoInspection.getIdInspectionStatus() != null) {
-            inspection.setIdInspectionStatus(em.getReference(EntityInspectionStatus.class, dtoInspection.getIdInspectionStatus()));
-        }
-
-        //Retornamos el DTO actualizado
-        return convertTOInspectionDTO(inspection);
     }
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
@@ -160,6 +187,7 @@ public class ServiceInspection {
         EntityInspection entityInspection = new EntityInspection();
         entityInspection.setInspectionTitle(dtoInspection.getInspectionTitle());
         entityInspection.setInspectionDate(LocalDate.now());
+        entityInspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
         entityInspection.setObservation(dtoInspection.getObservation());
         entityInspection.setIdEmployee(em.getReference(EntityEmployee.class, dtoInspection.getIdEmployee()));
         entityInspection.setIdArea(em.getReference(EntityArea.class, dtoInspection.getIdArea()));
