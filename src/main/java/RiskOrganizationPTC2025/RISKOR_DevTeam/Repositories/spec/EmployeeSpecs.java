@@ -81,4 +81,25 @@ public final class EmployeeSpecs {
             return cb.or(byId, byName);
         };
     }
+
+    /** Empleados activos que SÍ pertenecen al comité (ambas FKs presentes). */
+    public static Specification<EntityEmployee> inCommittee(String idBusiness) {
+        return (root, query, cb) -> {
+            var u = root.join("username"); // EntityUser
+
+            Predicate byBusiness = cb.equal(
+                    cb.upper(root.get("idBusiness").get("idBusiness")),
+                    idBusiness.toUpperCase()
+            );
+
+            Predicate inCommittee = cb.and(
+                    cb.isNotNull(root.get("idCommitteePosition")),
+                    cb.isNotNull(root.get("idCommitteeRole"))
+            );
+
+            Predicate active = cb.equal(u.get("status"), "T");
+
+            return cb.and(byBusiness, inCommittee, active);
+        };
+    }
 }

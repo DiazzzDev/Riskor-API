@@ -60,15 +60,15 @@ public class ControllerEmployee {
     public ResponseEntity<Page<DTOEmployee>> getCommittee(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String employeeInfo,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String idEmployeePosition
     ){
         if(size <= 0 || size > 50){
-            ResponseEntity.badRequest().body(Map.of(
-                    "status", "El tamaño de la página debe estar entre 1 y 50"
-            ));
-            return ResponseEntity.ok(null);
+            return ResponseEntity.badRequest().build();
         }
-        Page<DTOEmployee> committee = objServiceE.getCommitteeEmployees(idBusiness, page, size);
+        Page<DTOEmployee> committee = objServiceE.getCommitteeEmployees(idBusiness, page, size, employeeInfo, role, idEmployeePosition);
         return ResponseEntity.ok(committee);
     }
 

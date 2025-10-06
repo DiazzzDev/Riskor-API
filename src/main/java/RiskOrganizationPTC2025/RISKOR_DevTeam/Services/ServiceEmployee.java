@@ -131,11 +131,22 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
-    public Page<DTOEmployee> getCommitteeEmployees(String idBusiness, int page, int size) {
+    public Page<DTOEmployee> getCommitteeEmployees(
+            String idBusiness, int page, int size,
+            String employeeInfo, String role, String idEmployeePosition
+        ){
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<EntityEmployee> data = objRepoE.findByIdBusiness_IdBusinessAndIdCommitteePositionIsNotNullAndIdCommitteeRoleIsNotNullAndUsername_Status(idBusiness.toUpperCase(), "T", pageable);
-        return data.map(this::convertToDTOE);
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.inCommittee(idBusiness),        // <- base “en comité”
+                EmployeeSpecs.searchQ(employeeInfo),          // búsqueda por nombre/dui/email
+                EmployeeSpecs.byRole(role),                   // filtro por rol (EntityRoles.roleName)
+                EmployeeSpecs.byPosition(idEmployeePosition)  // filtro por cargo (ID o nombre)
+        );
+
+
+        Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
+        return result.map(this::convertToDTOE);
     }
     //endregion
 
