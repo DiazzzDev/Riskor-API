@@ -118,29 +118,28 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
      */
 
     @Query("""
-        SELECT e
-        FROM EntityEmployee e
-        JOIN e.username u
-        JOIN e.idRole r
-        JOIN e.idEmployeePosition p
-        WHERE UPPER(e.idBusiness.idBusiness) = UPPER(:idBusiness)
-          AND e.idCommitteePosition IS NULL
-          AND e.idCommitteeRole IS NULL
-          AND u.status = 'T'
-          AND ( :role IS NULL OR TRIM(:role) = '' OR UPPER(r.roleName) = UPPER(:role) )
-          AND (
-                :idEmployeePosition IS NULL OR TRIM(:idEmployeePosition) = ''
-                OR UPPER(p.idEmployeePosition) = UPPER(:idEmployeePosition)
-                OR UPPER(p.employeePosition)   = UPPER(:idEmployeePosition)
-              )
-          AND (
-                :employeeInfo IS NULL OR TRIM(:employeeInfo) = ''
-                OR UPPER(e.employeeEmail) LIKE CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%')
-                OR FUNCTION('REPLACE', UPPER(e.dui), '-', '') LIKE 
-                   FUNCTION('REPLACE', CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%'), '-', '')
-                OR UPPER(CONCAT(CONCAT(e.firstName, ' '), e.lastName)) LIKE CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%')
-                OR UPPER(e.firstName) LIKE CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%')
-                OR UPPER(e.lastName)  LIKE CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%')
+    SELECT e
+    FROM EntityEmployee e
+    JOIN e.username u
+    JOIN e.idRole r
+    JOIN e.idEmployeePosition p
+    WHERE UPPER(e.idBusiness.idBusiness) = UPPER(:idBusiness)
+      AND e.idCommitteePosition IS NULL
+      AND e.idCommitteeRole IS NULL
+      AND u.status = 'T'
+      AND ( COALESCE(:role, '') = '' OR UPPER(r.roleName) = UPPER(:role) )
+      AND (
+            COALESCE(:idEmployeePosition, '') = ''
+            OR UPPER(p.idEmployeePosition) = UPPER(:idEmployeePosition)
+            OR UPPER(p.employeePosition)   = UPPER(:idEmployeePosition)
+          )
+      AND (
+            COALESCE(:employeeInfo, '') = ''
+            OR UPPER(e.employeeEmail) LIKE ('%' || UPPER(:employeeInfo) || '%')
+            OR REPLACE(UPPER(e.dui), '-', '') LIKE ('%' || REPLACE(UPPER(:employeeInfo), '-', '') || '%')
+            OR UPPER(e.firstName || ' ' || e.lastName) LIKE ('%' || UPPER(:employeeInfo) || '%')
+            OR UPPER(e.firstName) LIKE ('%' || UPPER(:employeeInfo) || '%')
+            OR UPPER(e.lastName)  LIKE ('%' || UPPER(:employeeInfo) || '%')
           )
     """)
     Page<EntityEmployee> searchWithoutCommittee(@Param("idBusiness") String idBusiness,
