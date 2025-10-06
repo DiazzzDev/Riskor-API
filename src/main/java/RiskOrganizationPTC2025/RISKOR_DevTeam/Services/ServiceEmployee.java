@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -106,7 +107,14 @@ public class ServiceEmployee {
             String idBusiness, int page, int size,
             String employeeInfo, String role, String idEmployeePosition
     ) {
-        Pageable pageable = PageRequest.of(page, size);
+        //Permitir mostrar de manera ascendente los resultados
+        Sort sort = Sort.by(
+                Sort.Order.asc("lastName"),
+                Sort.Order.asc("firstName")
+        );
+
+        //Modificado: Se pasa el objeto 'sort' a PageRequest.of()
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.base(idBusiness),
@@ -135,7 +143,12 @@ public class ServiceEmployee {
             String idBusiness, int page, int size,
             String employeeInfo, String role, String idEmployeePosition
         ){
-        Pageable pageable = PageRequest.of(page, size);
+
+        Sort sort = Sort.by(
+                Sort.Order.asc("lastName"),
+                Sort.Order.asc("firstName")
+        );
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.inCommittee(idBusiness),        // <- base “en comité”
