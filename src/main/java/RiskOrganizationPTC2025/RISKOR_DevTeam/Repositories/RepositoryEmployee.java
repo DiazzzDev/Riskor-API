@@ -122,29 +122,26 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
         FROM EntityEmployee e
         JOIN e.username u
         JOIN e.idRole r
-        LEFT JOIN e.idEmployeePosition p
+        JOIN e.idEmployeePosition p
         WHERE UPPER(e.idBusiness.idBusiness) = UPPER(:idBusiness)
           AND e.idCommitteePosition IS NULL
           AND e.idCommitteeRole IS NULL
           AND u.status = 'T'
-          -- Filtro por rol (ADMIN/EMPLOYEE), opcional
           AND ( :role IS NULL OR TRIM(:role) = '' OR UPPER(r.roleName) = UPPER(:role) )
-          -- Filtro por cargo profesional (por ID o por nombre), opcional
           AND (
-                :idEmployeePosition IS NULL OR TRIM(:idEmployeePosition) = '' 
+                :idEmployeePosition IS NULL OR TRIM(:idEmployeePosition) = ''
                 OR UPPER(p.idEmployeePosition) = UPPER(:idEmployeePosition)
                 OR UPPER(p.employeePosition)   = UPPER(:idEmployeePosition)
               )
-          -- Búsqueda por nombre/dui/email, opcional
           AND (
                 :employeeInfo IS NULL OR TRIM(:employeeInfo) = ''
-                OR UPPER(e.employeeEmail) LIKE CONCAT('%', UPPER(:employeeInfo), '%')
+                OR UPPER(e.employeeEmail) LIKE CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%')
                 OR FUNCTION('REPLACE', UPPER(e.dui), '-', '') LIKE 
-                   FUNCTION('REPLACE', CONCAT('%', UPPER(:employeeInfo), '%'), '-', '')
-                OR UPPER(CONCAT(CONCAT(e.firstName, ' '), e.lastName)) LIKE CONCAT('%', UPPER(:employeeInfo), '%')
-                OR UPPER(e.firstName) LIKE CONCAT('%', UPPER(:employeeInfo), '%')
-                OR UPPER(e.lastName)  LIKE CONCAT('%', UPPER(:employeeInfo), '%')
-              )
+                   FUNCTION('REPLACE', CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%'), '-', '')
+                OR UPPER(CONCAT(CONCAT(e.firstName, ' '), e.lastName)) LIKE CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%')
+                OR UPPER(e.firstName) LIKE CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%')
+                OR UPPER(e.lastName)  LIKE CONCAT(CONCAT('%', UPPER(:employeeInfo)), '%')
+          )
     """)
     Page<EntityEmployee> searchWithoutCommittee(@Param("idBusiness") String idBusiness,
                                                 @Param("employeeInfo") String employeeInfo,
