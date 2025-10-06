@@ -5,6 +5,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryTrainingEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryUser;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec.EmployeeSpecs;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilPasswordGenerator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -14,11 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 
 @Service
@@ -101,11 +102,21 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
-    public Page<DTOEmployee> getWithoutCommittee(String idBusiness, int page, int size,
-                                                 String employeeInfo, String role, String idEmployeePosition) {
+    public Page<DTOEmployee> getWithoutCommittee(
+            String idBusiness, int page, int size,
+            String employeeInfo, String role, String idEmployeePosition
+    ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<EntityEmployee> data = objRepoE.searchWithoutCommittee(idBusiness.toUpperCase(), employeeInfo, role, idEmployeePosition, pageable);
-        return data.map(this::convertToDTOE);
+
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.base(idBusiness),
+                EmployeeSpecs.searchQ(employeeInfo),          //opcional (devuelve conjunction si viene vacío)
+                EmployeeSpecs.byRole(role),                   //opcional
+                EmployeeSpecs.byPosition(idEmployeePosition)  //opcional
+        );
+
+        Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
+        return result.map(this::convertToDTOE);
     }
 
     //Obtener los datos de un empleado

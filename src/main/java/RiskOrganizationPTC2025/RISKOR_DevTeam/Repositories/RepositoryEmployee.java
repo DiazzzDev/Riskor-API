@@ -4,6 +4,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,8 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String> {
+public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String>,
+                                            JpaSpecificationExecutor<EntityEmployee> {
     //Buscar por ID filtrado con empresa
     //1er IdBusiness: Nombre del atributo en EntityEmployee (ManyToOne), 2do: Campo PK en EntityBusinessInfo
     Optional<EntityEmployee> findByIdEmployeeAndIdBusiness_IdBusiness(String idEmployee, String idBusiness); //Este método también se usa para dashboard
@@ -116,34 +118,4 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
     /**
      * Métodos para realizar búsqueda
      */
-
-    @Query("""
-    SELECT e
-    FROM EntityEmployee e
-    JOIN e.username u
-    JOIN e.idRole r
-    LEFT JOIN e.idEmployeePosition p
-    WHERE UPPER(e.idBusiness.idBusiness) = UPPER(:idBusiness)
-      AND (e.idCommitteePosition IS NULL OR e.idCommitteeRole IS NULL)
-      AND u.status = 'T'
-      AND ( COALESCE(:role, '') = '' OR UPPER(r.roleName) = UPPER(:role) )
-      AND (
-            COALESCE(:idEmployeePosition, '') = ''
-            OR UPPER(p.idEmployeePosition) = UPPER(:idEmployeePosition)
-            OR UPPER(p.employeePosition)   = UPPER(:idEmployeePosition)
-          )
-      AND (
-            COALESCE(:employeeInfo, '') = ''
-            OR UPPER(e.employeeEmail) LIKE ('%' || UPPER(:employeeInfo) || '%')
-            OR REPLACE(UPPER(e.dui), '-', '') LIKE ('%' || REPLACE(UPPER(:employeeInfo), '-', '') || '%')
-            OR UPPER(e.firstName || ' ' || e.lastName) LIKE ('%' || UPPER(:employeeInfo) || '%')
-            OR UPPER(e.firstName) LIKE ('%' || UPPER(:employeeInfo) || '%')
-            OR UPPER(e.lastName)  LIKE ('%' || UPPER(:employeeInfo) || '%')
-          )
-    """)
-    Page<EntityEmployee> searchWithoutCommittee(@Param("idBusiness") String idBusiness,
-                                                @Param("employeeInfo") String employeeInfo,
-                                                @Param("role") String role,
-                                                @Param("idEmployeePosition") String idEmployeePosition,
-                                                Pageable pageable);
 }
