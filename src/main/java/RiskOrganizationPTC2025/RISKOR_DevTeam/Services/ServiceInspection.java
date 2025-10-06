@@ -51,7 +51,7 @@ public class ServiceInspection {
     }
 
     //Este método retornará los valores de las claves ingresadas para poder ser registradas dentro de la DB
-    public DTOInspection postInspection(@Valid DTOInspection dtoInspection, String idBusiness, MultipartFile file){
+    public DTOInspection postInspection(@Valid DTOInspection dtoInspection, String idBusiness, String idEmployee, MultipartFile file){
         DTOCloudinary up = null; //Limpieza en caso falla luego
         try {
             //Si los datos recibidos en el DTO (dependiendo de la base de datos, las restricciones) ES NULL, se mandará un mensaje de error indicando campos vacíos
@@ -65,7 +65,7 @@ public class ServiceInspection {
             }
 
             //Caso contrario, se procede con la inserción de datos (POST)
-            EntityInspection saved = objRepoI.save(convertTOInspectionEntity(dtoInspection, idBusiness));
+            EntityInspection saved = objRepoI.save(convertTOInspectionEntity(dtoInspection, idBusiness, idEmployee));
             return convertTOInspectionDTO(saved); //Retornamos los valores en formato JSON con 201 CREATED
         } catch (Exception e) {
             // si ya subimos la imagen, borrarla para no dejar basura
@@ -183,17 +183,21 @@ public class ServiceInspection {
     }
 
     //Método para conversión de datos de la ENTIDAD hacia el DTO (método de arriba)
-    private EntityInspection convertTOInspectionEntity(DTOInspection dtoInspection, String idBusiness){
+    private EntityInspection convertTOInspectionEntity(DTOInspection dtoInspection, String idBusiness, String idEmployee){
         EntityInspection entityInspection = new EntityInspection();
         entityInspection.setInspectionTitle(dtoInspection.getInspectionTitle());
         entityInspection.setInspectionDate(LocalDate.now());
         entityInspection.setInspectionEvidence(dtoInspection.getInspectionEvidence());
         entityInspection.setObservation(dtoInspection.getObservation());
-        entityInspection.setIdEmployee(em.getReference(EntityEmployee.class, dtoInspection.getIdEmployee()));
+        //FKs
+        //Asigna desde acá el empleado que fue encargado de la inspección a partir del id de la cookie (Es el id del empleado)
+        entityInspection.setIdEmployee(em.getReference(EntityEmployee.class, idEmployee));
         entityInspection.setIdArea(em.getReference(EntityArea.class, dtoInspection.getIdArea()));
         entityInspection.setIdInspectionType(em.getReference(EntityInspectionType.class, dtoInspection.getIdInspectionType()));
 
+        //Por defecto asignamos el status como pendiente
         String pendingStatusId = repoStatus.findPendingId("PENDIENTE").orElseThrow(() -> new EntityNotFoundException("El estado 'PENDIENTE' no fue encontrado en la base de datos."));
+
         entityInspection.setIdInspectionStatus(em.getReference(EntityInspectionStatus.class, pendingStatusId));
         entityInspection.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
 

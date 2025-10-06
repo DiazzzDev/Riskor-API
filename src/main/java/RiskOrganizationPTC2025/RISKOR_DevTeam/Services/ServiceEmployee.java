@@ -101,9 +101,10 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
-    public Page<DTOEmployee> getWithoutCommittee(String idBusiness, int page, int size) {
+    public Page<DTOEmployee> getWithoutCommittee(String idBusiness, int page, int size,
+                                                 String employeeInfo, String role, String idEmployeePosition) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<EntityEmployee> data = objRepoE.findByIdBusiness_IdBusinessAndIdCommitteePositionIsNullAndIdCommitteeRoleIsNullAndUsername_Status(idBusiness.toUpperCase(), "T", pageable);
+        Page<EntityEmployee> data = objRepoE.searchWithoutCommittee(idBusiness.toUpperCase(), employeeInfo, role, idEmployeePosition, pageable);
         return data.map(this::convertToDTOE);
     }
 

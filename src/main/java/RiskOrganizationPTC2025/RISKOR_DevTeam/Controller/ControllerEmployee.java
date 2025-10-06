@@ -42,15 +42,15 @@ public class ControllerEmployee {
     public ResponseEntity<Page<DTOEmployee>> getWithoutCommittee(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String employeeInfo,      //Nombre/dui/email
+            @RequestParam(required = false) String role,              //Administrador / Mantenimiento / Empleado
+            @RequestParam(required = false, name = "idEmployeePosition") String idEmployeePosition  //Contador / Ingeniero / Etc...
     ){
         if(size <= 0 || size > 50){
-            ResponseEntity.badRequest().body(Map.of(
-                    "status", "El tamaño de la página debe estar entre 1 y 50"
-            ));
-            return ResponseEntity.ok(null);
+            return ResponseEntity.badRequest().body(Page.empty());
         }
-        Page<DTOEmployee> committee = objServiceE.getWithoutCommittee(idBusiness, page, size);
+        Page<DTOEmployee> committee = objServiceE.getWithoutCommittee(idBusiness, page, size, employeeInfo, role, idEmployeePosition);
         return ResponseEntity.ok(committee);
     }
 
@@ -160,7 +160,7 @@ public class ControllerEmployee {
         return ResponseEntity.ok(objServiceE.getEmployeesNotInTraining(idBusiness, idTraining, page, size));
     }
 
-    @PreAuthorize("hasRole('Administrador')") //Mantenimiento negociable jajs
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getEmployees/{idTraining}")
     public ResponseEntity<?> getTrainingEmployees(
             @RequestAttribute("auth.business") String idBusiness,
@@ -175,6 +175,8 @@ public class ControllerEmployee {
         }
         return ResponseEntity.ok(objServiceE.getTrainingEmployees(idBusiness, idTraining, page, size));
     }
+
+    //*****************************************************************************************************
 
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
     @PreAuthorize("hasRole('Administrador')")

@@ -68,6 +68,7 @@ public class ControllerInspection {
     //RequestPart indica que se debe enviar como FORM DATA
     public ResponseEntity<?> postInspection(
             @RequestAttribute("auth.business") String idBusiness,
+            @RequestAttribute("auth.id") String idEmployee,
             @RequestPart("dto") String dtoJson,
             @RequestPart(value = "file", required = false) MultipartFile file
         ){
@@ -75,7 +76,7 @@ public class ControllerInspection {
             DTOInspection dto = mapper.readValue(dtoJson, DTOInspection.class);
             dto.setIdBusiness(idBusiness);
             //Indicamos los valores del DTO indicarán la respuesta dirigiéndose al Service, recibiendo como parámetros los valores de los campos
-            DTOInspection objAnswerI = objServiceInspection.postInspection(dto, idBusiness, file);
+            DTOInspection objAnswerI = objServiceInspection.postInspection(dto, idBusiness, idEmployee, file);
             if (objAnswerI == null) {
                 //Si la respuesta fue nula, se arrojará una badRequest con datos inválidos
                 return ResponseEntity.badRequest().body(Map.of(
