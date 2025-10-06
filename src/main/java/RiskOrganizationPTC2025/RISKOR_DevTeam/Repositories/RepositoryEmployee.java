@@ -122,10 +122,9 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
     FROM EntityEmployee e
     JOIN e.username u
     JOIN e.idRole r
-    JOIN e.idEmployeePosition p
+    LEFT JOIN e.idEmployeePosition p
     WHERE UPPER(e.idBusiness.idBusiness) = UPPER(:idBusiness)
-      AND e.idCommitteePosition IS NULL
-      AND e.idCommitteeRole IS NULL
+      AND (e.idCommitteePosition IS NULL OR e.idCommitteeRole IS NULL)
       AND u.status = 'T'
       AND ( COALESCE(:role, '') = '' OR UPPER(r.roleName) = UPPER(:role) )
       AND (
