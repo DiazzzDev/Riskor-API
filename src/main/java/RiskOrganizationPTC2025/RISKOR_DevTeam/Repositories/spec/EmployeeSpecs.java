@@ -82,6 +82,12 @@ public final class EmployeeSpecs {
         };
     }
 
+    /** Filtro por empresa */
+    public static Specification<EntityEmployee> byBusiness(String idBusiness) {
+        return (root, query, cb) ->
+                cb.equal(cb.upper(root.get("idBusiness").get("idBusiness")), idBusiness.toUpperCase());
+    }
+
     /** Empleados de una empresa con un status específico (T=activo, F=inactivo). */
     public static Specification<EntityEmployee> byBusinessAndStatus(String idBusiness, String statusTF) {
         return (root, query, cb) -> {

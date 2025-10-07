@@ -97,11 +97,21 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
-    public Page<DTOEmployee> getAllEmployees(String idBusiness, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<DTOEmployee> getAllEmployees(String idBusiness, int page, int size, String employeeInfo) {
+        Sort sort = Sort.by(
+                Sort.Order.asc("lastName"),
+                Sort.Order.asc("firstName")
+        );
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<EntityEmployee> permissionPage = objRepoE.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
-        return permissionPage.map(this::convertToDTOE);
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.byBusiness(idBusiness),  // sin filtro de status
+                EmployeeSpecs.searchQ(employeeInfo)    // nombre/dui/email (opcional)
+        );
+
+        Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
+
+        return result.map(this::convertToDTOE);
     }
 
     @Transactional(readOnly = true)

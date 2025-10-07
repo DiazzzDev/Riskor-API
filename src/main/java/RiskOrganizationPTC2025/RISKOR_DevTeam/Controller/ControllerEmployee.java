@@ -89,8 +89,8 @@ public class ControllerEmployee {
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idEmployee
     ){
-        DTOEmployee employee = objServiceE.getEmployeeById(idEmployee, idBusiness);
-        return ResponseEntity.ok(employee);
+        DTOEmployee employees = objServiceE.getEmployeeById(idEmployee, idBusiness);
+        return ResponseEntity.ok(employees);
     }
 
     //Obtenemos todos los empleados inactivos
@@ -105,8 +105,8 @@ public class ControllerEmployee {
         if(size <= 0 || size > 50){
             return ResponseEntity.badRequest().build();
         }
-        Page<DTOEmployee> devices = objServiceE.getInactiveEmployees(idBusiness, page, size, employeeInfo);
-        return ResponseEntity.ok(devices);
+        Page<DTOEmployee> employees = objServiceE.getInactiveEmployees(idBusiness, page, size, employeeInfo);
+        return ResponseEntity.ok(employees);
     }
 
     //Método para obtener todos los empleados ACTIVOS de la empresa - GET PRINCIPAL
@@ -120,23 +120,22 @@ public class ControllerEmployee {
         if(size <= 0 || size > 50){
             return ResponseEntity.badRequest().build();
         }
-        Page<DTOEmployee> devices = objServiceE.getActiveEmployees(idBusiness, page, size, employeeInfo);
-        return ResponseEntity.ok(devices);
+        Page<DTOEmployee> employees = objServiceE.getActiveEmployees(idBusiness, page, size, employeeInfo);
+        return ResponseEntity.ok(employees);
     }
 
     @GetMapping("/getEmployees")
     public ResponseEntity<Page<DTOEmployee>> getEmployees(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false, name = "employeeInfo") String employeeInfo
     ){
         if(size <= 0 || size > 50){
-            ResponseEntity.badRequest().body(Map.of(
-                    "status", "El tamaño de la página debe estar entre 1 y 50"
-            ));
+            return ResponseEntity.badRequest().build();
         }
-        Page<DTOEmployee> devices = objServiceE.getAllEmployees(idBusiness, page, size);
-        return ResponseEntity.ok(devices);
+        Page<DTOEmployee> employees = objServiceE.getAllEmployees(idBusiness, page, size, employeeInfo);
+        return ResponseEntity.ok(employees);
     }
 
     //Método para buscar empleados que NO están dentro de una capacitación
