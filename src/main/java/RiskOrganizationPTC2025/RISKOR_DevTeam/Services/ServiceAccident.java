@@ -3,6 +3,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOAccident;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryAccident;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec.AccidentSpecs;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -41,10 +43,27 @@ public class ServiceAccident {
     @Transactional(readOnly = true)
     public Page<DTOAccident> search(
             String idBusiness, String employeeId, String statusId,
-            LocalDate fromDate, LocalDate toDate, String employeeInfo, int page, int size) {
+            LocalDate fromDate, LocalDate toDate,
+            String employeeInfo,     //Búsqueda por NOMBRE, DUI O CORREO
+            int page, int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "accidentDate"));
-        Page<EntityAccident> pageE = objRepoA.search(idBusiness.toUpperCase(), employeeId, statusId, fromDate, toDate, employeeInfo, pageable);
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by(
+                        Sort.Order.desc("accidentDate"),
+                        Sort.Order.asc("idEmployee.lastName"),
+                        Sort.Order.asc("idEmployee.firstName")
+                )
+        );
+
+        Specification<EntityAccident> spec =
+                AccidentSpecs.scope(idBusiness)
+                        .and(AccidentSpecs.byEmployeeId(employeeId))
+                        .and(AccidentSpecs.byStatus(statusId))
+                        .and(AccidentSpecs.inDateRange(fromDate, toDate))
+                        .and(AccidentSpecs.searchQ(employeeInfo));
+
+        Page<EntityAccident> pageE = objRepoA.findAll(spec, pageable);
         return pageE.map(this::convertToDTOA);
     }
 

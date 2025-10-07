@@ -58,7 +58,7 @@ public class ControllerAccident {
             @RequestParam(required = false) String statusId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-            @RequestParam(required = false, name = "employeeInfo") String employeeInfo,
+            @RequestParam(required = false) String employeeInfo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
