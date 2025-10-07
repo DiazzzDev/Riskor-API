@@ -26,10 +26,10 @@ public class ControllerTraining {
     private ServiceTraining objServiceT;
 
     //Nuevo endpoint para el dashboard SIGUIENTE CAPACITACIÓN
-    @GetMapping("/next/{idEmployee}")
+    @GetMapping("/next")
     public ResponseEntity<?> getNextTrainingForEmployee(
             @RequestAttribute("auth.business") String idBusiness,
-            @PathVariable String idEmployee
+            @RequestAttribute("auth.id") String idEmployee //Agregamos el RequestAttribute para que se asigne el ID del empleado por la cookie
     ) {
         try {
             DTOTraining dto = objServiceT.getNextTrainingForEmployee(idBusiness, idEmployee);
