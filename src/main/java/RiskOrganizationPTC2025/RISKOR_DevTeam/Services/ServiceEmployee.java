@@ -64,12 +64,16 @@ public class ServiceEmployee {
 
     @Transactional(readOnly = true)
     public Page<DTOEmployee> getInactiveEmployees(String idBusiness, int page, int size, String employeeInfo) {
+        //Ordenamos el resultado por los campos nombre y apellido de manera ASCENDENTE
         Sort sort = Sort.by(
                 Sort.Order.asc("lastName"),
                 Sort.Order.asc("firstName")
         );
+
+        //Ahora la página que va a devolver estará ordenada y con el tamaño que se decida en la solicitud
         Pageable pageable = PageRequest.of(page, size, sort);
 
+        //Realizamos la búsqueda con todo lo solicitado
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.inactiveInBusiness(idBusiness), //status = 'F'
                 EmployeeSpecs.searchQ(employeeInfo)           //nombre/dui/email (opcional)
@@ -81,12 +85,16 @@ public class ServiceEmployee {
 
     @Transactional(readOnly = true)
     public Page<DTOEmployee> getActiveEmployees(String idBusiness, int page, int size, String employeeInfo) {
+        //Ordenamos el resultado por los campos nombre y apellido de manera ASCENDENTE
         Sort sort = Sort.by(
                 Sort.Order.asc("lastName"),
                 Sort.Order.asc("firstName")
         );
+
+        //Ahora la página que va a devolver estará ordenada y con el tamaño que se decida en la solicitud
         Pageable pageable = PageRequest.of(page, size, sort);
 
+        //Realizamos la búsqueda con todo lo solicitado
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.activeInBusiness(idBusiness), //status = 'T'
                 EmployeeSpecs.searchQ(employeeInfo)         //nombre/dui/email (opcional)
@@ -98,12 +106,16 @@ public class ServiceEmployee {
 
     @Transactional(readOnly = true)
     public Page<DTOEmployee> getAllEmployees(String idBusiness, int page, int size, String employeeInfo) {
+        //Ordenamos el resultado por los campos nombre y apellido de manera ASCENDENTE
         Sort sort = Sort.by(
                 Sort.Order.asc("lastName"),
                 Sort.Order.asc("firstName")
         );
+
+        //Ahora la página que va a devolver estará ordenada y con el tamaño que se decida en la solicitud
         Pageable pageable = PageRequest.of(page, size, sort);
 
+        //Realizamos la búsqueda con todo lo solicitado
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.byBusiness(idBusiness),  // sin filtro de status
                 EmployeeSpecs.searchQ(employeeInfo)    // nombre/dui/email (opcional)
@@ -119,12 +131,16 @@ public class ServiceEmployee {
             String idBusiness, String idTraining, int page, int size,
             String employeeInfo, String role, String idEmployeePosition
         ){
+        //Ordenamos el resultado por los campos nombre y apellido de manera ASCENDENTE
         Sort sort = Sort.by(
                 Sort.Order.asc("lastName"),
                 Sort.Order.asc("firstName")
         );
+
+        //Ahora la página que va a devolver estará ordenada y con el tamaño que se decida en la solicitud
         Pageable pageable = PageRequest.of(page, size, sort);
 
+        //Realizamos la búsqueda con todo lo solicitado
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.activeInBusiness(idBusiness),         //Activos en empresa (status = 'T')
                 EmployeeSpecs.notInTraining(idTraining),            //NO pertenecen a la capacitación
@@ -138,10 +154,25 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
-    public Page<DTOEmployee> getTrainingEmployees(String idBusiness, String idTraining, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<EntityEmployee> data = objRepoE.findActiveEmployeesInTraining(idBusiness.toUpperCase(), idTraining, pageable);
-        return data.map(this::convertToDTOE);
+    public Page<DTOEmployee> getTrainingEmployees(String idBusiness, String idTraining, int page, int size, String employeeInfo) {
+        //Ordenamos el resultado por los campos nombre y apellido de manera ASCENDENTE
+        Sort sort = Sort.by(
+                Sort.Order.asc("lastName"),
+                Sort.Order.asc("firstName")
+        );
+
+        //Ahora la página que va a devolver estará ordenada y con el tamaño que se decida en la solicitud
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        //Realizamos la búsqueda con todo lo solicitado
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.activeInBusiness(idBusiness),         //activos en la empresa
+                EmployeeSpecs.inTraining(idTraining),               //Capacitación
+                EmployeeSpecs.searchQ(employeeInfo)                 //nombre/dui/email (opcional)
+        );
+
+        Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
+        return result.map(this::convertToDTOE);
     }
 
     @Transactional(readOnly = true)
@@ -155,9 +186,10 @@ public class ServiceEmployee {
                 Sort.Order.asc("firstName")
         );
 
-        //Modificado: Se pasa el objeto 'sort' a PageRequest.of()
+        //Ahora la página que va a devolver estará ordenada y con el tamaño que se decida en la solicitud
         Pageable pageable = PageRequest.of(page, size, sort);
 
+        //Realizamos la búsqueda con todo lo solicitado
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.base(idBusiness),
                 EmployeeSpecs.searchQ(employeeInfo),          //opcional
@@ -184,12 +216,16 @@ public class ServiceEmployee {
             String employeeInfo, String role, String idEmployeePosition
         ){
 
+        //Permitir mostrar de manera ascendente los resultados
         Sort sort = Sort.by(
                 Sort.Order.asc("lastName"),
                 Sort.Order.asc("firstName")
         );
+
+        //Ahora la página que va a devolver estará ordenada y con el tamaño que se decida en la solicitud
         Pageable pageable = PageRequest.of(page, size, sort);
 
+        //Realizamos la búsqueda con todo lo solicitado
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.inCommittee(idBusiness),        // <- base “en comité”
                 EmployeeSpecs.searchQ(employeeInfo),          // búsqueda por nombre/dui/email

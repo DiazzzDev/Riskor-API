@@ -136,7 +136,7 @@ public final class EmployeeSpecs {
         };
     }
 
-    /** Empleado que NO pertenece a la capacitación indicada (mismo negocio). */
+    /** Empleados que NO pertenece a la capacitación indicada (mismo negocio). */
     public static Specification<EntityEmployee> notInTraining(String idTraining) {
         return (root, query, cb) -> {
             //subconsulta EXISTS sobre EntityTrainingEmployee
@@ -153,6 +153,21 @@ public final class EmployeeSpecs {
 
             // "NO pertenece" => NOT EXISTS(subconsulta)
             return cb.not(cb.exists(sq));
+        };
+    }
+
+    /** Empleados que pertenecen a la capacitación indicada (mismo negocio). */
+    public static Specification<EntityEmployee> inTraining(String idTraining) {
+        return (root, query, cb) -> {
+            Subquery<Integer> sq = query.subquery(Integer.class);
+            var te = sq.from(EntityTrainingEmployee.class);
+            sq.select(cb.literal(1));
+            sq.where(
+                    cb.equal(te.get("idEmployee").get("idEmployee"), root.get("idEmployee")),
+                    cb.equal(te.get("idTraining").get("idTraining"), idTraining),
+                    cb.equal(te.get("idBusiness").get("idBusiness"), root.get("idBusiness").get("idBusiness"))
+            );
+            return cb.exists(sq); // SÍ pertenece
         };
     }
 }
