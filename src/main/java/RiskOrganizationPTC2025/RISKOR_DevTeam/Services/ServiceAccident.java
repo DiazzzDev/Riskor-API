@@ -41,10 +41,10 @@ public class ServiceAccident {
     @Transactional(readOnly = true)
     public Page<DTOAccident> search(
             String idBusiness, String employeeId, String statusId,
-            LocalDate fromDate, LocalDate toDate, int page, int size) {
+            LocalDate fromDate, LocalDate toDate, String employeeInfo, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "accidentDate"));
-        Page<EntityAccident> pageE = objRepoA.search(idBusiness.toUpperCase(), employeeId, statusId, fromDate, toDate, pageable);
+        Page<EntityAccident> pageE = objRepoA.search(idBusiness.toUpperCase(), employeeId, statusId, fromDate, toDate, employeeInfo, pageable);
         return pageE.map(this::convertToDTOA);
     }
 
