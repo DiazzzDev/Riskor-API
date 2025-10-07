@@ -14,9 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -37,11 +39,26 @@ public class ServiceTraining {
 
     private static final DateTimeFormatter HH_MM = DateTimeFormatter.ofPattern("HH:mm");
 
-//    @Transactional(readOnly = true)
-//    public DTOTraining getNextTraining(String idBusiness, String idEmployee) {
-//        EntityTraining training = objRepoT.findNextTraining(idBusiness.toUpperCase(), idEmployee.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("No hay capacitaciones próximas"));
-//        return convertToDTOT(training);
-//    }
+    @Transactional(readOnly = true)
+    public DTOTraining getNextTrainingForEmployee(String idBusiness, String idEmployee) {
+        LocalDate today = LocalDate.now();
+        LocalTime now   = LocalTime.now();
+
+        //Se utiliza paginación a pesar que devuelve un solo elemento debido a temas de búsqueda SQL para mejorar rendimiento al momento de buscar
+        Pageable limitOne = PageRequest.of(0, 1, Sort.by(Sort.Order.asc("trainingDate"), Sort.Order.asc("startHour")));
+
+        List<EntityTraining> nextTrainingForEmployee = objRepoT.findNextTrainingForEmployee(
+                idBusiness.toUpperCase(),
+                idEmployee.toUpperCase(),
+                today, now,
+                limitOne
+        );
+
+        if (nextTrainingForEmployee.isEmpty()) throw new EntityNotFoundException("No hay capacitaciones próximas para el empleado.");
+
+        //Mandamos el primer elemento encontrado
+        return convertToDTOT(nextTrainingForEmployee.get(0));
+    }
 
     @Transactional(readOnly = true) //Validación de transactional que va a evitar que se pueda llegar a realizar un ataque al escribir en los datos que se mandan
     public Page<DTOTraining> getTrainingByTitle(int page, int size, String title, String idBusiness) {
