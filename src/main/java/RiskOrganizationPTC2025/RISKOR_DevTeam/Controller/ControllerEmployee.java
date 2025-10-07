@@ -61,7 +61,7 @@ public class ControllerEmployee {
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String employeeInfo,
+            @RequestParam(required = false) String employeeInfo,        //Nombre/dui/email
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String idEmployeePosition
     ){
@@ -99,15 +99,13 @@ public class ControllerEmployee {
     public ResponseEntity<Page<DTOEmployee>> getInactiveEmployees(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false, name = "employeeInfo") String employeeInfo  //Nombre/dui/email
     ){
         if(size <= 0 || size > 50){
-            ResponseEntity.badRequest().body(Map.of(
-                    "status", "El tamaño de la página debe estar entre 1 y 50"
-            ));
-            return ResponseEntity.ok(null);
+            return ResponseEntity.badRequest().build();
         }
-        Page<DTOEmployee> devices = objServiceE.getInactiveEmployees(idBusiness, page, size);
+        Page<DTOEmployee> devices = objServiceE.getInactiveEmployees(idBusiness, page, size, employeeInfo);
         return ResponseEntity.ok(devices);
     }
 
@@ -116,15 +114,13 @@ public class ControllerEmployee {
     public ResponseEntity<Page<DTOEmployee>> getActiveEmployees(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false, name = "employeeInfo") String employeeInfo  //Nombre/dui/email
     ){
         if(size <= 0 || size > 50){
-            ResponseEntity.badRequest().body(Map.of(
-                    "status", "El tamaño de la página debe estar entre 1 y 50"
-            ));
-            return ResponseEntity.ok(null);
+            return ResponseEntity.badRequest().build();
         }
-        Page<DTOEmployee> devices = objServiceE.getActiveEmployees(idBusiness, page, size);
+        Page<DTOEmployee> devices = objServiceE.getActiveEmployees(idBusiness, page, size, employeeInfo);
         return ResponseEntity.ok(devices);
     }
 

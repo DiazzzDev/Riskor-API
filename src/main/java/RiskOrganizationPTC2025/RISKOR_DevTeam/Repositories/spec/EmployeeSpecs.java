@@ -82,6 +82,27 @@ public final class EmployeeSpecs {
         };
     }
 
+    /** Empleados de una empresa con un status específico (T=activo, F=inactivo). */
+    public static Specification<EntityEmployee> byBusinessAndStatus(String idBusiness, String statusTF) {
+        return (root, query, cb) -> {
+            var u = root.join("username"); // EntityUser
+            return cb.and(
+                    cb.equal(cb.upper(root.get("idBusiness").get("idBusiness")), idBusiness.toUpperCase()),
+                    cb.equal(u.get("status"), statusTF)
+            );
+        };
+    }
+
+    /** Atajo: activos en empresa. */
+    public static Specification<EntityEmployee> activeInBusiness(String idBusiness) {
+        return byBusinessAndStatus(idBusiness, "T");
+    }
+
+    /** Atajo: inactivos en empresa. */
+    public static Specification<EntityEmployee> inactiveInBusiness(String idBusiness) {
+        return byBusinessAndStatus(idBusiness, "F");
+    }
+
     /** Empleados activos que SÍ pertenecen al comité (ambas FKs presentes). */
     public static Specification<EntityEmployee> inCommittee(String idBusiness) {
         return (root, query, cb) -> {

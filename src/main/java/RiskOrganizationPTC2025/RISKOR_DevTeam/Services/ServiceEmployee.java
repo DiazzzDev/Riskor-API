@@ -63,19 +63,37 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
-    public Page<DTOEmployee> getInactiveEmployees(String idBusiness, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size); //Creación de elemento Pageable para realizar el paginado en el GET
+    public Page<DTOEmployee> getInactiveEmployees(String idBusiness, int page, int size, String employeeInfo) {
+        Sort sort = Sort.by(
+                Sort.Order.asc("lastName"),
+                Sort.Order.asc("firstName")
+        );
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<EntityEmployee> permissionPage = objRepoE.findByIdBusiness_IdBusinessAndUsername_Status(idBusiness.toUpperCase(), "F", pageable); //Importante, los status F son inactivos
-        return permissionPage.map(this::convertToDTOE);
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.inactiveInBusiness(idBusiness), //status = 'F'
+                EmployeeSpecs.searchQ(employeeInfo)           //nombre/dui/email (opcional)
+        );
+
+        Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
+        return result.map(this::convertToDTOE);
     }
 
     @Transactional(readOnly = true)
-    public Page<DTOEmployee> getActiveEmployees(String idBusiness, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<DTOEmployee> getActiveEmployees(String idBusiness, int page, int size, String employeeInfo) {
+        Sort sort = Sort.by(
+                Sort.Order.asc("lastName"),
+                Sort.Order.asc("firstName")
+        );
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<EntityEmployee> permissionPage = objRepoE.findByIdBusiness_IdBusinessAndUsername_Status(idBusiness.toUpperCase(), "T", pageable); //Importante, los status T son activos
-        return permissionPage.map(this::convertToDTOE);
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.activeInBusiness(idBusiness), //status = 'T'
+                EmployeeSpecs.searchQ(employeeInfo)         //nombre/dui/email (opcional)
+        );
+
+        Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
+        return result.map(this::convertToDTOE);
     }
 
     @Transactional(readOnly = true)
@@ -89,16 +107,14 @@ public class ServiceEmployee {
     @Transactional(readOnly = true)
     public Page<DTOEmployee> getEmployeesNotInTraining(String idBusiness, String idTraining, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<EntityEmployee> data =
-                objRepoE.findActiveEmployeesNotInTraining(idBusiness.toUpperCase(), idTraining, pageable);
+        Page<EntityEmployee> data = objRepoE.findActiveEmployeesNotInTraining(idBusiness.toUpperCase(), idTraining, pageable);
         return data.map(this::convertToDTOE);
     }
 
     @Transactional(readOnly = true)
     public Page<DTOEmployee> getTrainingEmployees(String idBusiness, String idTraining, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<EntityEmployee> data =
-                objRepoE.findActiveEmployeesInTraining(idBusiness.toUpperCase(), idTraining, pageable);
+        Page<EntityEmployee> data = objRepoE.findActiveEmployeesInTraining(idBusiness.toUpperCase(), idTraining, pageable);
         return data.map(this::convertToDTOE);
     }
 
@@ -118,7 +134,7 @@ public class ServiceEmployee {
 
         Specification<EntityEmployee> spec = Specification.allOf(
                 EmployeeSpecs.base(idBusiness),
-                EmployeeSpecs.searchQ(employeeInfo),          //opcional (devuelve conjunction si viene vacío)
+                EmployeeSpecs.searchQ(employeeInfo),          //opcional
                 EmployeeSpecs.byRole(role),                   //opcional
                 EmployeeSpecs.byPosition(idEmployeePosition)  //opcional
         );
@@ -130,11 +146,9 @@ public class ServiceEmployee {
     //Obtener los datos de un empleado
     @Transactional(readOnly = true)
     public DTOEmployee getCommitteeById(String idEmployee, String idBusiness) {
-        if (idEmployee.isBlank() || idBusiness.isBlank())
-            throw new IllegalArgumentException("Los identificadores son necesarios");
+        if (idEmployee.isBlank() || idBusiness.isBlank()) throw new IllegalArgumentException("Los identificadores son necesarios");
 
         EntityEmployee employee = objRepoE.findByIdEmployeeAndIdBusiness_IdBusiness(idEmployee, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con ID: " + idEmployee));
-        ;
         return convertToDTOE(employee);
     }
 
@@ -156,7 +170,6 @@ public class ServiceEmployee {
                 EmployeeSpecs.byRole(role),                   // filtro por rol (EntityRoles.roleName)
                 EmployeeSpecs.byPosition(idEmployeePosition)  // filtro por cargo (ID o nombre)
         );
-
 
         Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
         return result.map(this::convertToDTOE);
@@ -235,7 +248,7 @@ public class ServiceEmployee {
     }
 
     //POST Principal al crear un empleado
-//Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
+    //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
     //POST Principal al crear un empleado
     @Transactional(rollbackFor = Exception.class)
     public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {

@@ -32,10 +32,6 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
     //Búsqueda por DUI
     Optional<EntityEmployee> findByDuiAndIdBusiness_IdBusiness(String dui, String idBusiness);
 
-    Page<EntityEmployee> findByIdBusiness_IdBusinessAndIdCommitteePositionIsNotNullAndIdCommitteeRoleIsNotNullAndUsername_Status(String idBusiness, String status, Pageable pageable);
-
-    Page<EntityEmployee> findByIdBusiness_IdBusinessAndIdCommitteePositionIsNullAndIdCommitteeRoleIsNullAndUsername_Status(String idBusiness, String status,Pageable pageable);
-
     //Consulta JPQL (Java Persistence Query Language)
     //Para buscar a todos los empleados activos que no están dentro de una capacitación específica
     /**
@@ -114,8 +110,4 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
         AND u.status = 'T'
     """)
     Optional<EntityEmployee> findMyInfo(@Param("login") String login);
-
-    /**
-     * Métodos para realizar búsqueda
-     */
 }
