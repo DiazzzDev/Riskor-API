@@ -145,14 +145,18 @@ public class ControllerEmployee {
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idTraining,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false, name = "employeeInfo") String employeeInfo,
+            @RequestParam(required = false, name = "role") String role,
+            @RequestParam(required = false, name = "idEmployeePosition") String idEmployeePosition
     ) {
         if (page < 0 || size <= 0 || size > 50) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "status","Parámetros inválidos","message","page >= 0, 1 <= size <= 50"
+                    "status", "Parámetros inválidos",
+                    "message", "page >= 0, 1 <= size <= 50"
             ));
         }
-        return ResponseEntity.ok(objServiceE.getEmployeesNotInTraining(idBusiness, idTraining, page, size));
+        return ResponseEntity.ok(objServiceE.getEmployeesNotInTraining(idBusiness, idTraining, page, size, employeeInfo, role, idEmployeePosition));
     }
 
     @PreAuthorize("hasRole('Administrador')")
@@ -170,8 +174,6 @@ public class ControllerEmployee {
         }
         return ResponseEntity.ok(objServiceE.getTrainingEmployees(idBusiness, idTraining, page, size));
     }
-
-    //*****************************************************************************************************
 
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
     @PreAuthorize("hasRole('Administrador')")

@@ -115,10 +115,26 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
-    public Page<DTOEmployee> getEmployeesNotInTraining(String idBusiness, String idTraining, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<EntityEmployee> data = objRepoE.findActiveEmployeesNotInTraining(idBusiness.toUpperCase(), idTraining, pageable);
-        return data.map(this::convertToDTOE);
+    public Page<DTOEmployee> getEmployeesNotInTraining(
+            String idBusiness, String idTraining, int page, int size,
+            String employeeInfo, String role, String idEmployeePosition
+        ){
+        Sort sort = Sort.by(
+                Sort.Order.asc("lastName"),
+                Sort.Order.asc("firstName")
+        );
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.activeInBusiness(idBusiness),         //Activos en empresa (status = 'T')
+                EmployeeSpecs.notInTraining(idTraining),            //NO pertenecen a la capacitación
+                EmployeeSpecs.searchQ(employeeInfo),                //Nombre/dui/email (opcional)
+                EmployeeSpecs.byRole(role),                         //Rol (opcional)
+                EmployeeSpecs.byPosition(idEmployeePosition)        //Cargo (opcional)
+        );
+
+        Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
+        return result.map(this::convertToDTOE);
     }
 
     @Transactional(readOnly = true)

@@ -3,9 +3,15 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployeePosition;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityRoles;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTrainingEmployee;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.*;
 
+/**
+ * Esta clase es especial, está colocada aquí porque hace referencia a la capa de recolección de datos
+ * Los specs o Specifications sirven para realizar consultas DINÁMICAS (CLAVE para los filtros)
+ * Esto para facilitar filtros de múltiples parámetros y que con una consulta Query no son ni óptimos ni escalables como aquí
+ */
 public final class EmployeeSpecs {
 
     private EmployeeSpecs() {}
@@ -127,6 +133,26 @@ public final class EmployeeSpecs {
             Predicate active = cb.equal(u.get("status"), "T");
 
             return cb.and(byBusiness, inCommittee, active);
+        };
+    }
+
+    /** Empleado que NO pertenece a la capacitación indicada (mismo negocio). */
+    public static Specification<EntityEmployee> notInTraining(String idTraining) {
+        return (root, query, cb) -> {
+            //subconsulta EXISTS sobre EntityTrainingEmployee
+            Subquery<Integer> sq = query.subquery(Integer.class);
+            var te = sq.from(EntityTrainingEmployee.class);
+
+            sq.select(cb.literal(1));
+            sq.where(
+                    cb.equal(te.get("idEmployee").get("idEmployee"), root.get("idEmployee")),
+                    cb.equal(te.get("idTraining").get("idTraining"), idTraining),
+                    // aseguramos que sea la MISMA empresa
+                    cb.equal(te.get("idBusiness").get("idBusiness"), root.get("idBusiness").get("idBusiness"))
+            );
+
+            // "NO pertenece" => NOT EXISTS(subconsulta)
+            return cb.not(cb.exists(sq));
         };
     }
 }
