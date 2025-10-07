@@ -45,6 +45,24 @@ public class ControllerEPPLoan {
         return ResponseEntity.ok(summary);
     }
 
+    //Búsqueda de préstamos a partir del nombre del empleado, como extra tmb permite buscar por rangos de fechas
+    @GetMapping("/search/byEmployeeName")
+    public ResponseEntity<Page<DTOEPPLoan>> searchLoansByEmployeeName(
+            @RequestAttribute("auth.business") String idBusiness,
+            @RequestParam String name, // texto a buscar (nombre)
+            @RequestParam(required = false) @DateTimeFormat(pattern = "MM/dd/yyyy") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "MM/dd/yyyy") LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size
+    ) {
+        if (size <= 0 || size > 30) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        return ResponseEntity.ok(
+                objServiceEPPLoan.searchByEmployeeName(idBusiness, name, startDate, endDate, page, size)
+        );
+    }
+
     //Endpoint para el mostrar todos los préstamos de un empleado
     @GetMapping("/getAllEPPLoansByEmployee/{idEmployee}")
     public ResponseEntity<Page<DTOEPPLoan>> getLoanByEmployee(

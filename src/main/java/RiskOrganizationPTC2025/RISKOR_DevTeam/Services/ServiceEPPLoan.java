@@ -8,6 +8,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoan;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPLoanSummary;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEPPInventory;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEPPLoan;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec.EPPLoanSpecs;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.LockModeType;
@@ -17,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -44,6 +47,29 @@ public class ServiceEPPLoan {
     @Transactional(readOnly = true)
     public DTOEPPLoanSummary getLoanSummaryByEmployee(String idBusiness, String idEmployee) {
         return objRepoEPPLoan.getLoanSummaryByEmployee(idBusiness.toUpperCase(), idEmployee.toUpperCase());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DTOEPPLoan> searchByEmployeeName(
+            String idBusiness, String employeeName,
+            LocalDate startDate, LocalDate endDate,
+            int page, int size
+    ){
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by(
+                        Sort.Order.asc("idEmployee.lastName"),
+                        Sort.Order.asc("idEmployee.firstName"),
+                        Sort.Order.desc("loanStartDate")
+                )
+        );
+
+        Specification<EntityEPPLoan> spec = EPPLoanSpecs.scope(idBusiness)
+                .and(EPPLoanSpecs.byEmployeeName(employeeName))
+                .and(EPPLoanSpecs.inDateRange(startDate, endDate));
+
+        Page<EntityEPPLoan> loans = objRepoEPPLoan.findAll(spec, pageable);
+        return loans.map(this::convertTOEPPLoanDTO);
     }
 
     @Transactional(readOnly = true)
