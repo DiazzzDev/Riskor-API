@@ -242,7 +242,7 @@ public class ServiceEmployee {
     //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
     //POST Principal al crear un empleado
     @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
+    public DTOEmployee postEmployeeOld(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
         if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
 
@@ -283,11 +283,11 @@ public class ServiceEmployee {
             employee = objRepoE.save(employee);
 
             //Lógica de envío de correo:
-            serviceEmailSender.sendWelcomeTemplate(
-                    employee.getEmployeeEmail(), "¡Tu usuario en RISKOR ha sido creado!",
-                    "RISKOR", employee.getFirstName(), user.getUsername(), secureRandomPassword,
-                    employee.getIdBusiness().getNameBusiness(), user.getCreationDate().toString()
-            );
+//            serviceEmailSender.sendWelcomeTemplate(
+//                    employee.getEmployeeEmail(), "¡Tu usuario en RISKOR ha sido creado!",
+//                    "RISKOR", employee.getFirstName(), user.getUsername(), secureRandomPassword,
+//                    employee.getIdBusiness().getNameBusiness(), user.getCreationDate().toString()
+//            );
 
             return convertToDTOE(employee);
         } catch (RuntimeException ex) {
@@ -304,6 +304,99 @@ public class ServiceEmployee {
                 }
             }
             throw new RuntimeException(e);
+        }
+    }
+
+    // ServiceEmployee.java
+
+    @Transactional(rollbackFor = Exception.class)
+    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
+        // 1. Verificaciones iniciales
+        if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+        // Asumiendo que esta validación se deja en el Service, aunque es mejor que el Controller maneje el error 400
+        if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
+
+        // 2. Verificaciones de unicidad (La lógica de tu Service es correcta)
+        if (objRepoU.existsById(dtoE.getUsername())) {
+            throw new IllegalStateException("El username ya existe (global).");
+        }
+        if (objRepoE.existsByDui(dtoE.getDui())) {
+            throw new IllegalStateException("El DUI ya existe.");
+        }
+        if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
+            throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");
+        }
+
+        DTOCloudinary up = null;
+        String secureRandomPassword = null;
+        EntityEmployee createdEmployee = null; // Variable para usar después del rollback
+
+        try {
+            // --- 1. Crear y guardar la Entidad User ---
+            EntityUser user = new EntityUser();
+            user.setUsername(dtoE.getUsername());
+
+            // Genera y guarda la contraseña segura
+            secureRandomPassword = passwordGenerator.generateSecureRandomString();
+            user.setPassword(argon2id.encode(secureRandomPassword));
+            user.setStatus("T");
+            EntityUser managedUser = objRepoU.save(user);
+
+            // --- 2. Subir la imagen a Cloudinary ---
+            up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
+            dtoE.setPhoto(up.getUrl());
+
+            // --- 3. Guardar la información del empleado ---
+            EntityEmployee employee = convertToEntityE(dtoE, idBusiness.toUpperCase());
+            employee.setUsername(managedUser); // Asignamos el EntityUser gestionado
+
+            createdEmployee = objRepoE.save(employee);
+
+            // 4. Devolver el DTO antes de la llamada de correo para que el Controller retorne 201
+            DTOEmployee resultDTO = convertToDTOE(createdEmployee);
+
+            // --- 5. Lógica de Envío de Correo (FUERA DEL BLOQUE DE CONTROL DE ROLLBACK) ---
+            // Se ejecuta aquí, pero si falla, no revierte la creación del empleado.
+            try {
+                // Usamos los datos de la entidad persistida (createdEmployee y managedUser)
+                serviceEmailSender.sendWelcomeTemplate(
+                        createdEmployee.getEmployeeEmail(),
+                        "¡Tu usuario en RISKOR ha sido creado!",
+                        "RISKOR",
+                        createdEmployee.getFirstName(),
+                        managedUser.getUsername(),
+                        secureRandomPassword,
+                        createdEmployee.getIdBusiness().getNameBusiness(),
+                        managedUser.getCreationDate().toString() // Conversión de LocalDate a String
+                );
+            } catch (Exception emailEx) {
+                // Usa un logger real (ej. slf4j) para registrar el fallo del correo.
+                // No hacemos throw para no causar el rollback de la base de datos.
+                System.err.println("ADVERTENCIA: El empleado " + createdEmployee.getIdEmployee() + " fue creado, pero el correo falló. Detalle: " + emailEx.getMessage());
+            }
+
+            return resultDTO;
+
+        } catch (IOException e) {
+            // Si hay error en Cloudinary/IOException, limpiamos la imagen subida.
+            handleCloudinaryCleanup(up);
+            throw new RuntimeException("Error de I/O (Cloudinary) al registrar el empleado.", e);
+        } catch (RuntimeException ex) {
+            // Esto captura IllegalStateException, IllegalArgumentException y errores de DB.
+            // Mantenemos la limpieza de Cloudinary en caso de que un error en la DB haya fallado *después*
+            // de subir la imagen, y relanzamos para que @Transactional haga el rollback.
+            handleCloudinaryCleanup(up);
+            throw ex; // Relanzar la excepción original
+        }
+    }
+
+    private void handleCloudinaryCleanup(DTOCloudinary up) {
+        if (up != null && up.getPublicId() != null) {
+            try {
+                cloudinary.deleteByPublicId(up.getPublicId());
+            } catch (Exception ignore) {
+                // Ignoramos el error de limpieza para no ocultar la excepción original.
+            }
         }
     }
 

@@ -184,16 +184,17 @@ public class ControllerEmployee {
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
     @PreAuthorize("hasRole('Administrador')")
     @PostMapping(value = "/postEmployee",
-                consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+                consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+                produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postDataEmployee(
             @RequestAttribute("auth.business") String idBusiness,
-            @RequestPart("dto") @Validated DTOEmployee dtoE,
-            @RequestPart(value = "photo", required = false) MultipartFile photo
+            @RequestPart("dtoE") String dtoE,
+            @RequestPart(value = "photo") MultipartFile photo
     ){
         try {
-            //DTOEmployee dto = mapper.readValue(dtoE, DTOEmployee.class);
-            dtoE.setIdBusiness(idBusiness);
-            DTOEmployee answer = objServiceE.postEmployee(dtoE, idBusiness, photo);
+            DTOEmployee dto = mapper.readValue(dtoE, DTOEmployee.class);
+            dto.setIdBusiness(idBusiness);
+            DTOEmployee answer = objServiceE.postEmployee(dto, idBusiness, photo);
             if (answer == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al guardar los datos",
