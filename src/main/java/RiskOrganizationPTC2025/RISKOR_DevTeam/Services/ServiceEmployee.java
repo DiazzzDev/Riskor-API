@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.time.LocalDate;
 
 @Service
 @Transactional
@@ -238,6 +239,69 @@ public class ServiceEmployee {
     }
     //endregion
 
+    //POST Principal al crear un empleado
+    //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
+    //POST Principal al crear un empleado
+    @Transactional(rollbackFor = Exception.class)
+    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
+        if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+        if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
+
+        //Si el usuario ya existe en esta empresa, lanzamos excepción
+        if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
+            throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");
+        }
+
+        DTOCloudinary up = null; // para limpieza si algo falla luego
+        String secureRandomPassword = null; // Declarada fuera para usarla en el email
+        try {
+            // --- 1. Crear la Entidad User (Antes para obtener la entidad gestionada) ---
+            EntityUser user = new EntityUser();
+            user.setUsername(dtoE.getUsername());
+
+            // Genera y guarda la contraseña segura para el email
+            secureRandomPassword = passwordGenerator.generateSecureRandomString();
+            user.setPassword(argon2id.encode(secureRandomPassword));
+
+            user.setStatus("T");
+            user = objRepoU.save(user); //Guardamos la entidad y actualizamos 'user' con la entidad gestionada.
+
+            // --- 2. Subir la imagen a Cloudinary ---
+            up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
+            dtoE.setPhoto(up.getUrl()); //Guardar URL en el DTO para el mapeo a entidad
+
+            // --- 3. Guardar la información del empleado ---
+            EntityEmployee employee = convertToEntityE(dtoE, idBusiness.toUpperCase());
+
+            //Asignamos el User que acabamos de guardar al empleado
+            employee.setUsername(user);
+            employee = objRepoE.save(employee);
+
+            //Lógica de envío de correo:
+            //Datos que va a mandar en el correo:
+            String toEmail = employee.getEmployeeEmail();
+            String username = user.getUsername();
+            String password = user.getPassword();
+            LocalDate creationDate = user.getCreationDate();
+            String userCreationDate = creationDate.toString();
+            String business = employee.getIdBusiness().getNameBusiness();
+
+            return convertToDTOE(employee);
+        } catch (Exception ex) {
+            // Lógica de limpieza idéntica a la de putEmployee:
+            // Si ya subimos imagen y la transacción falla luego (ej. error en la DB), limpia en Cloudinary
+            if (up != null && up.getPublicId() != null) {
+                try {
+                    cloudinary.deleteByPublicId(up.getPublicId());
+                } catch (Exception ignore) {
+                    // Ignoramos el error de limpieza para no ocultar la excepción original.
+                }
+            }
+            // Relanzamos la excepción original para que @Transactional haga el rollback
+            return null;
+        }
+    }
+
     //Si algo en el proceso cambió y luego salió mal se revierte lo que si funcionó para evitar problemas (Se hace rollback)
     @Transactional(rollbackFor = Exception.class)
     public DTOEmployee putEmployee(@Valid DTOEmployee dtoE, String idEmployee, String idBusiness, MultipartFile image) throws IOException {
@@ -307,67 +371,6 @@ public class ServiceEmployee {
         employee.setIdCommitteePosition(null);
         employee.setIdCommitteeRole(null);
         return true;
-    }
-
-    //POST Principal al crear un empleado
-    //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
-    //POST Principal al crear un empleado
-    @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
-        // Verificaciones iniciales
-        if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
-        if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
-
-        // Si el usuario ya existe en esta empresa, lanzamos excepción
-        if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
-            throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");
-        }
-
-        DTOCloudinary up = null; // para limpieza si algo falla luego
-        String secureRandomPassword = null; // Declarada fuera para usarla en el email
-
-        try {
-            // --- 1. Crear y guardar la EntidadUser (¡Se hace antes para obtener la entidad gestionada!) ---
-            EntityUser user = new EntityUser();
-            user.setUsername(dtoE.getUsername());
-
-            // Genera y guarda la contraseña segura para el email
-            secureRandomPassword = passwordGenerator.generateSecureRandomString();
-            user.setPassword(argon2id.encode(secureRandomPassword));
-
-            user.setStatus("T");
-            user = objRepoU.save(user); // ¡Importante!: Guardamos la entidad y actualizamos 'user' con la entidad gestionada.
-
-            // --- 2. Subir la imagen a Cloudinary ---
-            up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
-            dtoE.setPhoto(up.getUrl()); // Guardar URL en el DTO para el mapeo a entidad
-
-            // --- 3. Guardar la información del empleado ---
-            // Convertimos el DTO a la entidad
-            EntityEmployee employee = convertToEntityE(dtoE, idBusiness.toUpperCase());
-
-            // ¡LA LÍNEA CRUCIAL FALTANTE!
-            // Asignamos el EntityUser que acabamos de guardar al EntityEmployee.
-            employee.setUsername(user);
-
-            employee = objRepoE.save(employee);
-
-            // --- 5. Retornar DTO ---
-            return convertToDTOE(employee);
-
-        } catch (Exception ex) {
-            // Lógica de limpieza idéntica a la de putEmployee:
-            // Si ya subimos imagen y la transacción falla luego (ej. error en la DB), limpia en Cloudinary
-            if (up != null && up.getPublicId() != null) {
-                try {
-                    cloudinary.deleteByPublicId(up.getPublicId());
-                } catch (Exception ignore) {
-                    // Ignoramos el error de limpieza para no ocultar la excepción original.
-                }
-            }
-            // Relanzamos la excepción original para que @Transactional haga el rollback
-            return null;
-        }
     }
 
     //PUT para agregar un empleado a un comité con su posición respectiva
