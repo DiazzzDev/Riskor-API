@@ -204,7 +204,13 @@ public class ControllerEmployee {
                     "status", "Empleado creado correctamente, Success",
                     "data", answer
             ));
-        } catch (Exception e) {
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "status", "Duplicado",
+                    "message", e.getMessage()
+            ));
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al registrar el empleado",
