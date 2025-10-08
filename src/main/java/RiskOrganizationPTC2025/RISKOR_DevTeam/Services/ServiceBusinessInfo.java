@@ -42,6 +42,7 @@ public class ServiceBusinessInfo {
         businessInfo.setCreationDate(dtoBI.getCreationDate());
         businessInfo.setPhoneBusiness(dtoBI.getPhoneBusiness());
         businessInfo.setPbxBusiness(dtoBI.getPbxBusiness());
+        businessInfo.setNIT(dtoBI.getNIT());
 
         return convertToDTO(businessInfo);
     }
@@ -55,6 +56,8 @@ public class ServiceBusinessInfo {
         dtoBI.setCreationDate(businessInfo.getCreationDate());
         dtoBI.setPhoneBusiness(businessInfo.getPhoneBusiness());
         dtoBI.setPbxBusiness(businessInfo.getPbxBusiness());
+        dtoBI.setNIT(businessInfo.getNIT());
+
         return dtoBI;
     }
 
@@ -66,6 +69,8 @@ public class ServiceBusinessInfo {
         businessInfo.setCreationDate(dtoBI.getCreationDate());
         businessInfo.setPhoneBusiness(dtoBI.getPhoneBusiness());
         businessInfo.setPbxBusiness(dtoBI.getPbxBusiness());
+        businessInfo.setNIT(dtoBI.getNIT());
+
         return businessInfo;
     }
 }

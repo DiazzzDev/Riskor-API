@@ -32,4 +32,9 @@ public class DTOBusinessInfo {
     @NotBlank
     @Size(min = 6, max = 15, message = "El PBX del negocio debe tener de 6 a 15 carácteres")
     private String pbxBusiness;
+
+    @NotBlank(message = "El NIT no puede estar vacío.")
+    @Pattern(regexp = "^\\d{4}-?\\d{6}-?\\d{3}-?\\d{1}$",
+            message = "El NIT debe tener 14 dígitos en el formato XXXX-XXXXXX-XXX-X o 14 dígitos continuos.")
+    private String NIT;
 }

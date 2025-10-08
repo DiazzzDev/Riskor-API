@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Nuevo usuario creado</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Preheader (vista previa en el inbox) -->
+    <div style="display:none;max-height:0;overflow:hidden;">
+        Se ha creado tu usuario en [[${appName}]].
+    </div>
+</head>
+<body style="margin:0;padding:0;background:#0D0D0F;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#0D0D0F;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:100%;background:#111214;border-radius:16px;overflow:hidden;border:1px solid #1F2030;">
+                <!-- Header -->
+                <tr>
+                    <td align="center" style="padding:28px 28px 0 28px;background:#111214;font-size:0;line-height:0;">
+                        <img width="300" height="300" alt="RISKOR" style="display:block;border:0;margin:0 auto;" src="https://res.cloudinary.com/dmv1q774l/image/upload/v1758265249/RISKOR_-_Dark_gbbisi.png">
+                    </td>
+                </tr>
+
+                <!-- Title -->
+                <tr>
+                    <td style="padding:16px 28px 0 28px;background:#111214;">
+                        <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:34px;color:#FFFFFF;font-weight:700;">
+                            ¡Tu usuario ha sido creado!
+                        </h1>
+                        <p style="margin:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#B9BAC7;">
+                            Hola [[${name}]], te damos la bienvenida a RISKOR. Aquí tienes un resumen de tu cuenta.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Info card -->
+                <tr>
+                    <td style="padding:20px 28px 0 28px;background:#111214;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#15162A;border:1px solid #2B2D4A;border-radius:12px;">
+                            <tr>
+                                <td style="padding:16px 18px;">
+                                    <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#9C9DB0;">Usuario</p>
+                                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#FFFFFF;font-weight:700;">[[${username}]]</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 18px;border-top:1px solid #2B2D4A;">
+                                    <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#9C9DB0;">Contraseña temporal</p>
+                                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#FFFFFF;">[[${temporaryPassword}]]</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 18px;border-top:1px solid #2B2D4A;">
+                                    <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#9C9DB0;">Empresa</p>
+                                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#FFFFFF;">[[${businessName}]]</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 18px;border-top:1px solid #2B2D4A;">
+                                    <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#9C9DB0;">Creado el</p>
+                                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#FFFFFF;">[[${createdAt}]]</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="center" style="padding:28px 28px 30px 28px;background:#111214;">
+                        <a href="https://riskor.app/pages/login.html"
+                           style="display:inline-block;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;
+                          padding:14px 22px;border-radius:10px;background:#616FEF;color:#ffffff;">
+                            Inicia sesión ahora
+                        </a>
+                        <p style="margin:18px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9C9DB0;">
+                            Si el botón no funciona, pega este enlace en tu navegador:<br>
+                            <span style="color:#B8B9FF;word-break:break-all;">https://riskor.app/pages/login.html</span>
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="padding:28px;background:#0F101C;border-top:1px solid #1F2030;">
+                        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#7E7F92;">
+                            © [[${year}]] RISKOR.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

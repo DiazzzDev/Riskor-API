@@ -36,4 +36,7 @@ public class EntityBusinessInfo {
 
     @Column(name = "PBXBUSINESS", length = 15, nullable = false)
     private String pbxBusiness;
+
+    @Column(name = "NIT", length = 17, nullable = false)
+    private String NIT;
 }
