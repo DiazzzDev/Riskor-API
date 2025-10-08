@@ -268,7 +268,6 @@ public class ServiceEmployee {
             // Genera y guarda la contraseña segura para el email
             secureRandomPassword = passwordGenerator.generateSecureRandomString();
             user.setPassword(argon2id.encode(secureRandomPassword));
-
             user.setStatus("T");
             user = objRepoU.save(user); //Guardamos la entidad y actualizamos 'user' con la entidad gestionada.
 
@@ -284,27 +283,17 @@ public class ServiceEmployee {
             employee = objRepoE.save(employee);
 
             //Lógica de envío de correo:
-            //Datos que va a mandar en el correo:
-            String toEmail = employee.getEmployeeEmail();
-            String username = user.getUsername();
-            String password = user.getPassword();
-            LocalDate creationDate = user.getCreationDate();
-            String userCreationDate = creationDate.toString();
-            String business = employee.getIdBusiness().getNameBusiness();
-
             serviceEmailSender.sendWelcomeTemplate(
-                    employee.getEmployeeEmail(),
-                    "¡Tu usuario en RISKOR ha sido creado!",
-                    "RISKOR",                        // appName
-                    employee.getFirstName(),         // name (o nombre completo)
-                    user.getUsername(),              // username
-                    secureRandomPassword,            // OJO: texto plano
-                    employee.getIdBusiness().getNameBusiness(),
-                    user.getCreationDate().toString()
+                    employee.getEmployeeEmail(), "¡Tu usuario en RISKOR ha sido creado!",
+                    "RISKOR", employee.getFirstName(), user.getUsername(), secureRandomPassword,
+                    employee.getIdBusiness().getNameBusiness(), user.getCreationDate().toString()
             );
 
             return convertToDTOE(employee);
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
+            // Relanzamos la excepción original para que @Transactional haga el rollback
+            throw ex;
+        } catch (IOException e) {
             // Lógica de limpieza idéntica a la de putEmployee:
             // Si ya subimos imagen y la transacción falla luego (ej. error en la DB), limpia en Cloudinary
             if (up != null && up.getPublicId() != null) {
@@ -314,8 +303,7 @@ public class ServiceEmployee {
                     // Ignoramos el error de limpieza para no ocultar la excepción original.
                 }
             }
-            // Relanzamos la excepción original para que @Transactional haga el rollback
-            return null;
+            throw new RuntimeException(e);
         }
     }
 

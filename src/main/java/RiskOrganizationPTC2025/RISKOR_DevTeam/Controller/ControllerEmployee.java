@@ -181,61 +181,19 @@ public class ControllerEmployee {
         return ResponseEntity.ok(objServiceE.getTrainingEmployees(idBusiness, idTraining, page, size, employeeInfo));
     }
 
-    private final ServiceEmailSender emailSender;
-
-    public ControllerEmployee(ServiceEmailSender emailSender) {
-        this.emailSender = emailSender;
-    }
-
-    @GetMapping("/test-welcome")
-    public ResponseEntity<?> testWelcome(
-            @RequestParam(defaultValue = "ed.diaz.hz@gmail.com") String to,
-            @RequestParam(defaultValue = "Chris") String name,
-            @RequestParam(defaultValue = "demoUser") String username,
-            @RequestParam(defaultValue = "Demo#1234") String password,
-            @RequestParam(defaultValue = "RISKOR Demo") String business,
-            @RequestParam(required = false) String createdAt
-    ) {
-        String created = (createdAt != null && !createdAt.isBlank())
-                ? createdAt
-                : LocalDate.now().toString();
-
-        // Usa tu plantilla /templates/user.html con reemplazo [[${...}]]
-        emailSender.sendWelcomeTemplate(
-                to,
-                "¡Tu usuario en RISKOR ha sido creado!",
-                "RISKOR",          // appName
-                name,
-                username,
-                password,          // contraseña temporal quemada
-                business,
-                created
-        );
-
-        return ResponseEntity.ok(Map.of(
-                "status", "enviado",
-                "to", to,
-                "username", username,
-                "password", password,
-                "business", business,
-                "createdAt", created
-        ));
-    }
-
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
     @PreAuthorize("hasRole('Administrador')")
     @PostMapping(value = "/postEmployee",
-                consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-                produces = MediaType.APPLICATION_JSON_VALUE)
+                consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> postDataEmployee(
             @RequestAttribute("auth.business") String idBusiness,
-            @RequestPart("dto") String dtoE,
+            @RequestPart("dto") @Validated DTOEmployee dtoE,
             @RequestPart(value = "photo", required = false) MultipartFile photo
     ){
         try {
-            DTOEmployee dto = mapper.readValue(dtoE, DTOEmployee.class);
-            dto.setIdBusiness(idBusiness);
-            DTOEmployee answer = objServiceE.postEmployee(dto, idBusiness, photo);
+            //DTOEmployee dto = mapper.readValue(dtoE, DTOEmployee.class);
+            dtoE.setIdBusiness(idBusiness);
+            DTOEmployee answer = objServiceE.postEmployee(dtoE, idBusiness, photo);
             if (answer == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al guardar los datos",
