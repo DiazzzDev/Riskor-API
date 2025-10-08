@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 @Transactional
@@ -311,12 +312,10 @@ public class ServiceEmployee {
 
     @Transactional(rollbackFor = Exception.class)
     public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
-        // 1. Verificaciones iniciales
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
-        // Asumiendo que esta validación se deja en el Service, aunque es mejor que el Controller maneje el error 400
         if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
 
-        // 2. Verificaciones de unicidad (La lógica de tu Service es correcta)
+        //Verificaciones de unicidad
         if (objRepoU.existsById(dtoE.getUsername())) {
             throw new IllegalStateException("El username ya existe (global).");
         }
@@ -330,16 +329,18 @@ public class ServiceEmployee {
         DTOCloudinary up = null;
         String secureRandomPassword = null;
         EntityEmployee createdEmployee = null; // Variable para usar después del rollback
-
         try {
-            // --- 1. Crear y guardar la Entidad User ---
+            //Crear el usuario
             EntityUser user = new EntityUser();
             user.setUsername(dtoE.getUsername());
 
-            // Genera y guarda la contraseña segura
+            //Genera y guarda la contraseña segura
             secureRandomPassword = passwordGenerator.generateSecureRandomString();
             user.setPassword(argon2id.encode(secureRandomPassword));
             user.setStatus("T");
+            LocalDate createdAt = LocalDate.now();
+            user.setCreationDate(createdAt);
+
             EntityUser managedUser = objRepoU.save(user);
 
             // --- 2. Subir la imagen a Cloudinary ---
@@ -355,8 +356,8 @@ public class ServiceEmployee {
             // 4. Devolver el DTO antes de la llamada de correo para que el Controller retorne 201
             DTOEmployee resultDTO = convertToDTOE(createdEmployee);
 
-            // --- 5. Lógica de Envío de Correo (FUERA DEL BLOQUE DE CONTROL DE ROLLBACK) ---
-            // Se ejecuta aquí, pero si falla, no revierte la creación del empleado.
+            //Lógica de envío de correo
+            //Se ejecuta aquí, pero si falla, no revierte la creación del empleado.
             try {
                 // Usamos los datos de la entidad persistida (createdEmployee y managedUser)
                 serviceEmailSender.sendWelcomeTemplate(
@@ -370,13 +371,10 @@ public class ServiceEmployee {
                         managedUser.getCreationDate().toString() // Conversión de LocalDate a String
                 );
             } catch (Exception emailEx) {
-                // Usa un logger real (ej. slf4j) para registrar el fallo del correo.
-                // No hacemos throw para no causar el rollback de la base de datos.
+                //No hacemos throw para no causar el rollback de la base de datos.
                 System.err.println("ADVERTENCIA: El empleado " + createdEmployee.getIdEmployee() + " fue creado, pero el correo falló. Detalle: " + emailEx.getMessage());
             }
-
             return resultDTO;
-
         } catch (IOException e) {
             // Si hay error en Cloudinary/IOException, limpiamos la imagen subida.
             handleCloudinaryCleanup(up);
