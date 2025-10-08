@@ -4,8 +4,9 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataDuplicate;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmployee;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,8 @@ import java.util.Map;
 public class ControllerEmployee {
     @Autowired
     private ServiceEmployee objServiceE;
+
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     //Método para buscar un empleado por DUI
     @GetMapping("/getEmployee/{dui}")
@@ -178,15 +181,18 @@ public class ControllerEmployee {
 
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
     @PreAuthorize("hasRole('Administrador')")
-    @PostMapping(value = "/postEmployee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) //{username}
+    @PostMapping(value = "/postEmployee",
+                consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+                produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postDataEmployee(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestPart("dtoE") DTOEmployee dtoE,
+            @RequestPart("dto") String dtoE,
             @RequestPart(value = "photo", required = false) MultipartFile photo
     ){
         try {
-            dtoE.setIdBusiness(idBusiness);
-            DTOEmployee answer = objServiceE.postEmployee(dtoE, idBusiness, photo);
+            DTOEmployee dto = mapper.readValue(dtoE, DTOEmployee.class);
+            dto.setIdBusiness(idBusiness);
+            DTOEmployee answer = objServiceE.postEmployee(dto, idBusiness, photo);
             if (answer == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al guardar los datos",
@@ -209,11 +215,13 @@ public class ControllerEmployee {
 
     //Método para actualizar la información principal del empleado - No podrá cambiar detalles de usuario aquí
     @PreAuthorize("hasRole('Administrador')")
-    @PutMapping(value = "/putEmployee/{idEmployee}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/putEmployee/{idEmployee}",
+                consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+                produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> putEmployee(
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idEmployee,
-            @Valid @RequestPart("dtoE") DTOEmployee dto,
+            @RequestPart("dto") String dtoE,
             BindingResult dataResult,
             @RequestPart(value = "photo", required = false) MultipartFile photo) {
 
@@ -224,6 +232,7 @@ public class ControllerEmployee {
             return ResponseEntity.badRequest().body(errors);
         }
         try {
+            DTOEmployee dto = mapper.readValue(dtoE, DTOEmployee.class);
             //Forzamos empresa del path (evita que la cambien en el body) - Tema de seguridad
             dto.setIdBusiness(idBusiness);
             DTOEmployee answer = objServiceE.putEmployee(dto, idEmployee, idBusiness, photo);

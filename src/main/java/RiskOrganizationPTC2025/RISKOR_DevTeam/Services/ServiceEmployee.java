@@ -3,7 +3,6 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEmployee;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryTrainingEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryUser;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec.EmployeeSpecs;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilPasswordGenerator;
@@ -205,7 +204,7 @@ public class ServiceEmployee {
     //Obtener los datos de un empleado
     @Transactional(readOnly = true)
     public DTOEmployee getCommitteeById(String idEmployee, String idBusiness) {
-        if (idEmployee.isBlank() || idBusiness.isBlank()) throw new IllegalArgumentException("Los identificadores son necesarios");
+        if (idEmployee.isBlank()) throw new IllegalArgumentException("El id del empleado es necesario");
 
         EntityEmployee employee = objRepoE.findByIdEmployeeAndIdBusiness_IdBusiness(idEmployee, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con ID: " + idEmployee));
         return convertToDTOE(employee);
@@ -285,6 +284,17 @@ public class ServiceEmployee {
             LocalDate creationDate = user.getCreationDate();
             String userCreationDate = creationDate.toString();
             String business = employee.getIdBusiness().getNameBusiness();
+
+            serviceEmailSender.sendWelcomeTemplate(
+                    employee.getEmployeeEmail(),
+                    "¡Tu usuario en RISKOR ha sido creado!",
+                    "RISKOR",                        // appName
+                    employee.getFirstName(),         // name (o nombre completo)
+                    user.getUsername(),              // username
+                    secureRandomPassword,            // OJO: texto plano
+                    employee.getIdBusiness().getNameBusiness(),
+                    user.getCreationDate().toString()
+            );
 
             return convertToDTOE(employee);
         } catch (Exception ex) {
