@@ -246,6 +246,13 @@ public class ServiceEmployee {
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
         if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
 
+        if (objRepoU.existsById(dtoE.getUsername())) {
+            throw new IllegalStateException("El username ya existe (global).");
+        }
+        if (objRepoE.existsByDui(dtoE.getDui())) { // crea este método en el repo
+            throw new IllegalStateException("El DUI ya existe.");
+        }
+
         //Si el usuario ya existe en esta empresa, lanzamos excepción
         if (objRepoE.existsByUsername_UsernameAndIdBusiness_IdBusiness(dtoE.getUsername(), idBusiness.toUpperCase())) {
             throw new IllegalStateException("Ya existe un empleado con ese usuario en esta empresa");

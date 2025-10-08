@@ -18,6 +18,8 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
     //1er IdBusiness: Nombre del atributo en EntityEmployee (ManyToOne), 2do: Campo PK en EntityBusinessInfo
     Optional<EntityEmployee> findByIdEmployeeAndIdBusiness_IdBusiness(String idEmployee, String idBusiness); //Este método también se usa para dashboard
 
+    boolean existsByDui(String dui);
+
     //Todos los empleados por cada empresa - GET
     Page<EntityEmployee> findByIdBusiness_IdBusiness(String idBusiness, Pageable pageable);
 

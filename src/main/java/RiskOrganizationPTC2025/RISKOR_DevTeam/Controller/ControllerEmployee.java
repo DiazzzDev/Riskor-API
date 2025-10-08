@@ -3,6 +3,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataDuplicate;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmailSender;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmployee;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -18,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -177,6 +179,47 @@ public class ControllerEmployee {
             ));
         }
         return ResponseEntity.ok(objServiceE.getTrainingEmployees(idBusiness, idTraining, page, size, employeeInfo));
+    }
+
+    private final ServiceEmailSender emailSender;
+
+    public ControllerEmployee(ServiceEmailSender emailSender) {
+        this.emailSender = emailSender;
+    }
+
+    @GetMapping("/test-welcome")
+    public ResponseEntity<?> testWelcome(
+            @RequestParam(defaultValue = "ed.diaz.hz@gmail.com") String to,
+            @RequestParam(defaultValue = "Chris") String name,
+            @RequestParam(defaultValue = "demoUser") String username,
+            @RequestParam(defaultValue = "Demo#1234") String password,
+            @RequestParam(defaultValue = "RISKOR Demo") String business,
+            @RequestParam(required = false) String createdAt
+    ) {
+        String created = (createdAt != null && !createdAt.isBlank())
+                ? createdAt
+                : LocalDate.now().toString();
+
+        // Usa tu plantilla /templates/user.html con reemplazo [[${...}]]
+        emailSender.sendWelcomeTemplate(
+                to,
+                "¡Tu usuario en RISKOR ha sido creado!",
+                "RISKOR",          // appName
+                name,
+                username,
+                password,          // contraseña temporal quemada
+                business,
+                created
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "status", "enviado",
+                "to", to,
+                "username", username,
+                "password", password,
+                "business", business,
+                "createdAt", created
+        ));
     }
 
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
