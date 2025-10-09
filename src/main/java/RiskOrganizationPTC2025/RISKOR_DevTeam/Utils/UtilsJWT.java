@@ -18,11 +18,11 @@ public class UtilsJWT {
     private String secret; //Clave secreta para firmar el token con HS256
     @Value("${security.jwt.issuer}")
     private String issuer; //Indica el emisor del token
-    @Value("${security.jwt.expiration}")
-    private long expirationTime; //Asigna el tiempo de vida del token - 30min
+    @Value("${security.jwt.expiration:1800}")
+    private long expirationSeconds; //Asigna el tiempo de vida del token - 30min
 
     //Método para poder enviar el valor de el tiempo de expiración al controlador
-    public long getExpiracionMs() { return expirationTime; }
+    public long getExpiracionSeconds() { return expirationSeconds; }
 
     //LLama al logger para mostrar mensajes importantes en consola de servidor
     private final Logger log = LoggerFactory.getLogger(UtilsJWT.class);
@@ -37,8 +37,8 @@ public class UtilsJWT {
         //Se crea instancia de la fecha actual
         Date now = new Date();
 
-        //Define la fecha de expiración sumando el tiempo actual en milisegundos
-        Date expiration = new Date(now.getTime() + expirationTime);
+        long expMillis = java.util.concurrent.TimeUnit.SECONDS.toMillis(Math.max(0, expirationSeconds));
+        Date expiration = new Date(now.getTime() + expMillis);
 
         //Crea el token y es personalizado
         return Jwts.builder()
@@ -53,7 +53,7 @@ public class UtilsJWT {
                 .claim("business", business)
 
                 .setIssuer(issuer)                                          //Emisor del token - Este proyecto de spring
-                .setExpiration(expirationTime >= 0 ? expiration : null)     //Expiración (si es >= 0)
+                .setExpiration(expirationSeconds >= 0 ? expiration : null)     //Expiración (si es >= 0)
                 .signWith(signingKey, SignatureAlgorithm.HS256)             //Firma con algoritmo HS256
                 .compact();                                                 //Convierte a String compacto
     }

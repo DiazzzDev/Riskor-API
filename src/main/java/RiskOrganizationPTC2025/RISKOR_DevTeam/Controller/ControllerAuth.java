@@ -70,7 +70,7 @@ public class ControllerAuth {
 
             //Usamos long porque eso devuelve el método, luego será convertido a int
             //Porque lo necesitamos entero para la creación de la cookie
-            long maxAgeSeconds = objUtilJWT.getExpiracionMs();
+            long maxAgeSeconds = objUtilJWT.getExpiracionSeconds();
 
             //Crear la cookie como un String formateado
             String cookieValue = String.format(
