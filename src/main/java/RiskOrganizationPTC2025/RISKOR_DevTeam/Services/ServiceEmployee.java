@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.Period;
 
 @Service
 @Transactional
@@ -47,6 +48,9 @@ public class ServiceEmployee {
     //Inyección de PasswordEncoder para usar argon2id en encriptación
     @Autowired
     private PasswordEncoder argon2id;
+
+    private static final String defaultURL = "https://res.cloudinary.com/dmv1q774l/image/upload/v1758774597/DefaultPic_c3wznx.png";
+
 
     //region GETs (Activos, inactivos, por ID, todos)
     @Transactional(readOnly = true)
@@ -238,7 +242,6 @@ public class ServiceEmployee {
     @Transactional(rollbackFor = Exception.class)
     public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
-        if (image == null || image.isEmpty()) throw new IllegalArgumentException("La imagen no puede estar vacía");
 
         //Verificaciones de unicidad
         if (objRepoU.existsById(dtoE.getUsername())) {
@@ -269,8 +272,12 @@ public class ServiceEmployee {
             EntityUser managedUser = objRepoU.save(user);
 
             // --- 2. Subir la imagen a Cloudinary ---
-            up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
-            dtoE.setPhoto(up.getUrl());
+            if (image != null && !image.isEmpty()) {
+                up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
+                dtoE.setPhoto(up.getUrl());
+            } else {
+                dtoE.setPhoto(defaultURL);
+            }
 
             // --- 3. Guardar la información del empleado ---
             EntityEmployee employee = convertToEntityE(dtoE, idBusiness.toUpperCase());
@@ -305,11 +312,8 @@ public class ServiceEmployee {
             handleCloudinaryCleanup(up);
             throw new RuntimeException("Error de I/O (Cloudinary) al registrar el empleado.", e);
         } catch (RuntimeException ex) {
-            // Esto captura IllegalStateException, IllegalArgumentException y errores de DB.
-            // Mantenemos la limpieza de Cloudinary en caso de que un error en la DB haya fallado *después*
-            // de subir la imagen, y relanzamos para que @Transactional haga el rollback.
             handleCloudinaryCleanup(up);
-            throw ex; // Relanzar la excepción original
+            throw ex;
         }
     }
 
@@ -336,7 +340,7 @@ public class ServiceEmployee {
         employee.setBirthdate(dtoE.getBirthdate());
 
         //Se vuelve a calcular la edad
-        int years = java.time.Period.between(dtoE.getBirthdate(), java.time.LocalDate.now()).getYears();
+        int years = Period.between(dtoE.getBirthdate(), LocalDate.now()).getYears();
         if (years < 18) throw new IllegalArgumentException("Fecha de nacimiento inválida, debe ser mayor de edad");
         employee.setAge(years);
 
@@ -356,19 +360,21 @@ public class ServiceEmployee {
         employee.setEndDate(dtoE.getEndDate());
         employee.setIdRole(em.getReference(EntityRoles.class, dtoE.getIdRole()));
         employee.setIdEmployeePosition(em.getReference(EntityEmployeePosition.class, dtoE.getIdEmployeePosition()));
-        DTOCloudinary up = null;                     // ← para limpieza si algo falla luego
+
+        DTOCloudinary up = null;
         try {
             if (image != null && !image.isEmpty()) {
-                up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/"); // devuelve url + publicId
-
+                //Subir nueva foto
+                up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
                 String oldUrl = employee.getPhoto();
                 employee.setPhoto(up.getUrl()); // apuntar a la nueva
 
-                String oldPid = extractPublicIdFromUrl(oldUrl);
-                if (oldPid != null && !oldPid.equalsIgnoreCase(up.getPublicId())) {
-                    try {
-                        cloudinary.deleteByPublicId(oldPid);
-                    } catch (Exception ignore) {
+                //Borrar la anterior SOLO si no era la default
+                if (oldUrl != null && !isDefaultPhoto(oldUrl)) {
+                    String oldPid = extractPublicIdFromUrl(oldUrl);
+                    // equalsIgnoreCase es null-safe para el argumento
+                    if (oldPid != null && !oldPid.equalsIgnoreCase(up.getPublicId())) {
+                        try { cloudinary.deleteByPublicId(oldPid); } catch (Exception ignore) {}
                     }
                 }
             }
@@ -378,10 +384,7 @@ public class ServiceEmployee {
         } catch (Exception ex) {
             // Si ya subimos imagen nueva y la transacción falla luego, limpia en Cloudinary
             if (up != null && up.getPublicId() != null) {
-                try {
-                    cloudinary.deleteByPublicId(up.getPublicId());
-                } catch (Exception ignore) {
-                }
+                try { cloudinary.deleteByPublicId(up.getPublicId()); } catch (Exception ignore) {}
             }
             throw ex;
         }
@@ -397,9 +400,7 @@ public class ServiceEmployee {
     //PUT para agregar un empleado a un comité con su posición respectiva
     @Transactional(rollbackFor = Exception.class)
     public DTOEmployee putEmployeeCommittee(@Valid DTOEmployee dto, String idBusiness, String idEmployee) {
-        if (dto == null) {
-            throw new IllegalArgumentException("No pueden haber campos vacíos");
-        }
+        if (dto == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Se crea un elemento de la entidad donde verifica si existe el Registro que se va a actualizar, si no existe lanza error
         EntityEmployee employee = objRepoE.findByIdEmployeeAndIdBusiness_IdBusiness(idEmployee, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado para esta empresa"));
@@ -407,8 +408,7 @@ public class ServiceEmployee {
         employee.setIdCommitteePosition(em.getReference(EntityComittePosition.class, dto.getIdCommitteePosition()));
         employee.setIdCommitteeRole(em.getReference(EntityComitteRole.class, dto.getIdCommitteeRole()));
 
-        //EntityEmployee saved = objRepoE.save(employee); Ya usamos transactional, al cambiarlo JPA se encarga de actualizar el registro
-        return convertToDTOE(employee);
+        return convertToDTOE(employee); //@Transactional se encarga de actualizar en los setters
     }
 
     private DTOEmployee convertToDTOE(EntityEmployee employee) {
@@ -459,16 +459,22 @@ public class ServiceEmployee {
         employee.setBirthdate(dtoEmployee.getBirthdate());
 
         //Calcula la edad del empleado registrado
-        int years = java.time.Period.between(dtoEmployee.getBirthdate(), java.time.LocalDate.now()).getYears();
+        int years = Period.between(dtoEmployee.getBirthdate(), LocalDate.now()).getYears();
         if (years < 18) throw new IllegalArgumentException("Fecha de nacimiento inválida, debe ser mayor de edad");
         employee.setAge(years);
-        //employee.setAge(dtoEmployee.getAge());
 
         employee.setDui(dtoEmployee.getDui());
         employee.setAffiliationISSS(dtoEmployee.getAffiliationISSS());
         employee.setAddress(dtoEmployee.getAddress());
         employee.setPersonalPhone(dtoEmployee.getPersonalPhone());
-        employee.setPhoto(dtoEmployee.getPhoto());
+
+        employee.setPhoto(dtoEmployee.getPhoto()); //Agregar foto que se colocó en el dto
+
+        //En caso no se envíe foto se guarda la default
+        if (isBlank(employee.getPhoto())) {
+            employee.setPhoto(defaultURL);
+        }
+
         employee.setEmployeeEmail(dtoEmployee.getEmployeeMail());
         employee.setStartDate(dtoEmployee.getStartDate());
         employee.setEndDate(dtoEmployee.getEndDate());
@@ -504,39 +510,52 @@ public class ServiceEmployee {
 
         //Subir a la carpeta de cloudinary
         String folder = "RISKOR/Person-Photo/";
-        DTOCloudinary secureUrl = cloudinary.uploadImage(image, folder);
+        DTOCloudinary up = cloudinary.uploadImage(image, folder);
 
         //Actualizar la URL en el área
-        employee.setPhoto(secureUrl.getUrl());
-        return convertToDTOE(employee); //Devolvemos todo en formato JSON
-    }
+        String oldUrl = employee.getPhoto();
+        employee.setPhoto(up.getUrl());
 
-    public String uploadPhoto(MultipartFile image) throws IOException {
-        //Subir a la carpeta de cloudinary
-        String folder = "RISKOR/Person-Photo/";
-        return cloudinary.uploadImage(image, folder).getUrl();
+        if (oldUrl != null && !isDefaultPhoto(oldUrl)) {
+            String oldPid = extractPublicIdFromUrl(oldUrl);
+            if (oldPid != null && !oldPid.equalsIgnoreCase(up.getPublicId())) {
+                try { cloudinary.deleteByPublicId(oldPid); } catch (Exception ignore) {}
+            }
+        }
+
+        return convertToDTOE(employee); //Devolvemos todo en formato JSON
     }
 
     //Eliminar - Se va a eliminar solamente cuando se ingrese ELIMINAR FOTO, porque el empleado no se borra
     public DTOEmployee deletePhoto(String idEmployee, String idBusiness) throws IOException {
         EntityEmployee employee = objRepoE.findByIdEmployeeAndIdBusiness_IdBusiness(idEmployee, idBusiness).orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado"));
 
-        String expectedPublicIdWithFolder = "RISKOR/Person-Photo/" + idEmployee.toUpperCase();
+        String currentUrl = employee.getPhoto(); //Guardamos el url de la foto actual
 
-        //Se intenta con la convención oficial (idArea como public_id)
-        cloudinary.deleteByPublicId(expectedPublicIdWithFolder);
-
-        //Si alguna vez subiste con nombre aleatorio, intenta extraerlo desde la URL
-        String url = employee.getPhoto();
-        if (url != null) {
-            String fromUrl = extractPublicIdFromUrl(url); // ej: RISKOR/Person-Photo/
-            if (fromUrl != null && !fromUrl.equalsIgnoreCase(expectedPublicIdWithFolder)) {
-                cloudinary.deleteByPublicId(fromUrl);
-            }
+        // Si ya es la default o está vacío, solo asegura la default y sal
+        if (isDefaultPhoto(currentUrl) || isBlank(currentUrl)) {
+            employee.setPhoto(defaultURL);
+            return convertToDTOE(employee);
         }
 
-        employee.setPhoto("Sin fotografía"); //Limpiar campo en DB
+        //Intento por ubicación del archivo
+        String expectedPublicIdWithFolder = "RISKOR/Person-Photo/" + idEmployee.toUpperCase();
+        try { cloudinary.deleteByPublicId(expectedPublicIdWithFolder); } catch (Exception ignore) {}
+
+        //Intento por public_id real desde la URL
+        String fromUrl = extractPublicIdFromUrl(currentUrl);
+        if (fromUrl != null && !fromUrl.equalsIgnoreCase(expectedPublicIdWithFolder)) {
+            try { cloudinary.deleteByPublicId(fromUrl); } catch (Exception ignore) {}
+        }
+
+        employee.setPhoto(defaultURL); //Limpiar campo en DB y agregar la foto por defecto
         return convertToDTOE(employee);
+    }
+
+    private boolean isBlank(String s) { return s == null || s.isBlank(); }
+
+    private boolean isDefaultPhoto(String url) {
+        return url != null && url.equalsIgnoreCase(defaultURL);
     }
 
     //Método que ayuda a conseguir el ID público que da cloudinary a la img
