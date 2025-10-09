@@ -27,6 +27,15 @@ public class ControllerArea {
     private ServiceArea objServiceA;
 
     @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
+    @GetMapping("/getArea/{idArea}")
+    public ResponseEntity<?> getAreaById(
+            @RequestAttribute("auth.business") String idBusiness,
+            String idArea
+    ){
+        return ResponseEntity.ok(objServiceA.getAreaById(idBusiness, idArea));
+    }
+
+    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getAreas")
     public ResponseEntity<Page<DTOArea>> getAreas(
             @RequestAttribute("auth.business") String idBusiness,

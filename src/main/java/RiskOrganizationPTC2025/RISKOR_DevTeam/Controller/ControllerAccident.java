@@ -89,14 +89,12 @@ public class ControllerAccident {
     @PostMapping("/postAccident")
     public ResponseEntity<?> postAccident(
             @RequestAttribute("auth.business") String idBusiness,
-            @RequestAttribute("auth.email") String emailEmployee,
+            @RequestAttribute("auth.id") String idEmployee,
             @Valid @RequestBody DTOAccident dtoA
     ) {
         try {
-            dtoA.setIdBusiness(idBusiness); // fijamos empresa desde la ruta
-            dtoA.setSentBy(emailEmployee);  // Establecer el email del empleado en el DTO
-
-            DTOAccident answer = objServiceA.postAccident(dtoA, idBusiness, emailEmployee);
+            dtoA.setIdBusiness(idBusiness); //fijamos empresa desde la ruta
+            DTOAccident answer = objServiceA.postAccident(dtoA, idBusiness, idEmployee);
             if (answer == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al guardar los datos",

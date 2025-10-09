@@ -34,13 +34,13 @@ public class ServiceEmailSender {
             String html = loadTemplate("/templates/user.html");
 
             Map<String, String> vars = new HashMap<>();
-            vars.put("appName", safe(appName));
-            vars.put("name", safe(name));
-            vars.put("username", safe(username));
-            vars.put("temporaryPassword", safe(temporaryPassword));
-            vars.put("businessName", safe(businessName));
-            vars.put("createdAt", safe(createdAt));
-            vars.put("year", String.valueOf(java.time.Year.now().getValue()));
+            vars.put("appName",             safe(appName));
+            vars.put("name",                safe(name));
+            vars.put("username",            safe(username));
+            vars.put("temporaryPassword",   safe(temporaryPassword));
+            vars.put("businessName",        safe(businessName));
+            vars.put("createdAt",           safe(createdAt));
+            vars.put("year",                String.valueOf(java.time.Year.now().getValue()));
 
             html = applyVars(html, vars);
 
@@ -64,14 +64,14 @@ public class ServiceEmailSender {
             String html = loadTemplate("/templates/newtraining.html");
 
             Map<String, String> vars = new HashMap<>();
-            vars.put("appName", safe(appName));
-            vars.put("employeeName", safe(employeeName));
-            vars.put("trainingTitle", safe(trainingTitle));
+            vars.put("appName",             safe(appName));
+            vars.put("employeeName",        safe(employeeName));
+            vars.put("trainingTitle",       safe(trainingTitle));
             vars.put("trainingDescription", safe(trainingDescription));
-            vars.put("startAt", safe(startAt));
-            vars.put("location", safe(location));
-            vars.put("modality", safe(modality));
-            vars.put("year", String.valueOf(java.time.Year.now().getValue()));
+            vars.put("startAt",             safe(startAt));
+            vars.put("location",            safe(location));
+            vars.put("modality",            safe(modality));
+            vars.put("year",                String.valueOf(java.time.Year.now().getValue()));
 
             html = applyVars(html, vars);
 
@@ -81,6 +81,32 @@ public class ServiceEmailSender {
         } catch (Exception e) {
             throw new IllegalStateException("Error enviando correo de capacitación: " + e.getMessage(), e);
         }
+    }
+
+    public void sendAccidentReportedTemplate(String toEmail, String subject, String appName, String accidentDate, String victimName, String location, String reporterName, String reporterEmail
+    ) throws Exception {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+
+        helper.setFrom(sender);
+        helper.setTo(toEmail);
+        helper.setSubject(subject != null ? subject : "Se ha reportado un nuevo accidente");
+
+        String html = loadTemplate("/templates/accident.html");
+
+        Map<String, String> vars = new HashMap<>();
+        vars.put("appName",        safe(appName));
+        vars.put("accidentDate",   safe(accidentDate));
+        vars.put("victimName",     safe(victimName));
+        vars.put("location",       safe(location));
+        vars.put("reporterName",   safe(reporterName));
+        vars.put("reporterEmail",  safe(reporterEmail));
+        vars.put("year",           String.valueOf(java.time.Year.now().getValue()));
+
+        html = applyVars(html, vars);
+
+        helper.setText(html, true);
+        mailSender.send(message);
     }
 
     private String loadTemplate(String path) throws Exception {

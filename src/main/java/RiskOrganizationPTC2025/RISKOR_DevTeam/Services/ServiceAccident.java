@@ -3,6 +3,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOAccident;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryAccident;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec.AccidentSpecs;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,6 +18,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @Transactional
@@ -26,6 +28,12 @@ public class ServiceAccident {
 
     @PersistenceContext
     private EntityManager em;
+
+    @Autowired
+    private ServiceEmailSender serviceEmailSender;
+
+    @Autowired
+    private RepositoryEmployee objRepoE;
 
     @Transactional(readOnly = true)
     public DTOAccident getById(String idAccident, String idBusiness) {
@@ -67,7 +75,7 @@ public class ServiceAccident {
         return pageE.map(this::convertToDTOA);
     }
 
-    public DTOAccident postAccident(@Valid DTOAccident dtoA, String idBusiness, String emailEmployee) {
+    public DTOAccident postAccident(@Valid DTOAccident dtoA, String idBusiness, String idEmployee) {
         if (dtoA == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Validación - consistencia entre fechas
@@ -81,17 +89,41 @@ public class ServiceAccident {
         accident.setAccidentDate(dtoA.getAccidentDate());
         accident.setReportAccident(report);
 
-        //if (dto.getIdAccidentCategory() != null) e.setIdAccidentCategory(em.getReference(EntityAccidentCategory.class, dto.getIdAccidentCategory()));
-        //if (dto.getIdAccidentType() != null) e.setIdAccidentType(em.getReference(EntityAccidentType.class, dto.getIdAccidentType()));
-        //if (dto.getIdAccidentSeverity() != null) e.setIdAccidentSeverity(em.getReference(EntityAccidentSeverity.class, dto.getIdAccidentSeverity()));
         if (dtoA.getIdAccidentStatus() != null) accident.setIdAccidentStatus(em.getReference(EntityAccidentStatus.class, dtoA.getIdAccidentStatus()));
 
-        accident.setIdEmployee(em.getReference(EntityEmployee.class, dtoA.getIdEmployee()));
+        accident.setIdEmployee(em.getReference(EntityEmployee.class, dtoA.getIdEmployee())); //ID del empleado que fue víctima
         accident.setIdLocation(em.getReference(EntityLocation.class, dtoA.getIdLocation()));
         accident.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
-        accident.setSentBy(emailEmployee);
+        accident.setSentBy(em.getReference(EntityEmployee.class, idEmployee)); //ID del empleado que reportó
 
         EntityAccident saved = objRepoA.save(accident);
+
+        //Envío de correo (try/catch para separar en caso no se pueda mandar el correo)
+        try {
+            //Obtenemos los admins (Todos ellos van a recibir el correo)
+            List<String> adminEmails = objRepoE.findByIdBusiness_IdBusinessAndIdRole_RoleNameIgnoreCaseAndEmployeeEmailIsNotNullAndEndDateIsNull(idBusiness.toUpperCase(), "Administrador")
+                    .stream()
+                    .map(EntityEmployee::getEmployeeEmail)
+                    .distinct()
+                    .toList();
+
+            //Enviar uno por uno (mejor trazabilidad)
+            for (String to : adminEmails) {
+                serviceEmailSender.sendAccidentReportedTemplate(
+                        to,
+                        "Se ha reportado un nuevo accidente",
+                        "RISKOR",
+                        saved.getAccidentDate().toString(),
+                        saved.getIdEmployee().getFirstName() + " " + saved.getIdEmployee().getLastName(),
+                        saved.getIdLocation().getLocationName(),
+                        saved.getSentBy().getFirstName() + " " + saved.getSentBy().getLastName(),
+                        saved.getSentBy().getEmployeeEmail()
+                );
+            }
+        } catch (Exception mailEx) {
+            System.err.println("ADVERTENCIA: notificación a administradores falló. Detalle: " + mailEx.getMessage());
+        }
+
         return convertToDTOA(saved);
     }
 

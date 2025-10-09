@@ -57,5 +57,5 @@ public class EntityAccident {
     private EntityBusinessInfo idBusiness;
 
     @Column(name = "SENTBY", length = 125, nullable = false)
-    private String sentBy;
+    private EntityEmployee sentBy;
 }

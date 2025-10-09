@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Se ha reportado un nuevo accidente</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Preheader (vista previa en el inbox) -->
+    <div style="display:none;max-height:0;overflow:hidden;">
+        Se ha reportado un nuevo accidente en [[${appName}]].
+    </div>
+</head>
+<body style="margin:0;padding:0;background:#0D0D0F;font-family:Arial, Helvetica, sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#0D0D0F;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <!-- Card -->
+            <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:100%;background:#0F101C;border:1px solid #1F2030;border-radius:16px;overflow:hidden;">
+
+                <!-- Mini-banda superior -->
+                <tr>
+                    <td style="padding:10px 16px;background:#111214;border-bottom:1px solid #1F2030;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="left" style="font-size:0;line-height:0;">
+                                    <img alt="RISKOR" width="120" height="120" style="display:block;border:0;" src="https://res.cloudinary.com/dmv1q774l/image/upload/v1758265249/RISKOR_-_Dark_gbbisi.png">
+                                </td>
+                                <td align="right" valign="middle">
+                  <span style="display:inline-block;font-size:12px;letter-spacing:.3px;color:#E7E8FF;background:#1C1D33;border:1px solid #2B2D4A;border-radius:999px;padding:6px 10px;">
+                    Alerta de accidente
+                  </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Hero / título -->
+                <tr>
+                    <td style="padding:25px 26px;background:linear-gradient(90deg,#101226 0%, #151A3D 100%);">
+                        <h1 style="margin:0;font-size:24px;line-height:30px;color:#FFFFFF;font-weight:700;">
+                            Se ha reportado un nuevo accidente
+                        </h1>
+                        <p style="margin:6px 0 8px 0;font-size:14px;line-height:20px;color:#B9BAC7;">
+                            Resumen del incidente registrado en [[${appName}]].
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Ticket layout -->
+                <tr>
+                    <td style="padding:25px 22px 30px 22px;background:#111214;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;overflow:hidden;">
+                            <tr>
+                                <!-- Stub izquierda (ID de la víctima) -->
+                                <td valign="top" width="160" style="background:#141633;border:1px dashed #2B2D4A;border-right:0;border-radius:12px 0 0 12px;">
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td style="padding:16px 14px;">
+                                                <p style="margin:0 0 8px 0;font-size:12px;color:#9C9DB0;letter-spacing:.2px;">Fecha del accidente</p>
+                                                <p style="margin:0;font-size:16px;line-height:22px;color:#FFFFFF;font-weight:500;">
+                                                    [[${accidentDate}]]
+                                                </p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:12px 14px;border-top:1px dashed #2B2D4A;">
+                                                <p style="margin:0 0 6px 0;font-size:12px;color:#9C9DB0;">Víctima</p>
+                                                <p style="margin:0;font-size:14px;line-height:20px;color:#E4E5F3;">[[${victimName}]]</p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+
+                                <!-- Cuerpo derecho (datos principales) -->
+                                <td valign="top" style="background:#111226;border:1px dashed #262842;border-left:0;border-radius:0 12px 12px 0;">
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                        <!-- Locación -->
+                                        <tr>
+                                            <td style="padding:16px 16px 12px 16px;">
+                                                <p style="margin:0 0 6px 0;font-size:12px;color:#9C9DB0;">Locación</p>
+                                                <p style="margin:0;font-size:15px;line-height:21px;color:#FFFFFF;">[[${location}]]</p>
+                                            </td>
+                                        </tr>
+                                        <!-- Separador punteado -->
+                                        <tr>
+                                            <td style="padding:0 16px;">
+                                                <div style="height:1px;border-top:1px dashed #262842;line-height:1px;font-size:1px;">&nbsp;</div>
+                                            </td>
+                                        </tr>
+                                        <!-- Reportado por -->
+                                        <tr>
+                                            <td style="padding:12px 16px 8px 16px;">
+                                                <p style="margin:0 0 6px 0;font-size:12px;color:#9C9DB0;">Persona que reportó</p>
+                                                <p style="margin:0;font-size:15px;color:#FFFFFF;">[[${reporterName}]]</p>
+                                            </td>
+                                        </tr>
+                                        <!-- Contacto -->
+                                        <tr>
+                                            <td style="padding:0 16px 16px 16px;">
+                                                <p style="margin:0 0 6px 0;font-size:12px;color:#9C9DB0;">Contacto del reportante</p>
+                                                <p style="margin:0;font-size:15px;">
+                                                    <a href="mailto:[[${reporterEmail}]]" style="color:#B8B9FF;text-decoration:none;">[[${reporterEmail}]]</a>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- CTA -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="center" style="padding:30px 0 0 0;">
+                                    <a href="https://riskor.app/pages/accidents.html"
+                                       style="display:inline-block;text-decoration:none;font-size:16px;font-weight:700;padding:14px 22px;border-radius:10px;background:#616FEF;color:#ffffff;">
+                                        Ver accidentes en RISKOR
+                                    </a>
+                                    <p style="margin:18px 0 0 0;font-size:12px;color:#9C9DB0;">
+                                        Si el botón no funciona, pega este enlace en tu navegador:<br>
+                                        <span style="color:#B8B9FF;word-break:break-all;">https://riskor.app/pages/accidents.html</span>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="padding:24px 26px;background:#0F101C;border-top:1px solid #1F2030;">
+                        <p style="margin:0;font-size:12px;line-height:18px;color:#7E7F92;">
+                            © [[${year}]] RISKOR.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+            <!-- /Card -->
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -55,4 +56,6 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
         AND u.status = 'T'
     """)
     Optional<EntityEmployee> findMyInfo(@Param("login") String login);
+
+    List<EntityEmployee> findByIdBusiness_IdBusinessAndIdRole_RoleNameIgnoreCaseAndEmployeeEmailIsNotNullAndEndDateIsNull(String idBusiness, String roleName);
 }

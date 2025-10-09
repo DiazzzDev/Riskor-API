@@ -31,6 +31,12 @@ public class ServiceArea {
     private ServiceCloudinary cloudinary;
 
     @Transactional(readOnly = true)
+    public DTOArea getAreaById(String idBusiness, String idArea) {
+        EntityArea area = objRepoA.findByIdAreaAndIdBusiness_IdBusiness(idArea, idBusiness).orElseThrow(() -> new EntityNotFoundException("Área no encontrada"));
+        return convertToDTOA(area);
+    }
+
+    @Transactional(readOnly = true)
     public Page<DTOArea> getAllAreas(String idBusiness, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<EntityArea> permissionPage = objRepoA.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);

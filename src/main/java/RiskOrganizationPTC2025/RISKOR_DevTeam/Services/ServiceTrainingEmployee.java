@@ -55,7 +55,7 @@ public class ServiceTrainingEmployee {
                     trainingEmployee.getIdEmployee().getEmployeeEmail(),
                     subject,
                     "RISKOR",
-                    trainingEmployee.getIdEmployee().getFirstName() + trainingEmployee.getIdEmployee().getLastName(),
+                    trainingEmployee.getIdEmployee().getFirstName() + " " + trainingEmployee.getIdEmployee().getLastName(),
                     trainingEmployee.getIdTraining().getTitle(),
                     trainingEmployee.getIdTraining().getDescription(),
                     startAt,
