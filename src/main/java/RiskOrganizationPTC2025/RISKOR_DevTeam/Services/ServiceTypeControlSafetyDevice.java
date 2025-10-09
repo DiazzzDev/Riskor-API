@@ -32,16 +32,16 @@ public class ServiceTypeControlSafetyDevice {
 
     @Transactional(readOnly = true)
     public DTOTypeControlSafetyDevice getControlSDSSOById(String idControlSDSSO, String idBusiness){
-        EntityTypeControlSafetyDevice safetyDevice = objRepoTCSD.findByIdTypeControlSDAndIdBusiness_IdBusiness(idControlSDSSO, idBusiness.toUpperCase()).orElseThrow(() -> new IllegalArgumentException("No se encontró el cargo para empleado dentro de esta empresa"));
+        var safetyDevice = objRepoTCSD.findByIdTypeControlSDAndIdBusiness_IdBusiness(idControlSDSSO, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Tipo de control de dispositivo de seguridad no encontrado"));
         return convertTOTypeCSDDTO(safetyDevice);
     }
 
     //Método para retornar una lista de todos los registros dentro de la tabla referenciada
     @Transactional(readOnly = true)
     public Page<DTOTypeControlSafetyDevice> getAllTypeControlSD(String idBusiness, int page, int size){
-        Pageable pageable = PageRequest.of(page, size);
-        Page<EntityTypeControlSafetyDevice> typeControlSafetyDevices = objRepoTCSD.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
-        return typeControlSafetyDevices.map(this::convertTOTypeCSDDTO);
+        var pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        var entities = objRepoTCSD.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
+        return entities.map(this::convertTOTypeCSDDTO);
     }
 
     public DTOTypeControlSafetyDevice postTypeControlSD(@Valid DTOTypeControlSafetyDevice dtoTypeEPPControl, String idBusiness) {

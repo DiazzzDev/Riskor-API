@@ -52,9 +52,26 @@ public class ControllerTrainingRating {
             @PathVariable String idTrainingEmployee
         ){
         try {
+            if (idTrainingEmployee == null || idTrainingEmployee.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Validación",
+                        "message", "idTrainingEmployee es requerido"
+                ));
+            }
             List<DTOTrainingRating> list = objServiceTR.listByTrainingEmployee(idTrainingEmployee, idBusiness);
             return ResponseEntity.ok(list);
-        } catch (Exception e) {
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", e.getMessage() // "Registro de participación en capacitación no encontrado"
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
+            ));
+        }catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al listar calificaciones por empleado en capacitación",

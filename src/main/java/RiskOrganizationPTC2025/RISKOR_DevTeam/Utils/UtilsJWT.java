@@ -19,7 +19,7 @@ public class UtilsJWT {
     @Value("${security.jwt.issuer}")
     private String issuer; //Indica el emisor del token
     @Value("${security.jwt.expiration}")
-    private long expirationTime; //Asigna el tiempo de vida del token - 15min
+    private long expirationTime; //Asigna el tiempo de vida del token - 30min
 
     //Método para poder enviar el valor de el tiempo de expiración al controlador
     public long getExpiracionMs() { return expirationTime; }

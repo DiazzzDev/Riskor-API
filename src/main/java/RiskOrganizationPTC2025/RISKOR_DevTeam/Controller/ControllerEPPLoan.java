@@ -33,7 +33,28 @@ public class ControllerEPPLoan {
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idEPPLoan
     ){
-        return ResponseEntity.ok(objServiceEPPLoan.getEPPLoanById(idBusiness, idEPPLoan));
+
+        try {
+            if (idEPPLoan == null || idEPPLoan.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idEPPLoan es requerido"
+                ));
+            }
+            return ResponseEntity.ok(objServiceEPPLoan.getEPPLoanById(idBusiness, idEPPLoan));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Préstamo no encontrado",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar el préstamo",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/summary/{idEmployee}")

@@ -3,6 +3,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPInventory;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEPPInventory;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,27 @@ public class ControllerEPPInventory {
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idEPPInventory
     ){
-        return ResponseEntity.ok(objServiceEPPInventory.getEPPInventoryById(idBusiness, idEPPInventory));
+        try {
+            if (idEPPInventory == null || idEPPInventory.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idEPPInventory es requerido"
+                ));
+            }
+            return ResponseEntity.ok(objServiceEPPInventory.getEPPInventoryById(idBusiness, idEPPInventory));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Equipo del inventario no encontrado",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar el equipo del inventario",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/getAllEPPInventory")

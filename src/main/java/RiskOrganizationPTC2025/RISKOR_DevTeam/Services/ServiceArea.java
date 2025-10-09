@@ -32,7 +32,7 @@ public class ServiceArea {
 
     @Transactional(readOnly = true)
     public DTOArea getAreaById(String idBusiness, String idArea) {
-        EntityArea area = objRepoA.findByIdAreaAndIdBusiness_IdBusiness(idArea, idBusiness).orElseThrow(() -> new EntityNotFoundException("Área no encontrada"));
+        EntityArea area = objRepoA.findByIdAreaAndIdBusiness_IdBusiness(idArea, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Área no encontrada"));
         return convertToDTOA(area);
     }
 
@@ -46,7 +46,7 @@ public class ServiceArea {
     public DTOArea postArea(@Valid DTOArea dtoA, String idBusiness) {
         if(dtoA == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
-        EntityArea saved = objRepoA.save(convertToEA(dtoA, idBusiness));
+        EntityArea saved = objRepoA.save(convertToEA(dtoA, idBusiness.toUpperCase()));
         return convertToDTOA(saved);
     }
 

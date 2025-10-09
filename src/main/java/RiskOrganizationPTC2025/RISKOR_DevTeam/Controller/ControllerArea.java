@@ -30,9 +30,29 @@ public class ControllerArea {
     @GetMapping("/getArea/{idArea}")
     public ResponseEntity<?> getAreaById(
             @RequestAttribute("auth.business") String idBusiness,
-            String idArea
+            @PathVariable String idArea
     ){
-        return ResponseEntity.ok(objServiceA.getAreaById(idBusiness, idArea));
+        try {
+            if (idArea == null || idArea.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idArea es requerido"
+                ));
+            }
+            return ResponseEntity.ok(objServiceA.getAreaById(idBusiness, idArea));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Área no encontrada",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar el área",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")

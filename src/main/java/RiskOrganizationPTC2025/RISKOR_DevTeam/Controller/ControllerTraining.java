@@ -64,6 +64,11 @@ public class ControllerTraining {
             }
             Page<DTOTraining> trainings = objServiceT.getTrainingByTitle(page, size, title, idBusiness);
 
+            if (trainings == null || trainings.isEmpty()) {
+                //Devolvemos un OK vacío para el páginado del frontend
+                return ResponseEntity.ok(Page.empty(org.springframework.data.domain.PageRequest.of(page, size)));
+            }
+
             return ResponseEntity.ok(trainings);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(

@@ -19,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,15 +32,6 @@ public class ControllerEmployee {
     private ServiceEmployee objServiceE;
 
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
-
-    //Método para buscar un empleado por DUI
-    @GetMapping("/getEmployee/{dui}")
-    public ResponseEntity<DTOEmployee> getEmployeeByDui(
-            @RequestAttribute("auth.business") String idBusiness,
-            @PathVariable String dui
-        ){
-        return ResponseEntity.ok(objServiceE.getEmployeeByDui(dui, idBusiness));
-    }
 
     //Método para obtener todos los empleados de la empresa que no pertenecen al comité
     @PreAuthorize("hasRole('Administrador')")
@@ -80,12 +72,31 @@ public class ControllerEmployee {
     //Método para obtener un empleado de comité específico
     @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getCommitteeById/{idEmployee}")
-    public ResponseEntity<DTOEmployee> getEmployeeCommitteeById(
+    public ResponseEntity<?> getEmployeeCommitteeById(
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idEmployee
     ){
-        DTOEmployee employee = objServiceE.getCommitteeById(idEmployee, idBusiness);
-        return ResponseEntity.ok(employee);
+        try {
+            if (idEmployee == null || idEmployee.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idEmployee es requerido"
+                ));
+            }
+            return ResponseEntity.ok(objServiceE.getCommitteeById(idEmployee, idBusiness));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Empleado no encontrado",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar el empleado",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     //Obtener toda la información de un empleado
@@ -94,8 +105,27 @@ public class ControllerEmployee {
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idEmployee
     ){
-        DTOEmployee employees = objServiceE.getEmployeeById(idEmployee, idBusiness);
-        return ResponseEntity.ok(employees);
+        try {
+            if (idEmployee == null || idEmployee.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idEmployee es requerido"
+                ));
+            }
+            return ResponseEntity.ok(objServiceE.getEmployeeById(idEmployee, idBusiness));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Empleado no encontrado",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar el empleado",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     //Obtenemos todos los empleados inactivos

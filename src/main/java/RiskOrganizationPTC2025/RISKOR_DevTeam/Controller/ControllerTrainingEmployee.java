@@ -30,8 +30,13 @@ public class ControllerTrainingEmployee {
             @PathVariable String idTrainingEmployee
         ){
         try {
-            DTOTrainingEmployee trainingEmployee = objServiceTE.getTrainingEmployeeById(idTrainingEmployee, idBusiness);
-            return ResponseEntity.ok(trainingEmployee);
+            if (idTrainingEmployee == null || idTrainingEmployee.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idTrainingEmployee es requerido"
+                ));
+            }
+            return ResponseEntity.ok(objServiceTE.getTrainingEmployeeById(idTrainingEmployee, idBusiness));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                     "status", "No encontrado, Error",

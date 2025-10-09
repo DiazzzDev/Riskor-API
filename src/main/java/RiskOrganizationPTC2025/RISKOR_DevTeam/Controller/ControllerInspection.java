@@ -38,7 +38,27 @@ public class ControllerInspection {
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idInspection
     ){
-        return ResponseEntity.ok(objServiceInspection.getInspectionById(idBusiness, idInspection));
+        try {
+            if (idInspection == null || idInspection.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idInspection es requerido"
+                ));
+            }
+            return ResponseEntity.ok(objServiceInspection.getInspectionById(idBusiness, idInspection));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Inspección no encontrada",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar la inspección",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     //GetMapping para indicar la URL de nuestra API, GET

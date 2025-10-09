@@ -34,28 +34,83 @@ public class ControllerTypeEPPControl {
     }
 
     @GetMapping("/{idTypeEPPControl}")
-    public DTOTypeEPPControl getEmployeesPositionsById(
+    public ResponseEntity<?> getEmployeesPositionsById(
             @PathVariable String idTypeEPPControl,
             @RequestAttribute("auth.business") String idBusiness
         ){
-        return objServiceTEPPC.getTypeEPPById(idBusiness, idTypeEPPControl);
+        try {
+            if (idTypeEPPControl == null || idTypeEPPControl.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Validación",
+                        "message", "idTypeEPPControl es requerido"
+                ));
+            }
+
+            DTOTypeEPPControl dto = objServiceTEPPC.getTypeEPPById(idBusiness, idTypeEPPControl);
+            return ResponseEntity.ok(dto);
+
+        } catch (jakarta.persistence.EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", e.getMessage()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al obtener el tipo de EPP/Control",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     //GET PRINCIPAL
     //GetMapping para indicar la URL de nuestra API, GET
     @GetMapping("/getTypeEPPC")
-    public ResponseEntity<Page<DTOTypeEPPControl>> getTypeEPPC(
+    public ResponseEntity<?> getTypeEPPC(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int size
         ){
-        if(size <= 0 || size > 30){
-            ResponseEntity.badRequest().body(Map.of(
-                    "status", "El tamaño de la página debe estar entre 1 y 30"
+        try {
+            if (page < 0) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Validación",
+                        "message", "page no puede ser negativo"
+                ));
+            }
+            if (size < 1 || size > 30) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Validación",
+                        "message", "El tamaño de la página debe estar entre 1 y 30"
+                ));
+            }
+
+            Page<DTOTypeEPPControl> pageDTO = objServiceTEPPC.getAllTypeEPPControl(idBusiness, page, size);
+
+            if (pageDTO == null || pageDTO.isEmpty()) {
+                return ResponseEntity.ok(Page.empty(org.springframework.data.domain.PageRequest.of(page, size)));
+            }
+            return ResponseEntity.ok(pageDTO);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
             ));
-            return ResponseEntity.ok(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al listar tipos de EPP/Control",
+                    "detail", e.getMessage()
+            ));
         }
-        return ResponseEntity.ok(objServiceTEPPC.getAllTypeEPPControl(idBusiness, page, size));
     }
 
     @PreAuthorize("hasRole('Administrador')")

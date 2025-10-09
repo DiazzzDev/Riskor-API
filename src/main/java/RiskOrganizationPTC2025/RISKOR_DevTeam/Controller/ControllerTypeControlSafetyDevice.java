@@ -25,27 +25,81 @@ public class ControllerTypeControlSafetyDevice {
     private ServiceTypeControlSafetyDevice objServiceTCSD;
 
     @GetMapping("/{idTypeControlSD}")
-    public DTOTypeControlSafetyDevice getTypeById(
+    public ResponseEntity<?> getTypeById(
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable String idTypeControlSD
         ){
-        return objServiceTCSD.getControlSDSSOById(idTypeControlSD, idBusiness);
+        try {
+            if (idTypeControlSD == null || idTypeControlSD.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Validación",
+                        "message", "idTypeControlSD es requerido"
+                ));
+            }
+            DTOTypeControlSafetyDevice dto = objServiceTCSD.getControlSDSSOById(idTypeControlSD, idBusiness);
+            return ResponseEntity.ok(dto);
+
+        } catch (jakarta.persistence.EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", e.getMessage()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al obtener el tipo de control de dispositivo de seguridad",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     //GetMapping para indicar la URL de nuestra API, GET
     @GetMapping("/getTypeControlSD")
-    public ResponseEntity<Page<DTOTypeControlSafetyDevice>> getTypeEPPC(
+    public ResponseEntity<?> getTypeEPPC(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int size
     ){
-        if(size <= 0 || size > 30){
-            ResponseEntity.badRequest().body(Map.of(
-                    "status", "El tamaño de la página debe estar entre 1 y 30"
+        try {
+            if (page < 0) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Validación",
+                        "message", "page no puede ser negativo"
+                ));
+            }
+            if (size < 1 || size > 30) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Validación",
+                        "message", "El tamaño de la página debe estar entre 1 y 30"
+                ));
+            }
+            Page<DTOTypeControlSafetyDevice> pageDTO = objServiceTCSD.getAllTypeControlSD(idBusiness, page, size);
+
+            if (pageDTO == null || pageDTO.isEmpty()) {
+                // Mantén el shape de Page para el frontend
+                return ResponseEntity.ok(Page.empty(org.springframework.data.domain.PageRequest.of(page, size)));
+            }
+            return ResponseEntity.ok(pageDTO);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
             ));
-            return ResponseEntity.ok(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al listar tipos de control de dispositivo de seguridad",
+                    "detail", e.getMessage()
+            ));
         }
-        return ResponseEntity.ok(objServiceTCSD.getAllTypeControlSD(idBusiness, page, size));
     }
 
     @PreAuthorize("hasRole('Administrador')")

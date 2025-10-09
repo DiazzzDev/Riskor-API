@@ -5,6 +5,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOMedicalRecord;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceMedicalRecord;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,13 +51,33 @@ public class ControllerMedicalRecord {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
         ){
-        if (size <= 0 || size > 50) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "status", "VALIDATION_ERROR",
-                    "message", "El tamaño de la página debe estar entre 1 y 50"
+        try {
+            if (idEmployee == null || idEmployee.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idEmployee es requerido"
+                ));
+            }
+            if (size <= 0 || size > 50) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "VALIDATION_ERROR",
+                        "message", "El tamaño de la página debe estar entre 1 y 50"
+                ));
+            }
+            return ResponseEntity.ok(objServiceMedicalR.getMedicalRByEmployee(idEmployee, page, size, idBusiness));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Registro médico no encontrado",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar el registro médico",
+                    "detail", e.getMessage()
             ));
         }
-        return ResponseEntity.ok(objServiceMedicalR.getMedicalRByEmployee(idEmployee, page, size, idBusiness));
     }
 
     //Creación del método POST (HTTP Request API), utilización de PostMapping

@@ -10,8 +10,6 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +28,7 @@ public class ServiceTypeEPPControl {
 
     @Transactional(readOnly = true)
     public DTOTypeEPPControl getTypeEPPById(String idBusiness, String idTypeEPPControl) {
-        EntityTypeEPPControl typeEPPControl = objRepoTEPPC.findByIdTypeEPPControlAndIdBusiness_IdBusiness(idTypeEPPControl, idBusiness.toUpperCase()).orElseThrow(() -> new IllegalArgumentException("No se encontró el cargo para empleado dentro de esta empresa"));
+        var typeEPPControl = objRepoTEPPC.findByIdTypeEPPControlAndIdBusiness_IdBusiness(idTypeEPPControl, idBusiness.toUpperCase()).orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Tipo de EPP/Control no encontrado"));
         return convertTOTypeEPPCDTO(typeEPPControl);
     }
 
@@ -43,9 +41,9 @@ public class ServiceTypeEPPControl {
     //Método para retornar una lista de todos los registros dentro de la tabla referenciada
     @Transactional(readOnly = true)
     public Page<DTOTypeEPPControl> getAllTypeEPPControl(String idBusiness, int page, int size){
-        Pageable pageable = PageRequest.of(page, size);
-        Page<EntityTypeEPPControl> typeEPPControlList = objRepoTEPPC.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
-        return typeEPPControlList.map(this::convertTOTypeEPPCDTO);
+        var pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        var typeEPPControls = objRepoTEPPC.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
+        return typeEPPControls.map(this::convertTOTypeEPPCDTO);
     }
 
     public DTOTypeEPPControl postTypeEPPC(@Valid DTOTypeEPPControl dtoTypeEPPControl, String idBusiness) {

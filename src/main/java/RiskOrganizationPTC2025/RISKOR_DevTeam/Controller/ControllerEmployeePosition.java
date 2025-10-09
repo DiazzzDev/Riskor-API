@@ -3,6 +3,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployeePosition;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmployeePosition;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,11 +25,31 @@ public class ControllerEmployeePosition {
     private ServiceEmployeePosition objServiceEP;
 
     @GetMapping("/{idEmployeePosition}")
-    public DTOEmployeePosition getEmployeesPositionsById(
+    public ResponseEntity<?> getEmployeesPositionsById(
             @PathVariable String idEmployeePosition,
             @RequestAttribute("auth.business") String idBusiness
     ){
-        return objServiceEP.getPositionById(idBusiness, idEmployeePosition);
+        try {
+            if (idEmployeePosition == null || idEmployeePosition.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idEmployeePosition es requerido"
+                ));
+            }
+            return ResponseEntity.ok(objServiceEP.getPositionById(idBusiness, idEmployeePosition));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Cargo no encontrado",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar el cargo laboral",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/getEmployeesPositions")

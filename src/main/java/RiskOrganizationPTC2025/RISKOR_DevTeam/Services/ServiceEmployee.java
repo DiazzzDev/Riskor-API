@@ -57,12 +57,6 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
-    public DTOEmployee getEmployeeByDui(String dui, String idBusiness) {
-        EntityEmployee employee = objRepoE.findByDuiAndIdBusiness_IdBusiness(dui, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado o no pertenece a esta empresa"));
-        return convertToDTOE(employee);
-    }
-
-    @Transactional(readOnly = true)
     public Page<DTOEmployee> getInactiveEmployees(String idBusiness, int page, int size, String employeeInfo) {
         //Ordenamos el resultado por los campos nombre y apellido de manera ASCENDENTE
         Sort sort = Sort.by(

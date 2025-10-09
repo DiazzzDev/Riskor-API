@@ -4,6 +4,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTrainingEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTrainingRating;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOTrainingRating;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryTrainingEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryTrainingRating;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,6 +23,9 @@ public class ServiceTrainingRating {
     @Autowired
     private RepositoryTrainingRating objRepoTR;
 
+    @Autowired
+    private RepositoryTrainingEmployee objRepoTE;
+
     @PersistenceContext
     private EntityManager em;
 
@@ -33,7 +37,13 @@ public class ServiceTrainingRating {
 
     @Transactional(readOnly = true)
     public List<DTOTrainingRating> listByTrainingEmployee(String idTrainingEmployee, String idBusiness) {
+        boolean teExists = objRepoTE.existsByIdTrainingEmployeeAndIdBusiness_IdBusiness(idTrainingEmployee, idBusiness.toUpperCase());
+        if (!teExists) {
+            throw new jakarta.persistence.EntityNotFoundException("Registro de participación en capacitación no encontrado");
+        }
+
         List<EntityTrainingRating> ratings = objRepoTR.findByIdTrainingEmployee_IdTrainingEmployeeAndIdBusiness_IdBusiness(idTrainingEmployee, idBusiness.toUpperCase());
+
         return ratings.stream().map(this::convertToDTOTR).collect(Collectors.toList());
     }
 

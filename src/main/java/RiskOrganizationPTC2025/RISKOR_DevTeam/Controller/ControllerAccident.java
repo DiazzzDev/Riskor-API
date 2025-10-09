@@ -32,6 +32,12 @@ public class ControllerAccident {
             @PathVariable String idAccident
     ) {
         try {
+            if (idAccident == null || idAccident.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", 400,
+                        "error", "idArea es requerido"
+                ));
+            }
             return ResponseEntity.ok(objServiceA.getById(idAccident, idBusiness));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(

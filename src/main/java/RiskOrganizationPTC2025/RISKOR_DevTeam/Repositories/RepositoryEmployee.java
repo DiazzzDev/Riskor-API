@@ -28,9 +28,6 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
 
     boolean existsByUsername_UsernameAndIdBusiness_IdBusiness(String username, String idBusiness);
 
-    //Búsqueda por DUI
-    Optional<EntityEmployee> findByDuiAndIdBusiness_IdBusiness(String dui, String idBusiness);
-
     //Consulta JPQL (Java Persistence Query Language)
     //Query para hacer Login a traves del correo de los empleados, verificando si el usuario está activo y obtenemos
     @Query("""
