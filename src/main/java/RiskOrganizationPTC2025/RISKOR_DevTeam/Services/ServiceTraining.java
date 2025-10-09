@@ -101,14 +101,14 @@ public class ServiceTraining {
     }
 
     public DTOTraining postTraining(DTOTraining dtoT, String idBusiness){
-        if (dtoT == null){ throw new IllegalArgumentException("No pueden haber campos vacios"); }
+        if (dtoT == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         EntityTraining training = objRepoT.save(convertToET(dtoT, idBusiness.toUpperCase()));
         return convertToDTOT(training);
     }
 
     public DTOTraining putTraining(DTOTraining dtoT, String idTraining, String idBusiness) {
-        if(dtoT == null){ throw new IllegalArgumentException("No pueden haber campos vacíos"); }
+        if(dtoT == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
         //Se crea un elemento de la entidad donde verifica si existe el Registro que se va a actualizar, si no existe lanza error (Luego se debe crear excepción personalizada)
         EntityTraining training = objRepoT.findByIdTrainingAndIdBusiness_IdBusiness(idTraining, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Capacitación no encontrada con ID: " + idTraining));
 
@@ -130,8 +130,7 @@ public class ServiceTraining {
             training.setIdTrainingModality(em.getReference(EntityTrainingModality.class, dtoT.getIdTrainingModality()));
         }
 
-        //JPA sincroniza por @Transactional, de esta manera podemos ahorrar el uso de SAVE
-        return convertToDTOT(training);
+        return convertToDTOT(training); //JPA sincroniza por @Transactional, de esta manera podemos ahorrar el uso de SAVE
     }
 
     public boolean removeTraining(String idTraining, String idBusiness){

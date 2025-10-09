@@ -23,6 +23,9 @@ public class ServiceTrainingEmployee {
     @PersistenceContext
     private EntityManager em;
 
+    @Autowired
+    private ServiceEmailSender serviceEmailSender;
+
     @Transactional(readOnly = true)
     public DTOTrainingEmployee getTrainingEmployeeById(String idTrainingEmployee, String idBusiness) {
         EntityTrainingEmployee entityTrainingEmployee = objRepoTE.findByIdTrainingEmployeeAndIdBusiness_IdBusiness(idTrainingEmployee, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Registro no encontrado"));
@@ -43,6 +46,27 @@ public class ServiceTrainingEmployee {
         if (dup) throw new IllegalArgumentException("El empleado ya está registrado en esa capacitación");
 
         EntityTrainingEmployee trainingEmployee = objRepoTE.save(convertToETE(dtoTE, idBusiness));
+
+        try {
+            final String startAt = formatStartAt(trainingEmployee.getIdTraining().getTrainingDate(), trainingEmployee.getIdTraining().getStartHour());
+            final String subject = "Se te ha unido a la capacitación: " + trainingEmployee.getIdTraining().getTitle();
+
+            serviceEmailSender.sendNewTrainingTemplate(
+                    trainingEmployee.getIdEmployee().getEmployeeEmail(),
+                    subject,
+                    "RISKOR",
+                    trainingEmployee.getIdEmployee().getFirstName() + trainingEmployee.getIdEmployee().getLastName(),
+                    trainingEmployee.getIdTraining().getTitle(),
+                    trainingEmployee.getIdTraining().getDescription(),
+                    startAt,
+                    trainingEmployee.getIdTraining().getTrainingLocation(),
+                    trainingEmployee.getIdTraining().getIdTrainingModality().getTrainingModality()
+            );
+        } catch (Exception emailEx) {
+            //Dejamos advertencia
+            System.err.println("ADVERTENCIA: el correo de capacitación falló. Detalle: " + emailEx.getMessage());
+        }
+
         return convertToDTOTE(trainingEmployee);
     }
 
@@ -88,9 +112,8 @@ public class ServiceTrainingEmployee {
         long rows = objRepoTE.deleteByIdTraining_IdTrainingAndIdEmployee_IdEmployeeAndIdBusiness_IdBusiness(idTraining, idEmployee, idBusiness.toUpperCase());
 
         //Evitamos doble consulta y eliminamos, si no lo encuentra y elimina las filas afectadas serán 0 y devolverá false
-        if(rows != 0){
-            return true;
-        }
+        if(rows != 0) return true;
+
         return false; //Si se retornó false significa que no se pudo eliminar
     }
 
@@ -126,5 +149,16 @@ public class ServiceTrainingEmployee {
         trainingEmployee.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase()));
 
         return trainingEmployee;
+    }
+
+    //Método que se encarga de dar el formato deseado a la plantilla que será enviada por correo
+    private String formatStartAt(java.time.LocalDate date, java.time.LocalTime time) {
+        if (date == null || time == null) return "";
+        var ldt = java.time.LocalDateTime.of(date, time);
+        var fmt = java.time.format.DateTimeFormatter.ofPattern(
+                "d 'de' MMMM 'de' uuuu, hh:mm a",
+                new java.util.Locale("es", "ES")
+        );
+        return ldt.format(fmt);
     }
 }

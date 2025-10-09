@@ -2,7 +2,6 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -50,6 +49,37 @@ public class ServiceEmailSender {
 
         } catch (Exception e) {
             throw new IllegalStateException("Error enviando correo: " + e.getMessage(), e);
+        }
+    }
+
+    public void sendNewTrainingTemplate(String toEmail, String subject, String appName, String employeeName, String trainingTitle, String trainingDescription, String startAt, String location, String modality){
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+
+            helper.setFrom(sender);
+            helper.setTo(toEmail);
+            helper.setSubject(subject != null ? subject : "Se te ha unido a la capacitación");
+
+            String html = loadTemplate("/templates/newtraining.html");
+
+            Map<String, String> vars = new HashMap<>();
+            vars.put("appName", safe(appName));
+            vars.put("employeeName", safe(employeeName));
+            vars.put("trainingTitle", safe(trainingTitle));
+            vars.put("trainingDescription", safe(trainingDescription));
+            vars.put("startAt", safe(startAt));
+            vars.put("location", safe(location));
+            vars.put("modality", safe(modality));
+            vars.put("year", String.valueOf(java.time.Year.now().getValue()));
+
+            html = applyVars(html, vars);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            throw new IllegalStateException("Error enviando correo de capacitación: " + e.getMessage(), e);
         }
     }
 

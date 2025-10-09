@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Se te ha unido a la capacitación</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Preheader (vista previa en el inbox) -->
+    <div style="display:none;max-height:0;overflow:hidden;">
+        Has sido agregado como participante a [[${trainingTitle}]] en [[${appName}]].
+    </div>
+</head>
+<body style="margin:0;padding:0;background:#0D0D0F;font-family:Arial, Helvetica, sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#0D0D0F;font-family:Arial, Helvetica, sans-serif;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <!-- Card -->
+            <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:100%;background:#111214;border-radius:16px;overflow:hidden;border:1px solid #1F2030;">
+
+                <!-- Header (logo + badge) -->
+                <tr>
+                    <td style="padding:18px 22px;background:#111214;border-bottom:1px solid #1F2030;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="left" style="font-size:0;line-height:0;">
+                                    <img alt="RISKOR" width="120" height="120" style="display:block;border:0;" src="https://res.cloudinary.com/dmv1q774l/image/upload/v1758265249/RISKOR_-_Dark_gbbisi.png">
+                                </td>
+                                <td align="right" valign="middle">
+                  <span style="display:inline-block;font-size:12px;letter-spacing:.3px;color:#E7E8FF;background:#1C1D33;border:1px solid #2B2D4A;border-radius:999px;padding:6px 10px;">
+                    [[${modality}]]
+                  </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Hero -->
+                <tr>
+                    <td style="padding:22px 26px;background:linear-gradient(90deg,#101226 0%, #151A3D 100%);">
+                        <h1 style="margin:0;font-size:24px;line-height:30px;color:#FFFFFF;font-weight:700;">
+                            Se te ha unido a la capacitación
+                        </h1>
+                        <p style="margin:8px 0 0 0;font-size:14px;line-height:20px;color:#B9BAC7;">
+                            Hola [[${employeeName}]], has sido agregado como participante a la siguiente capacitación.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Bloque: título y descripción -->
+                <tr>
+                    <td style="padding:18px 26px;background:#0F101C;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#141633;border:1px solid #2B2D4A;border-radius:12px;">
+                            <tr>
+                                <td style="padding:16px 18px;">
+                                    <p style="margin:0 0 6px 0;font-size:12px;color:#9C9DB0;letter-spacing:.2px;">Título</p>
+                                    <p style="margin:0;font-size:16px;line-height:24px;color:#FFFFFF;font-weight:700;">
+                                        [[${trainingTitle}]]
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 18px;border-top:1px solid #2B2D4A;">
+                                    <p style="margin:0 0 6px 0;font-size:12px;color:#9C9DB0;">Descripción</p>
+                                    <p style="margin:0;font-size:15px;line-height:21px;color:#FFFFFF;">
+                                        [[${trainingDescription}]]
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Detalles -->
+                <tr>
+                    <td style="padding:4px 26px 30px 26px;background:#0F101C;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#111226;border:1px solid #262842;border-radius:12px;">
+                            <tr>
+                                <td style="padding:14px 16px;">
+                                    <p style="margin:0 0 4px 0;font-size:12px;color:#9C9DB0;">Fecha y hora de inicio</p>
+                                    <p style="margin:0;font-size:15px;color:#FFFFFF;">[[${startAt}]]</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:14px 16px;border-top:1px solid #262842;">
+                                    <p style="margin:0 0 4px 0;font-size:12px;color:#9C9DB0;">Lugar</p>
+                                    <p style="margin:0;font-size:15px;color:#FFFFFF;">[[${location}]]</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:14px 16px;border-top:1px solid #262842;">
+                                    <p style="margin:0 0 4px 0;font-size:12px;color:#9C9DB0;">Modalidad</p>
+                                    <p style="margin:0;font-size:15px;color:#FFFFFF;">[[${modality}]]</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="padding:24px 26px;background:#0F101C;border-top:1px solid #1F2030;">
+                        <p style="margin:0;font-size:12px;line-height:18px;color:#7E7F92;">
+                            © [[${year}]] RISKOR.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
