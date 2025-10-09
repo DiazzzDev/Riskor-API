@@ -56,6 +56,7 @@ public class EntityAccident {
     @JoinColumn(name = "IDBUSINESS", nullable = false)
     private EntityBusinessInfo idBusiness;
 
-    @Column(name = "SENTBY", length = 125, nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "SENTBY", nullable = false)
     private EntityEmployee sentBy;
 }
