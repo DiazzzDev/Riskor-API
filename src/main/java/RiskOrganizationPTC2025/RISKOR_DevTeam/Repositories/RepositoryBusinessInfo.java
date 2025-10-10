@@ -10,4 +10,6 @@ import java.util.Optional;
 @Repository
 public interface RepositoryBusinessInfo extends JpaRepository<EntityBusinessInfo, String> {
     Optional<EntityBusinessInfo> findById(String idBusiness);
+    boolean existsByNameBusinessIgnoreCase(String nameBusiness);
+    boolean existsByEmailBusinessIgnoreCase(String emailBusiness);
 }

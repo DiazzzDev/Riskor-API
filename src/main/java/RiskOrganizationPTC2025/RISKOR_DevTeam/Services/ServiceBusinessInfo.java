@@ -1,6 +1,7 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityBusinessInfo;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataDuplicate;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryBusinessInfo;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,6 +25,11 @@ public class ServiceBusinessInfo {
 
     public DTOBusinessInfo insertBusinessInfo(@Valid DTOBusinessInfo dtoBI){ //El método pide el DTO para saber que va a enviar a la entidad
         if(dtoBI == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+
+        if (objRepoBI.existsByNameBusinessIgnoreCase(dtoBI.getNameBusiness()))
+            throw new ExceptionDataDuplicate("Datos duplicados en Nombre de la empresa");
+        if (objRepoBI.existsByEmailBusinessIgnoreCase(dtoBI.getEmailBusiness()))
+            throw new ExceptionDataDuplicate("Datos duplicados en Correo");
 
         //Crea un objEntidad donde se convierte el argumento (JSON) a entidad
         EntityBusinessInfo saved = objRepoBI.save(convertToEntity(dtoBI)); //Se crea otro objEntidad donde enviará objEntidad anterior a la db con el Repository
