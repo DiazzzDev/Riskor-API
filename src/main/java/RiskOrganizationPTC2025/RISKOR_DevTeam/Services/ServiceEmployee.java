@@ -51,7 +51,6 @@ public class ServiceEmployee {
 
     private static final String defaultURL = "https://res.cloudinary.com/dmv1q774l/image/upload/v1758774597/DefaultPic_c3wznx.png";
 
-
     //region GETs (Activos, inactivos, por ID, todos)
     @Transactional(readOnly = true)
     //Uso de transactional con readonly true en este método para que la db aplique optimizaciones de lectura

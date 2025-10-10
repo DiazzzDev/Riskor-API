@@ -1,5 +1,7 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,6 +35,8 @@ public class DTOBusinessInfo {
     @Size(min = 6, max = 15, message = "El PBX del negocio debe tener de 6 a 15 carácteres")
     private String pbxBusiness;
 
+    @JsonProperty("NIT")
+    @JsonAlias({"nit","Nit"})
     @NotBlank(message = "El NIT no puede estar vacío.")
     @Pattern(regexp = "^\\d{4}-?\\d{6}-?\\d{3}-?\\d{1}$",
             message = "El NIT debe tener 14 dígitos en el formato XXXX-XXXXXX-XXX-X o 14 dígitos continuos.")
