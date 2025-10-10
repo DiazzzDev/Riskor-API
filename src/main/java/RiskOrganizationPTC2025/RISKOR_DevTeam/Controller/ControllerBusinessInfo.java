@@ -4,6 +4,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataDuplicate;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceBusinessInfo;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.HashMap;
@@ -45,7 +47,20 @@ public class ControllerBusinessInfo {
                     "status", "Negocio registrado correctamente, Success",
                     "data", answer
             ));
-        } catch (Exception e) {
+        } catch (ExceptionDataDuplicate e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "status", "error",
+                    "errorType", "DATA_DUPLICATE",
+                    "message", e.getMessage()
+            ));
+        }catch (ConstraintViolationException e) {
+            //400 de bean validation
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", "Datos inválidos, corrige e intenta de nuevo"
+            ));
+        }catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al registrar el negocio",

@@ -233,6 +233,26 @@ public class ServiceEmployee {
         Page<EntityEmployee> result = objRepoE.findAll(spec, pageable);
         return result.map(this::convertToDTOE);
     }
+
+    @Transactional(readOnly = true)
+    public Page<DTOEmployee> getEmployeesNotInArea(
+            String idBusiness,
+            String idArea,
+            String q,
+            int page,
+            int size
+    ){
+        Pageable pageable = PageRequest.of(page, size, Sort.by("lastName").ascending().and(Sort.by("firstName").ascending()));
+
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.activeInBusiness(idBusiness),   // solo activos de la empresa
+                EmployeeSpecs.notInArea(idBusiness, idArea),  // NO pertenecen a ese idArea
+                EmployeeSpecs.searchQ(q)                      // nombre/dui/correo (opcional)
+        );
+
+        Page<EntityEmployee> data = objRepoE.findAll(spec, pageable);
+        return data.map(this::convertToDTOE);
+    }
     //endregion
 
     //POST Principal al crear un empleado

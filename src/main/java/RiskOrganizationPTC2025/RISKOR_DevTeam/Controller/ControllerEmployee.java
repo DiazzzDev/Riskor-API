@@ -211,6 +211,23 @@ public class ControllerEmployee {
         return ResponseEntity.ok(objServiceE.getTrainingEmployees(idBusiness, idTraining, page, size, employeeInfo));
     }
 
+    @GetMapping("/getEmployees/notInArea/{idArea}")
+    public ResponseEntity<?> searchEmployeesWithoutArea(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idArea,
+            @RequestParam(required = false) String q, //Nombre/dui/correo
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 0 || size <= 0 || size > 50) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status","Parámetros inválidos","message","page >= 0, 1 <= size <= 50"
+            ));
+        }
+        Page<DTOEmployee> out = objServiceE.getEmployeesNotInArea(idBusiness, idArea, q, page, size);
+        return ResponseEntity.ok(out);
+    }
+
     //Método para crear el empleado desde el formulario de EMPLEADOS - Frontend
     @PreAuthorize("hasRole('Administrador')")
     @PostMapping(value = "/postEmployee",

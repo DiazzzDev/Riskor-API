@@ -1,9 +1,6 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec;
 
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployeePosition;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityRoles;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTrainingEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.*;
 
@@ -47,12 +44,10 @@ public final class EmployeeSpecs {
             String uq = q.trim().toUpperCase();
 
             // Nombre completo: CONCAT de 2 en 2
-            Expression<String> fullName =
-                    cb.upper(cb.concat(cb.concat(root.get("firstName"), " "), root.get("lastName")));
+            Expression<String> fullName = cb.upper(cb.concat(cb.concat(root.get("firstName"), " "), root.get("lastName")));
 
             // DUI normalizado (sin guiones) usando función tipada
-            Expression<String> duiNorm =
-                    cb.function("replace", String.class, cb.upper(root.get("dui")), cb.literal("-"), cb.literal(""));
+            Expression<String> duiNorm = cb.function("replace", String.class, cb.upper(root.get("dui")), cb.literal("-"), cb.literal(""));
             String uqDuiNoDash = uq.replace("-", "");
 
             Predicate byFullName = cb.like(fullName, "%" + uq + "%");
@@ -168,6 +163,43 @@ public final class EmployeeSpecs {
                     cb.equal(te.get("idBusiness").get("idBusiness"), root.get("idBusiness").get("idBusiness"))
             );
             return cb.exists(sq); // SÍ pertenece
+        };
+    }
+
+    public static Specification<EntityEmployee> notInAnyArea(String idBusiness) {
+        return (root, query, cb) -> {
+            Subquery<String> sq = query.subquery(String.class);
+            Root<EntityAreaEmployee> ae = sq.from(EntityAreaEmployee.class);
+            sq.select(ae.get("idAreaEmployee"))
+                    .where(
+                            cb.equal(cb.upper(ae.get("idBusiness").get("idBusiness")), idBusiness.toUpperCase()),
+                            cb.equal(ae.get("idEmployee").get("idEmployee"), root.get("idEmployee"))
+                    );
+
+            return cb.and(
+                    cb.equal(cb.upper(root.get("idBusiness").get("idBusiness")), idBusiness.toUpperCase()),
+                    cb.not(cb.exists(sq))
+            );
+        };
+    }
+
+    public static Specification<EntityEmployee> notInArea(String idBusiness, String idArea) {
+        return (root, query, cb) -> {
+            // Subconsulta: existe un vínculo del empleado con ESA área en ESTA empresa
+            Subquery<String> sq = query.subquery(String.class);
+            Root<EntityAreaEmployee> ae = sq.from(EntityAreaEmployee.class);
+            sq.select(ae.get("idAreaEmployee"))
+                    .where(
+                            cb.equal(cb.upper(ae.get("idBusiness").get("idBusiness")), idBusiness.toUpperCase()),
+                            cb.equal(cb.upper(ae.get("idArea").get("idArea")), idArea.toUpperCase()),
+                            cb.equal(ae.get("idEmployee").get("idEmployee"), root.get("idEmployee"))
+                    );
+
+            // “No pertenece a esa área” => NOT EXISTS(subconsulta)
+            return cb.and(
+                    cb.equal(cb.upper(root.get("idBusiness").get("idBusiness")), idBusiness.toUpperCase()),
+                    cb.not(cb.exists(sq))
+            );
         };
     }
 }
