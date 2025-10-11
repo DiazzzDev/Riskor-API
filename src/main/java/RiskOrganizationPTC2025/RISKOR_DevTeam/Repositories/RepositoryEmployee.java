@@ -35,8 +35,7 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
             JOIN FETCH e.username u
             LEFT JOIN FETCH e.idRole r
             JOIN FETCH e.idBusiness b
-        WHERE (UPPER(e.employeeEmail) = UPPER(:login)
-            OR UPPER(u.username)   = UPPER(:login))
+        WHERE (e.employeeEmail = :login OR u.username = :login)
         AND u.status = 'T'
     """)
     Optional<EntityEmployee> findActiveByLogin(String login);
@@ -48,8 +47,7 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
             LEFT JOIN FETCH e.idCommitteeRole  c
             LEFT JOIN FETCH e.idCommitteePosition cp
             JOIN FETCH e.username u
-        WHERE (LOWER(e.employeeEmail) = LOWER(:login)
-            OR LOWER(u.username)      = LOWER(:login))
+        WHERE (e.employeeEmail = :login OR u.username = :login)
         AND u.status = 'T'
     """)
     Optional<EntityEmployee> findMyInfo(@Param("login") String login);
