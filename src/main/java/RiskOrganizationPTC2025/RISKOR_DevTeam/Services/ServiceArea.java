@@ -58,9 +58,10 @@ public class ServiceArea {
 
     //Este post es para un área que se va a crear, NO para agregar empleados a esta área si ya está creada
     //Para realizar un post de muchos empleados a un área ya asignada hay un endpoint en ControllerAreaEmployee
-    public DTOAreaInBusiness postAreaBundle(String idBusiness, DTOAreaBundleRequest req) {
+    public DTOAreaInBusiness postAreaBundle(String idBusiness, DTOAreaBundleRequest req, MultipartFile image) {
+        if (image == null || image.isEmpty()) throw new IllegalArgumentException("El mapa del área es obligatorio");
         //Crear área (Manda a llamar un método para crear un área)
-        DTOArea createdArea = this.postArea(req.getArea(), idBusiness);
+        DTOArea createdArea = this.postArea(req.getArea(), idBusiness, image);
 
         //Crear locaciones en el área
         List<DTOLocation> createdLocations = new ArrayList<>();
@@ -97,12 +98,30 @@ public class ServiceArea {
     }
 
     //Método para subir el área para luego guardar las locaciones y empleados que pertenecen a esa misma
-    public DTOArea postArea(@Valid DTOArea dtoA, String idBusiness) {
+    public DTOArea postArea(@Valid DTOArea dtoA, String idBusiness, MultipartFile image) {
         if(dtoA == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
+        if (image == null || image.isEmpty()) throw new IllegalArgumentException("El mapa del área es obligatorio");
 
-        //Guardamos el área recibida en mi JSON
-        EntityArea saved = objRepoA.save(convertToEA(dtoA, idBusiness.toUpperCase()));
-        return convertToDTOA(saved); //Devolvemos Entidad recien registrada
+        DTOCloudinary up = null;
+        try {
+            // sube a Cloudinary (usa una carpeta por empresa si quieres)
+            String folder = "RISKOR/Areas-Sketches/" + idBusiness.toUpperCase() + "/";
+            up = cloudinary.uploadImage(image, folder);
+
+            // construir entidad usando la URL subida
+            EntityArea area = new EntityArea();
+            area.setAreaName(dtoA.getAreaName());
+            area.setAreaSketch(up.getUrl()); // <- CLAVE: nunca null
+            area.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness));
+
+            EntityArea saved = objRepoA.save(area);
+            return convertToDTOA(saved);
+
+        } catch (IOException io) {
+            throw new RuntimeException("Error de I/O al subir el mapa del área.", io);
+        } catch (RuntimeException ex) {
+            throw ex;
+        }
     }
 
     public DTOArea putArea(@Valid DTOArea dtoA, String idArea, String idBusiness) {

@@ -90,11 +90,19 @@ public class ControllerArea {
             @RequestPart(value = "image") MultipartFile photo
     ) {
         try {
+            if (photo == null || photo.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status","Datos inválidos",
+                        "errorType","VALIDATION_ERROR",
+                        "message","El mapa del área (image) es obligatorio"
+                ));
+            }
+
             DTOAreaBundleRequest dto = mapper.readValue(req, DTOAreaBundleRequest.class);
             // Seguridad: la empresa SIEMPRE viene del request-attribute
             dto.getArea().setIdBusiness(idBusiness);
 
-            DTOAreaInBusiness out = objServiceA.postAreaBundle(idBusiness, dto);
+            DTOAreaInBusiness out = objServiceA.postAreaBundle(idBusiness, dto, photo);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "status", "Área + datos creados correctamente, Success",
                     "data", out
