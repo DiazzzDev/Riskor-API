@@ -6,6 +6,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEPPInventory;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -52,6 +53,19 @@ public class ControllerEPPInventory {
                     "detail", e.getMessage()
             ));
         }
+    }
+
+    @PreAuthorize("hasAnyRole('Administrador','Mantenimiento')")
+    @GetMapping("/search")
+    public ResponseEntity<Page<DTOEPPInventory>> search(
+            @RequestAttribute("auth.business") String idBusiness,
+            @RequestParam(required = false, name = "q") String q,           //Nombre del equipo
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 0 || size <= 0 || size > 50) return ResponseEntity.badRequest().build();
+        Page<DTOEPPInventory> out = objServiceEPPInventory.searchByName(idBusiness, q, page, size);
+        return ResponseEntity.ok(out);
     }
 
     @GetMapping("/getAllEPPInventory")

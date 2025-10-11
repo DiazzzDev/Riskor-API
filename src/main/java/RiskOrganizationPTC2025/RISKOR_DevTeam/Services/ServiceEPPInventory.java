@@ -5,6 +5,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEPPInventory;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTypeEPPControl;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEPPInventory;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEPPInventory;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec.EPPInventorySpecs;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -13,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +36,22 @@ public class ServiceEPPInventory {
     public DTOEPPInventory getEPPInventoryById(String idBusiness, String idEPPInventory) {
         EntityEPPInventory entityEPPInventory = objRepoEPPInventory.findByIdEPPInventoryAndIdBusiness_IdBusiness(idEPPInventory, idBusiness).orElseThrow(() -> new EntityNotFoundException("EPP no encontrado con ID: " + idEPPInventory));
         return convertTOEPPInventoryDTO(entityEPPInventory);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DTOEPPInventory> searchByName(
+            String idBusiness, String q,
+            int page, int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nameEPP").ascending());
+
+        Specification<EntityEPPInventory> spec = Specification.allOf(
+                EPPInventorySpecs.inBusiness(idBusiness),
+                EPPInventorySpecs.nameContains(q)
+        );
+
+        Page<EntityEPPInventory> data = objRepoEPPInventory.findAll(spec, pageable);
+        return data.map(this::convertTOEPPInventoryDTO);
     }
 
     @Transactional(readOnly = true)
