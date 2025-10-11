@@ -4,12 +4,16 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOArea;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOAreaBundleRequest;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOAreaInBusiness;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceArea;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
@@ -27,6 +31,8 @@ import java.util.Map;
 public class ControllerArea {
     @Autowired
     private ServiceArea objServiceA;
+
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getArea/{idArea}")
@@ -75,16 +81,20 @@ public class ControllerArea {
     }
 
     @PreAuthorize("hasRole('Administrador')")
-    @PostMapping("/postAreaBundle")
+    @PostMapping(value = "/postAreaBundle",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postAreaBundle(
             @RequestAttribute("auth.business") String idBusiness,
-            @Valid @RequestBody DTOAreaBundleRequest req
+            @RequestPart("req") String req,
+            @RequestPart(value = "image") MultipartFile photo
     ) {
         try {
+            DTOAreaBundleRequest dto = mapper.readValue(req, DTOAreaBundleRequest.class);
             // Seguridad: la empresa SIEMPRE viene del request-attribute
-            req.getArea().setIdBusiness(idBusiness);
+            dto.getArea().setIdBusiness(idBusiness);
 
-            DTOAreaInBusiness out = objServiceA.postAreaBundle(idBusiness, req);
+            DTOAreaInBusiness out = objServiceA.postAreaBundle(idBusiness, dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "status", "Área + datos creados correctamente, Success",
                     "data", out

@@ -17,6 +17,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -244,10 +245,10 @@ public class ControllerAuth {
                     "data", answer
             ));
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                    "status", "Duplicado",
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("status", "Duplicado");
+            body.put("message", Optional.ofNullable(e.getMessage()).orElse("Datos duplicados"));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
         }
         catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
