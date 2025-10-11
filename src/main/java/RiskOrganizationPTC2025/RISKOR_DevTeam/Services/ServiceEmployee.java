@@ -303,7 +303,7 @@ public class ServiceEmployee {
 
             EntityUser managedUser = objRepoU.save(user);
 
-            // --- 2. Subir la imagen a Cloudinary ---
+            //Subir la imagen a Cloudinary
             if (image != null && !image.isEmpty()) {
                 up = cloudinary.uploadImage(image, "RISKOR/Person-Photo/");
                 dtoE.setPhoto(up.getUrl());
@@ -311,13 +311,13 @@ public class ServiceEmployee {
                 dtoE.setPhoto(defaultURL);
             }
 
-            // --- 3. Guardar la información del empleado ---
+            //Guardar la información del empleado
             EntityEmployee employee = convertToEntityE(dtoE, idBusiness.toUpperCase());
             employee.setUsername(managedUser); // Asignamos el EntityUser gestionado
 
             createdEmployee = objRepoE.save(employee);
 
-            // 4. Devolver el DTO antes de la llamada de correo para que el Controller retorne 201
+            //Devolver el DTO antes de la llamada de correo para que el Controller retorne 201
             DTOEmployee resultDTO = convertToDTOE(createdEmployee);
 
             //Lógica de envío de correo
@@ -412,7 +412,6 @@ public class ServiceEmployee {
             }
             // No hace falta save(); @Transactional hará flush
             return convertToDTOE(employee);
-
         } catch (Exception ex) {
             // Si ya subimos imagen nueva y la transacción falla luego, limpia en Cloudinary
             if (up != null && up.getPublicId() != null) {
@@ -475,7 +474,10 @@ public class ServiceEmployee {
         //SI Entidad es diferente de nulo mostrará su ID, caso contrario mostrará nulo
         dtoE.setIdCommitteePosition(employee.getIdCommitteePosition() != null ? employee.getIdCommitteePosition().getIdComitteP() : null);
         dtoE.setIdCommitteeRole(employee.getIdCommitteeRole() != null ? employee.getIdCommitteeRole().getIdRole() : null);
+
         dtoE.setIdEmployeePosition(employee.getIdEmployeePosition() != null ? employee.getIdEmployeePosition().getIdEmployeePosition() : null);
+        dtoE.setEmployeePosition(employee.getIdEmployeePosition() != null ? employee.getIdEmployeePosition().getEmployeePosition() : null);
+
         dtoE.setIdBusiness(employee.getIdBusiness() != null ? employee.getIdBusiness().getIdBusiness() : null);
         return dtoE;
     }
@@ -585,7 +587,6 @@ public class ServiceEmployee {
     }
 
     private boolean isBlank(String s) { return s == null || s.isBlank(); }
-
     private boolean isDefaultPhoto(String url) {
         return url != null && url.equalsIgnoreCase(defaultURL);
     }

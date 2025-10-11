@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ServiceEmailSender {
@@ -109,6 +111,41 @@ public class ServiceEmailSender {
         mailSender.send(message);
     }
 
+    public void sendPasswordResetCodeTemplate(
+            String toEmail, String subject, String appName, String name,
+            String code,             //el PIN temporal
+            int minutes,             //minutos de vigencia
+            String supportEmail
+    ) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+
+            helper.setFrom(sender);
+            helper.setTo(toEmail);
+            helper.setSubject(subject != null ? subject : "Código de verificación");
+
+            // Cambia el path si usas otro nombre de archivo
+            String html = loadTemplate("/templates/securitypin.html");
+
+            Map<String, String> vars = new HashMap<>();
+            vars.put("appName",      safe(appName));
+            vars.put("name",         safe(name));
+            vars.put("code",         safe(code));
+            vars.put("minutes",      String.valueOf(minutes));
+            vars.put("supportEmail", safe(supportEmail));
+            vars.put("year",         String.valueOf(java.time.Year.now().getValue()));
+
+            html = applyVars(html, vars);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            throw new IllegalStateException("Error enviando correo de verificación: " + e.getMessage(), e);
+        }
+    }
+
     private String loadTemplate(String path) throws Exception {
         try (var in = Objects.requireNonNull(
                 ServiceEmailSender.class.getResourceAsStream(path),
@@ -123,14 +160,14 @@ public class ServiceEmailSender {
         String result = html;
         for (Map.Entry<String, String> e : vars.entrySet()) {
             String key = e.getKey();
-            String val = java.util.regex.Matcher.quoteReplacement(e.getValue());
+            String val = Matcher.quoteReplacement(e.getValue());
 
             //Patrón [[${key}]]
-            String thymeleafLike = "\\[\\[\\$\\{" + java.util.regex.Pattern.quote(key) + "}]]";
+            String thymeleafLike = "\\[\\[\\$\\{" + Pattern.quote(key) + "}]]";
             result = result.replaceAll(thymeleafLike, val);
 
             //Patrón moustache simple: {{key}}
-            String moustache = "\\{\\{" + java.util.regex.Pattern.quote(key) + "}}";
+            String moustache = "\\{\\{" + Pattern.quote(key) + "}}";
             result = result.replaceAll(moustache, val);
         }
         return result;

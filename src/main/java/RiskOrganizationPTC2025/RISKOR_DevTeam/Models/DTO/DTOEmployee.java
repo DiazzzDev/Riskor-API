@@ -91,6 +91,8 @@ public class DTOEmployee {
     @NotBlank
     private String idEmployeePosition;
 
+    private String employeePosition;
+
     //Se agrega para evitar que un atacante modifique el JSON cambiando el ID y modificando registros de otras empresas
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String idBusiness;

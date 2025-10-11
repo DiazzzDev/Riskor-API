@@ -3,6 +3,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOLogin;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceAuth;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmailSender;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilsJWT;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -173,6 +174,48 @@ public class ControllerAuth {
                             "authenticated", false,
                             "message", "Error obteniendo datos de usuario"
                     ));
+        }
+    }
+
+    /**
+     * emailSender.sendPasswordResetCodeTemplate(
+     *     usuario.getEmail(),
+     *     "Verifica tu correo",
+     *     "RISKOR",
+     *     usuario.getFirstName(),
+     *     codigoGenerado,     // p.ej. "384129"
+     *     10,                 // minutos de vigencia
+     *     "soporte@tudominio.com"
+     * );
+     */
+    @Autowired
+    private ServiceEmailSender emailSender;
+
+    @GetMapping("/pin-ga")
+    public ResponseEntity<?> sendResetCode(
+    ) {
+        try{
+            String toEmail = "2017razor2017@gmail.com";
+            String subject  = "Verifica tu correo";
+            String appName  = "RISKOR";
+            String name     = "Usuario Demo";
+            String code     = "384129";
+            int minutes     = 10;
+            String supportEmail = "huasipungo@correo.com";
+
+            emailSender.sendPasswordResetCodeTemplate(
+                    toEmail,
+                    subject,
+                    appName,
+                    name,
+                    code,
+                    minutes,
+                    supportEmail
+            );
+
+            return ResponseEntity.ok(String.format("OK: correo de verificación enviado a %s con código %s (vence en %d min).", toEmail, code, minutes));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("ERROR enviando correo: " + e.getMessage());
         }
     }
 }

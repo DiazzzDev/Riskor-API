@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Verifica tu correo</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Preheader (se ve en la vista previa de Gmail) -->
+    <div style="display:none;max-height:0;overflow:hidden;">
+        Tu código de verificación es [[${code}]] y vence en [[${minutes}]] minutos.
+    </div>
+</head>
+<body style="margin:0;padding:0;background:#0D0D0F;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#0D0D0F;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:100%;background:#111214;border-radius:16px;overflow:hidden;border:1px solid #1F2030;">
+                <!-- Header -->
+                <tr>
+                    <td style="padding:28px 28px 0 28px;background:#111214;">
+                        <img src="https://res.cloudinary.com/dmv1q774l/image/upload/v1758265249/RISKOR_-_Dark_gbbisi.png" width="150" height="150" alt="RISKOR" style="display:block;border:0;">
+                    </td>
+                </tr>
+
+                <!-- Title -->
+                <tr>
+                    <td style="padding:16px 48px 0px 48px;background:#111214;">
+                        <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:36px;color:#FFFFFF;font-weight:700;">
+                            Código de verificación del correo electrónico
+                        </h1>
+                        <p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#B9BAC7;">
+                            Hola [[${name}]], introduce este código en la pantalla de verificación.
+                            Caduca en [[${minutes}]] minutos.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Big Code -->
+                <tr>
+                    <td align="center" style="padding:24px 28px 0 28px;background:#111214;">
+                        <div style="display:inline-block;background:#15162A;border:1px solid #2B2D4A;border-radius:12px;padding:18px 24px;">
+                  <span style="font-family:Consolas,Menlo,Monaco,monospace;font-size:40px;letter-spacing:6px;color:#FFFFFF;font-weight:800;">
+                    [[${code}]]
+                  </span>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Tips -->
+                <tr>
+                    <td style="padding:24px 28px 0 28px;background:#111214;">
+                        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#9C9DB0;">
+                            Si tú no solicitaste este código, ignora este correo. Por seguridad, nunca compartas tu código.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="padding:28px;background:#0F101C;border-top:1px solid #1F2030;">
+                        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#7E7F92;">
+                            © [[${year}]] [[${appName}]].
+                            ¿Necesitas ayuda? Escríbenos a <a href="mailto:[[${supportEmail}]]" style="color:#B8B9FF;text-decoration:none;">[[${supportEmail}]]</a>.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
