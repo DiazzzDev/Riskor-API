@@ -45,7 +45,7 @@ public class ServiceBusinessInfo {
 
         //Repetimos proceso con el empleado, obtenemos el DTOEmployee que contiene el DTORegister
         DTOEmployee dtoEmployee = dto.getEmployee(); //Mandamos a llamar el método para post de empleado
-        dtoEmployee.setIdEmployeePosition(dto.getEmployeePosition().getIdBusiness()); //Asignamos el id del cargo recien creado (Para crear más deberá ir a config/Mi empresa)
+        dtoEmployee.setIdEmployeePosition(dto.getEmployeePosition().getIdEmployeePosition()); //Asignamos el id del cargo recién creado (Para crear más deberá ir a config/Mi empresa)
         dto.setEmployee(objServiceE.postEmployee(dtoEmployee, dto.getBusiness().getIdBusiness(), null, true)); //Asignamos TRUE para que sea administrador al momento de crear el usuario
 
         return dto; //Se devolverá el primer usuario y empresa registrados

@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //Permite los preflight requests
                         //Preflights: Navegador pregunta al servidor sobre los métodos y cabeceras permitidos, indicando si la solicitud es segura
-                        .requestMatchers(HttpMethod.POST,"/api/auth/login", "/api/businessInfo/postBusinessInfo").permitAll() //Esto es para que a este endpoint acceda cualquiera
+                        .requestMatchers(HttpMethod.POST,"/api/auth/login", "/api/auth/register").permitAll() //Esto es para que a este endpoint acceda cualquiera
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/me").authenticated() // Este endpoint es para ver la info del usuario logeado
                         .anyRequest().authenticated()
