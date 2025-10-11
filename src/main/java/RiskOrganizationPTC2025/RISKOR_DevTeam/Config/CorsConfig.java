@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
-public class CorsConfig {
+public class    CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -23,6 +23,7 @@ public class CorsConfig {
         //Orígenes desde donde se pueden hacer solicitudes
         config.addAllowedOrigin("http://127.0.0.1:5501");
         config.addAllowedOrigin("http://127.0.0.1:5502");
+        config.addAllowedOrigin("http://127.0.0.2:5501");
         config.addAllowedOrigin("https://sistemaweb-beta.vercel.app/"); //Dominio web definido por vercel
         config.addAllowedOrigin("https://riskor.app"); //Dominio web
         config.addAllowedOrigin("https://localhost");
@@ -61,6 +62,7 @@ public class CorsConfig {
         //Orígenes desde donde se pueden hacer solicitudes
         configuration.addAllowedOrigin("http://127.0.0.1:5501");
         configuration.addAllowedOrigin("http://127.0.0.1:5502");
+        configuration.addAllowedOrigin("http://127.0.0.2:5501");
         configuration.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
         configuration.addAllowedOrigin("https://sistemaweb-beta.vercel.app/");
         configuration.addAllowedOrigin("https://riskor.app");

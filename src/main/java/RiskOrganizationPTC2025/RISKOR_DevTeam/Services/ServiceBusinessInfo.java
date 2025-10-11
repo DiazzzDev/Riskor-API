@@ -4,6 +4,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataDuplicate;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployeePosition;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegister;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryBusinessInfo;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,6 +23,9 @@ public class ServiceBusinessInfo {
     @Autowired
     private ServiceEmployee objServiceE;
 
+    @Autowired
+    private ServiceEmployeePosition objServiceEP;
+
     @Transactional(readOnly = true)
     public DTOBusinessInfo getBusinessById(String idBusiness) {
         EntityBusinessInfo information = objRepoBI.findById(idBusiness).orElseThrow(() -> new IllegalArgumentException("No se encontró la empresa"));
@@ -35,8 +39,13 @@ public class ServiceBusinessInfo {
         DTOBusinessInfo dtoBusinessInfo = dto.getBusiness();
         dto.setBusiness(insertBusinessInfo(dtoBusinessInfo)); //Mandamos a llamar el método que insertará la empresa
 
+        //Creamos un DTOEmployeePosition para mandarlo al service de EmployeePosition y registrar el cargo, así obtenemos el id del cargo para registrar al empleado
+        DTOEmployeePosition employeePosition = dto.getEmployeePosition();
+        dto.setEmployeePosition(objServiceEP.postEmployeePosition(employeePosition, dto.getBusiness().getIdBusiness())); //Registramos el cargo a la empresa recién creada
+
         //Repetimos proceso con el empleado, obtenemos el DTOEmployee que contiene el DTORegister
         DTOEmployee dtoEmployee = dto.getEmployee(); //Mandamos a llamar el método para post de empleado
+        dtoEmployee.setIdEmployeePosition(dto.getEmployeePosition().getIdBusiness()); //Asignamos el id del cargo recien creado (Para crear más deberá ir a config/Mi empresa)
         dto.setEmployee(objServiceE.postEmployee(dtoEmployee, dto.getBusiness().getIdBusiness(), null, true)); //Asignamos TRUE para que sea administrador al momento de crear el usuario
 
         return dto; //Se devolverá el primer usuario y empresa registrados

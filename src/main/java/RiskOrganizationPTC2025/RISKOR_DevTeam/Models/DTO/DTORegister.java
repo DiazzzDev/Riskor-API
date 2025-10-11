@@ -12,4 +12,7 @@ public class DTORegister {
 
     @Valid
     private DTOEmployee employee;
+
+    @Valid
+    private DTOEmployeePosition employeePosition; //Con esta propiedad se creará el cargo laboral para registrar el primer empleado
 }

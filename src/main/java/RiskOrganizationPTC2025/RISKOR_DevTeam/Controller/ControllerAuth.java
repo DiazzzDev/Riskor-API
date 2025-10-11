@@ -1,7 +1,6 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOLogin;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegister;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceAuth;
