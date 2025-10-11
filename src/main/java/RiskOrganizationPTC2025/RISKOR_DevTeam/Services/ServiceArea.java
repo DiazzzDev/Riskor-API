@@ -1,10 +1,10 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityArea;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityBusinessInfo;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOArea;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOCloudinary;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryArea;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryAreaEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryLocation;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -17,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 @Transactional
@@ -24,11 +27,21 @@ public class ServiceArea {
     @Autowired
     private RepositoryArea objRepoA;
 
+    @Autowired
+    private RepositoryLocation objRepoL;
+
     @PersistenceContext //Anotación que permite usar EntityManager
     private EntityManager em; //Invocamos a EntityManager para la persistencia de datos, haciendo referencia a businessInfo sin cargar todo desde la db
 
     @Autowired
     private ServiceCloudinary cloudinary;
+
+    //Clase e interfaz inyectadas para el POST de área/locación-area/empleados-area
+    @Autowired
+    private ServiceEmployee objServiceE; //Para devolver el DTOEmployee
+
+    @Autowired
+    private RepositoryAreaEmployee objRepoAE;
 
     @Transactional(readOnly = true)
     public DTOArea getAreaById(String idBusiness, String idArea) {
@@ -43,11 +56,53 @@ public class ServiceArea {
         return permissionPage.map(this::convertToDTOA);
     }
 
+    //Este post es para un área que se va a crear, NO para agregar empleados a esta área si ya está creada
+    //Para realizar un post de muchos empleados a un área ya asignada hay un endpoint en ControllerAreaEmployee
+    public DTOAreaInBusiness postAreaBundle(String idBusiness, DTOAreaBundleRequest req) {
+        //Crear área (Manda a llamar un método para crear un área)
+        DTOArea createdArea = this.postArea(req.getArea(), idBusiness);
+
+        //Crear locaciones en el área
+        List<DTOLocation> createdLocations = new ArrayList<>();
+        //Si el JSON no viene nulo ni vació en las locaciones...
+        if (req.getLocations() != null && !req.getLocations().isEmpty()) {
+            //Por cada locación de tipo DTOLocationCreate en el JSON recibido..
+            for (DTOLocationCreate lc : req.getLocations()) {
+                //Vamos a guardar la locación agregando el id del área recién creada con el nombre enviado
+                EntityLocation entity = toEntityLocation(idBusiness, createdArea.getIdArea(), lc);
+                EntityLocation saved = objRepoL.save(entity);
+
+                //Se hace map a DTOLocation y se guardan en la lista creada
+                DTOLocation dtoOut = new DTOLocation();
+                dtoOut.setIdLocation(saved.getIdLocation());
+                dtoOut.setLocationName(saved.getLocationName());
+                dtoOut.setIdArea(createdArea.getIdArea());
+                dtoOut.setIdBusiness(idBusiness);
+                createdLocations.add(dtoOut);
+            }
+        }
+
+        //Asignar empleados al área
+        List<DTOEmployee> assigned = Collections.emptyList();
+        if (req.getEmployeeIds() != null && !req.getEmployeeIds().isEmpty()) {
+            assigned = assignEmployeesToArea(idBusiness, createdArea.getIdArea(), req.getEmployeeIds());
+        }
+
+        //Armar respuesta final: El área registrada con todas las locaciones hechas en el post y todos los empleados enviados
+        DTOAreaInBusiness out = new DTOAreaInBusiness();
+        out.setArea(createdArea);
+        out.setLocationsInArea(createdLocations);
+        out.setEmployeesOnArea(assigned);
+        return out;
+    }
+
+    //Método para subir el área para luego guardar las locaciones y empleados que pertenecen a esa misma
     public DTOArea postArea(@Valid DTOArea dtoA, String idBusiness) {
         if(dtoA == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
+        //Guardamos el área recibida en mi JSON
         EntityArea saved = objRepoA.save(convertToEA(dtoA, idBusiness.toUpperCase()));
-        return convertToDTOA(saved);
+        return convertToDTOA(saved); //Devolvemos Entidad recien registrada
     }
 
     public DTOArea putArea(@Valid DTOArea dtoA, String idArea, String idBusiness) {
@@ -88,6 +143,47 @@ public class ServiceArea {
         area.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness));
 
         return area;
+    }
+
+    //Método que permite registar locaciones en un área en específico (Usada en el POST masivo)
+    private EntityLocation toEntityLocation(String idBusiness, String idArea, DTOLocationCreate dto) {
+        EntityLocation loc = new EntityLocation();
+        loc.setLocationName(dto.getLocationName());
+        loc.setIdArea(em.getReference(EntityArea.class, idArea));
+        loc.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness));
+        return loc;
+    }
+
+    private List<DTOEmployee> assignEmployeesToArea(String idBusiness, String idArea, List<String> employeeIds) {
+        //Llamamos las entidades de empresa y área con las cargas perezosas, haciendo referencia a la clase con su ID
+        EntityArea areaRef = em.getReference(EntityArea.class, idArea);
+        EntityBusinessInfo bizRef = em.getReference(EntityBusinessInfo.class, idBusiness);
+
+        if (employeeIds != null) {
+            for (String empId : employeeIds) {
+                if (empId == null || empId.isBlank()) continue;
+
+                // Evita duplicado (mismo área + mismo empleado + misma empresa)
+                boolean exists = objRepoAE.existsByIdArea_IdAreaAndIdEmployee_IdEmployeeAndIdBusiness_IdBusiness(
+                        idArea, empId, idBusiness);
+                if (!exists) {
+                    EntityAreaEmployee link = new EntityAreaEmployee();
+                    link.setIdArea(areaRef);
+                    link.setIdEmployee(em.getReference(EntityEmployee.class, empId));
+                    link.setIdBusiness(bizRef);
+                    objRepoAE.save(link);
+                }
+            }
+        }
+
+        //Lista completa de empleados asignados al área (útil para el front)
+        List<EntityAreaEmployee> links = objRepoAE.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, idBusiness);
+        List<DTOEmployee> out = new ArrayList<>();
+        for (EntityAreaEmployee link : links) {
+            String empId = link.getIdEmployee().getIdEmployee();
+            out.add(objServiceE.getEmployeeById(empId, idBusiness));
+        }
+        return out;
     }
 
     //CRUD DEL MAPA

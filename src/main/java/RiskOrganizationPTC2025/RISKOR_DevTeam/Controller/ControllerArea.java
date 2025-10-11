@@ -2,6 +2,8 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOArea;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOAreaBundleRequest;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOAreaInBusiness;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceArea;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -73,6 +75,37 @@ public class ControllerArea {
     }
 
     @PreAuthorize("hasRole('Administrador')")
+    @PostMapping("/postAreaBundle")
+    public ResponseEntity<?> postAreaBundle(
+            @RequestAttribute("auth.business") String idBusiness,
+            @Valid @RequestBody DTOAreaBundleRequest req
+    ) {
+        try {
+            // Seguridad: la empresa SIEMPRE viene del request-attribute
+            req.getArea().setIdBusiness(idBusiness);
+
+            DTOAreaInBusiness out = objServiceA.postAreaBundle(idBusiness, req);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "status", "Área + datos creados correctamente, Success",
+                    "data", out
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al registrar el bundle de área",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    /*
+    @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postArea") //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP
     public ResponseEntity<?> postArea(
             @RequestAttribute("auth.business") String idBusiness,
@@ -100,6 +133,8 @@ public class ControllerArea {
             ));
         }
     }
+
+     */
 
     @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/{idArea}/sketch/upload")

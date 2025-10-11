@@ -11,9 +11,14 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,7 +37,7 @@ public class ServiceAreaEmployee {
         return areaEmployees.stream().map(this::convertToDTOAE).collect(Collectors.toList());
     }
 
-    //POST - Método para registrar empleados en un área
+    //POST - Método para registrar UN EMPLEADO en un área
     public DTOAreaEmployee postAreaEmployee(@Valid DTOAreaEmployee dtoAE, String idBusiness){
         //Validaciones
         if (dtoAE == null) throw new IllegalArgumentException("No pueden haber campos vacios");
@@ -45,6 +50,43 @@ public class ServiceAreaEmployee {
 
         EntityAreaEmployee saved = objRepoAE.save(convertToEAE(dtoAE, idBusiness)); //Guardamos el empleado en el área
         return convertToDTOAE(saved); //Convertimos el área a DTO para mostrar en la respuesta los datos insertados
+    }
+
+    //POST para MUCHOS EMPLEADOS en un área ya existente
+    public List<DTOAreaEmployee> assignEmployeesOnArea(String idBusiness, String idArea, List<String> employeeIds) {
+        if (idArea == null || idArea.isBlank()) throw new IllegalArgumentException("idArea es obligatorio");
+        if (employeeIds == null || employeeIds.isEmpty()) return List.of();
+
+        EntityArea areaRef = em.getReference(EntityArea.class, idArea);
+        EntityBusinessInfo bizRef = em.getReference(EntityBusinessInfo.class, idBusiness.toUpperCase());
+
+        // Deduplicar entradas nulas/repetidas
+        Set<String> uniqueEmpIds = new LinkedHashSet<>();
+        for (String idEmp : employeeIds) {
+            if (idEmp != null && !idEmp.isBlank()) uniqueEmpIds.add(idEmp);
+        }
+
+        List<DTOAreaEmployee> out = new ArrayList<>(uniqueEmpIds.size());
+        for (String idEmp : uniqueEmpIds) {
+            //Evitar duplicado lógico
+            boolean exists = objRepoAE.existsByIdArea_IdAreaAndIdEmployee_IdEmployeeAndIdBusiness_IdBusiness(idArea, idEmp, idBusiness.toUpperCase());
+            if (exists) continue;
+
+            // Construir y guardar vínculo
+            EntityAreaEmployee link = new EntityAreaEmployee();
+            link.setIdArea(areaRef);
+            link.setIdEmployee(em.getReference(EntityEmployee.class, idEmp));
+            link.setIdBusiness(bizRef);
+
+            try {
+                EntityAreaEmployee saved = objRepoAE.save(link);
+                out.add(convertToDTOAE(saved));
+            } catch (DataIntegrityViolationException dup) {
+                //Si otro hilo insertó el mismo par (área, empleado, empresa) entre el exists y el save
+                //lo ignoramos silenciosamente (ya está asignado)
+            }
+        }
+        return out;
     }
 
     //PUT - Método para modificar el registro de un empleado dentro de un área

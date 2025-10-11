@@ -58,6 +58,20 @@ public class ControllerAreaEmployee {
         }
     }
 
+    //Para agregar muchos empleados a un área ya existente
+    @PreAuthorize("hasRole('Administrador')")
+    @PostMapping("/post/{idArea}")
+    public ResponseEntity<?> assignBulk(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idArea,
+            @RequestBody List<String> employeeIds) {
+
+        List<DTOAreaEmployee> out = objServiceAE.assignEmployeesOnArea(idBusiness, idArea, employeeIds);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "status", "Asignaciones completadas", "data", out
+        ));
+    }
+
     @PutMapping("/{idAreaEmployee}")
     public ResponseEntity<?> putAreaEmployee(
             @RequestAttribute("auth.business") String idBusiness,

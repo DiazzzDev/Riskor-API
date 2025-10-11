@@ -15,4 +15,6 @@ public interface RepositoryAreaEmployee extends JpaRepository<EntityAreaEmployee
 
     // (opcional) evitar duplicados: mismo empleado asignado a misma área en la misma empresa
     boolean existsByIdArea_IdAreaAndIdEmployee_IdEmployeeAndIdBusiness_IdBusiness(String idArea, String idEmployee, String idBusiness);
+
+    List<EntityAreaEmployee> findByIdArea_IdAreaAndIdBusiness_IdBusiness(String idArea, String idBusiness);
 }
