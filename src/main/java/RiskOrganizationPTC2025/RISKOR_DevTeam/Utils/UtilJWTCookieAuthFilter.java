@@ -115,7 +115,7 @@ public class UtilJWTCookieAuthFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         if ("OPTIONS".equalsIgnoreCase(method)) return true;
         if ("/api/auth/login".equals(p) && "POST".equalsIgnoreCase(method)) return true;
-        if ("/api/businessInfo/postBusinessInfo".equals(p) && "POST".equalsIgnoreCase(method)) return true;
+        if ("/api/auth/register".equals(p) && "POST".equalsIgnoreCase(method)) return true;
         return false;
     }
 }
