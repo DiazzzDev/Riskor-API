@@ -211,6 +211,22 @@ public class ControllerEmployee {
         return ResponseEntity.ok(objServiceE.getTrainingEmployees(idBusiness, idTraining, page, size, employeeInfo));
     }
 
+    @PreAuthorize("hasRole('Administrador')")
+    @GetMapping("/getEmployees/inArea/{idArea}")
+    public ResponseEntity<Page<DTOEmployee>> getEmployeesInArea(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idArea,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false, name = "q") String q
+    ){
+        if (page < 0 || size <= 0 || size > 50) {
+            return ResponseEntity.badRequest().build();
+        }
+        Page<DTOEmployee> out = objServiceE.getEmployeesInArea(idBusiness, idArea, q, page, size);
+        return ResponseEntity.ok(out);
+    }
+
     @GetMapping("/getEmployees/notInArea/{idArea}")
     public ResponseEntity<?> searchEmployeesWithoutArea(
             @RequestAttribute("auth.business") String idBusiness,

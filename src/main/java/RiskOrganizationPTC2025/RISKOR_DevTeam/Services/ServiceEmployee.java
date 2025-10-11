@@ -235,12 +235,25 @@ public class ServiceEmployee {
     }
 
     @Transactional(readOnly = true)
+    public Page<DTOEmployee> getEmployeesInArea(
+            String idBusiness, String idArea, String q, int page, int size
+    ){
+        Pageable pageable = PageRequest.of(page, size, Sort.by("lastName").ascending().and(Sort.by("firstName").ascending()));
+
+        Specification<EntityEmployee> spec = Specification.allOf(
+                EmployeeSpecs.activeInBusiness(idBusiness),
+                EmployeeSpecs.inArea(idBusiness, idArea),
+                EmployeeSpecs.searchQ(q)
+        );
+
+        Page<EntityEmployee> data = objRepoE.findAll(spec, pageable);
+        return data.map(this::convertToDTOE);
+    }
+
+    @Transactional(readOnly = true)
     public Page<DTOEmployee> getEmployeesNotInArea(
-            String idBusiness,
-            String idArea,
-            String q,
-            int page,
-            int size
+            String idBusiness, String idArea, String q,
+            int page, int size
     ){
         Pageable pageable = PageRequest.of(page, size, Sort.by("lastName").ascending().and(Sort.by("firstName").ascending()));
 

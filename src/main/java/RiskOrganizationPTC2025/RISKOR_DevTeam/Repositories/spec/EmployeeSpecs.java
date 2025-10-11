@@ -183,6 +183,23 @@ public final class EmployeeSpecs {
         };
     }
 
+    public static Specification<EntityEmployee> inArea(String idBusiness, String idArea) {
+        return (Root<EntityEmployee> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            if (idArea == null || idArea.isBlank())
+                return cb.conjunction();
+
+            Subquery<Integer> sq = query.subquery(Integer.class);
+            Root<EntityAreaEmployee> ae = sq.from(EntityAreaEmployee.class);
+            sq.select(cb.literal(1));
+            sq.where(
+                    cb.equal(ae.get("idBusiness").get("idBusiness"), idBusiness.toUpperCase()),
+                    cb.equal(ae.get("idArea").get("idArea"), idArea),
+                    cb.equal(ae.get("idEmployee").get("idEmployee"), root.get("idEmployee"))
+            );
+            return cb.exists(sq);
+        };
+    }
+
     public static Specification<EntityEmployee> notInArea(String idBusiness, String idArea) {
         return (root, query, cb) -> {
             // Subconsulta: existe un vínculo del empleado con ESA área en ESTA empresa
