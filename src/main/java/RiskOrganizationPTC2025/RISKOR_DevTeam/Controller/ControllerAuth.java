@@ -1,8 +1,11 @@
 package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOLogin;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegister;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceAuth;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmailSender;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilsJWT;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,12 +25,17 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth")
 public class ControllerAuth {
-    //Iniciamos inyectando el service
+    //Iniciamos inyectando el service -> Manejar login
     @Autowired
     private ServiceAuth objServiceA;
-    //Inyectamos el JWT
+
+    //Inyectamos el JWT -> Creación del token
     @Autowired
     private UtilsJWT objUtilJWT;
+
+    //Inyectamos el service de tbEmployee para la creación del primer usuario y empresa
+    @Autowired
+    private ServiceBusinessInfo objServiceBI;
 
     //Método POST que crea la sesión al usuario, otorgandole acceso a los recursos
     @PostMapping("/login")
@@ -216,6 +224,38 @@ public class ControllerAuth {
             return ResponseEntity.ok(String.format("OK: correo de verificación enviado a %s con código %s (vence en %d min).", toEmail, code, minutes));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("ERROR enviando correo: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(
+            @Valid @RequestBody DTORegister dtoRegister
+            ){
+        try {
+            DTORegister answer = objServiceBI.postRegister(dtoRegister);
+            if (answer == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Error al guardar los datos",
+                        "errorType", "VALIDATION_ERROR",
+                        "message", "Datos inválidos, vuelva a intentarlo"
+                ));
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "status", "Empleado creado correctamente, Success",
+                    "data", answer
+            ));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "status", "Duplicado",
+                    "message", e.getMessage()
+            ));
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al registrar el empleado",
+                    "detail", e.getMessage()
+            ));
         }
     }
 }

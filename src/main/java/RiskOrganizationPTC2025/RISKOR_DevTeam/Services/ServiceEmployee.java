@@ -3,6 +3,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryRoles;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryUser;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec.EmployeeSpecs;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilPasswordGenerator;
@@ -48,6 +49,9 @@ public class ServiceEmployee {
     //Inyección de PasswordEncoder para usar argon2id en encriptación
     @Autowired
     private PasswordEncoder argon2id;
+
+    @Autowired
+    private RepositoryRoles objRepoR;
 
     private static final String defaultURL = "https://res.cloudinary.com/dmv1q774l/image/upload/v1758774597/DefaultPic_c3wznx.png";
 
@@ -272,7 +276,7 @@ public class ServiceEmployee {
     //Haremos uso de transactional con rollback en caso de que un error suceda y no quede un USUARIO FLOTANTE
     //POST Principal al crear un empleado
     @Transactional(rollbackFor = Exception.class)
-    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image) {
+    public DTOEmployee postEmployee(@Valid DTOEmployee dtoE, String idBusiness, MultipartFile image, boolean isRegister) {
         if (dtoE == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 
         //Verificaciones de unicidad
@@ -312,7 +316,7 @@ public class ServiceEmployee {
             }
 
             //Guardar la información del empleado
-            EntityEmployee employee = convertToEntityE(dtoE, idBusiness.toUpperCase());
+            EntityEmployee employee = convertToEntityE(dtoE, idBusiness.toUpperCase(), isRegister);
             employee.setUsername(managedUser); // Asignamos el EntityUser gestionado
 
             createdEmployee = objRepoE.save(employee);
@@ -482,7 +486,7 @@ public class ServiceEmployee {
         return dtoE;
     }
 
-    private EntityEmployee convertToEntityE(DTOEmployee dtoEmployee, String idBusiness) {
+    private EntityEmployee convertToEntityE(DTOEmployee dtoEmployee, String idBusiness, boolean isRegister) {
         EntityEmployee employee = new EntityEmployee();
 
         //Asignación directa de campos
@@ -520,7 +524,12 @@ public class ServiceEmployee {
         }
 
         if (dtoEmployee.getIdRole() != null) {
-            employee.setIdRole(em.getReference(EntityRoles.class, dtoEmployee.getIdRole()));
+            if(isRegister){
+                String roleId = objRepoR.findAdministratorId().orElseThrow(() -> new EntityNotFoundException("El rol 'ADMINISTRADOR' no fue encontrado en la base de datos."));
+                employee.setIdRole(em.getReference(EntityRoles.class, roleId));
+            }else{
+                employee.setIdRole(em.getReference(EntityRoles.class, dtoEmployee.getIdRole()));
+            }
         }
 
         //Por defecto el empleado no va a pertenecer al comité de salud y seguridad ocupacional

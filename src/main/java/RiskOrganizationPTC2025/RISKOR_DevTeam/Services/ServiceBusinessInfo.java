@@ -3,6 +3,8 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataDuplicate;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOBusinessInfo;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegister;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryBusinessInfo;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -17,12 +19,30 @@ public class ServiceBusinessInfo {
     @Autowired
     private RepositoryBusinessInfo objRepoBI;
 
+    @Autowired
+    private ServiceEmployee objServiceE;
+
     @Transactional(readOnly = true)
     public DTOBusinessInfo getBusinessById(String idBusiness) {
         EntityBusinessInfo information = objRepoBI.findById(idBusiness).orElseThrow(() -> new IllegalArgumentException("No se encontró la empresa"));
         return convertToDTO(information);
     }
 
+    //Como trabaja con varias tablas, si en una algo sale mal elimina lo realizado para evtar registros flotantes
+    @Transactional(rollbackFor = Exception.class)
+    public DTORegister postRegister(@Valid DTORegister dto){
+        //Creamos un dto de Empresa donde guardamos el que contiene el DTORegister, para utilizar insertBusinessInfo() en el registro de la empresa
+        DTOBusinessInfo dtoBusinessInfo = dto.getBusiness();
+        dto.setBusiness(insertBusinessInfo(dtoBusinessInfo)); //Mandamos a llamar el método que insertará la empresa
+
+        //Repetimos proceso con el empleado, obtenemos el DTOEmployee que contiene el DTORegister
+        DTOEmployee dtoEmployee = dto.getEmployee(); //Mandamos a llamar el método para post de empleado
+        dto.setEmployee(objServiceE.postEmployee(dtoEmployee, dto.getBusiness().getIdBusiness(), null, true)); //Asignamos TRUE para que sea administrador al momento de crear el usuario
+
+        return dto; //Se devolverá el primer usuario y empresa registrados
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public DTOBusinessInfo insertBusinessInfo(@Valid DTOBusinessInfo dtoBI){ //El método pide el DTO para saber que va a enviar a la entidad
         if(dtoBI == null) throw new IllegalArgumentException("No pueden haber campos vacíos");
 

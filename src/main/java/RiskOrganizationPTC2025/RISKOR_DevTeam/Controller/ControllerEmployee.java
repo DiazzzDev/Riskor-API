@@ -257,7 +257,7 @@ public class ControllerEmployee {
         try {
             DTOEmployee dto = mapper.readValue(dtoE, DTOEmployee.class);
             dto.setIdBusiness(idBusiness);
-            DTOEmployee answer = objServiceE.postEmployee(dto, idBusiness, photo);
+            DTOEmployee answer = objServiceE.postEmployee(dto, idBusiness, photo, false);
             if (answer == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", "Error al guardar los datos",
