@@ -6,6 +6,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegister;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceAuth;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceBusinessInfo;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmailSender;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilPasswordGenerator;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Utils.UtilsJWT;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -17,7 +18,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,6 +37,20 @@ public class ControllerAuth {
     //Inyectamos el service de tbEmployee para la creación del primer usuario y empresa
     @Autowired
     private ServiceBusinessInfo objServiceBI;
+
+    //Inyectamos el service de envío de correo
+    @Autowired
+    private ServiceEmailSender emailSender;
+
+    //UTILIDAD de generación de PIN
+    @Autowired
+    private UtilPasswordGenerator utilPasswordGenerator;
+
+    //DTOS SIMPLES DENTRO DE ESTA CLASE, explicación CLARA:
+    /* Estos DTOs internos simplifican la comunicación entre frontend y backend
+    permitiendo recibir de forma estructurada los datos del envío y verificación del PIN */
+    public static class DTOSendPinRequest { public String email; public Integer minutes; }
+    public static class DTOVerifyPinRequest { public String email; public String pin; }
 
     //Método POST que crea la sesión al usuario, otorgandole acceso a los recursos
     @PostMapping("/login")
@@ -58,68 +73,6 @@ public class ControllerAuth {
         clearCookie(response);
         //Devolvemos un 204, de que el cierre de sesión fue realizado correctamente
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     *  IMPORTANTE:
-     *  La razón por la que hay métodos que no son endpoints dentro del controller y no el service es por el parámetro HttpServletResponse
-     *  ya que pertenecen al ciclo de vida del request/response (se menciona por el método de abajo) y si se coloca en el service se pierde
-     *  el principio de separación de capas
-     */
-    private void addTokenCookie(HttpServletResponse response, String email) {
-        objServiceA.getEmployeeByCredentials(email).ifPresent(employee -> {
-            //Del empleado obtiene el nombre de su ROL dentro de la aplicación para manejar su acceso y guardarlo en la cookie
-            //Obtiene el ID business para evitar que el usuario realice acciones en una empresa que no corresponde
-            String token = objUtilJWT.create(
-                    employee.getIdEmployee(),
-                    employee.getEmployeeEmail(),
-                    employee.getIdRole().getRoleName(),
-                    employee.getIdBusiness().getIdBusiness()
-            );
-
-            //Usamos long porque eso devuelve el método, luego será convertido a int
-            //Porque lo necesitamos entero para la creación de la cookie
-            long maxAgeSeconds = objUtilJWT.getExpiracionSeconds();
-
-            //Crear la cookie como un String formateado
-            String cookieValue = String.format(
-                    "authToken=%s; " +
-                            "Path=/; " + //Se aplica para toda la API esta cookie creada
-                            "HttpOnly; " + //Protege la cookie de accesos JavaScript
-                            "Secure; " + //Asegura la cookie cuando el API está en HTTPS (desarrollo debe ser TRUE solo en producción)
-                            "SameSite=None; " + //Desde otro dominio (Ejemplo vercel)
-                            "Max-Age=%d; " + //Duración de la cookie en segundos
-                            "Domain=riskor-370e22badbf5.herokuapp.com", // Asegura que la cookie sea válida solo para el dominio
-                    token, maxAgeSeconds
-            );
-
-            //Agregar la cookie a la respuesta de la cabecera HTTP
-            response.addHeader("Set-Cookie", cookieValue);
-            response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
-        });
-    }
-
-    /**
-     *  IMPORTANTE:
-     *  La razón por la que hay métodos que no son endpoints dentro del controller y no el service es por el parámetro HttpServletResponse
-     *  ya que pertenecen al ciclo de vida del request/response (se menciona por el método de abajo) y si se coloca en el service se pierde
-     *  el principio de separación de capas
-     */
-    private void clearCookie(HttpServletResponse response) {
-        //Creamos la cookie con el mismo nombre y dominio que la cookie original
-        String cookieValue = String.format(
-                "authToken=; " +             //Valor vacío para eliminar
-                        "Path=/; " +
-                        "HttpOnly; " +
-                        "Secure; " +
-                        "SameSite=None; " +
-                        "Max-Age=0; " +              //Expiración inmediata
-                        "Domain=riskor-370e22badbf5.herokuapp.com" // Mismo dominio que la cookie original
-        );
-
-        //Agregamos la cabecera para eliminar la cookie
-        response.addHeader("Set-Cookie", cookieValue);
-        response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
     }
 
     //Endpoint ME, encargado de realizar GET a variables de entorno de usuario en principio de Login
@@ -185,52 +138,82 @@ public class ControllerAuth {
         }
     }
 
-    /**
-     * emailSender.sendPasswordResetCodeTemplate(
-     *     usuario.getEmail(),
-     *     "Verifica tu correo",
-     *     "RISKOR",
-     *     usuario.getFirstName(),
-     *     codigoGenerado,     // p.ej. "384129"
-     *     10,                 // minutos de vigencia
-     *     "soporte@tudominio.com"
-     * );
-     */
-    @Autowired
-    private ServiceEmailSender emailSender;
+    //ENDPOINT para enviar el PIN
+    @PostMapping("/pin-send")
+    public ResponseEntity<?> sendResetCode(@RequestBody DTOSendPinRequest req) {
+        if (req == null || req.email == null || req.email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("status","fail","message","Email requerido"));
+        }
+        String email = req.email.trim().toLowerCase(Locale.ROOT);
 
-    @GetMapping("/pin-ga")
-    public ResponseEntity<?> sendResetCode(
-    ) {
-        try{
-            String toEmail = "2017razor2017@gmail.com";
+        //Verificar existencia con el endpoint
+        Optional<EntityEmployee> empOpt = objServiceA.getEmployeeByCredentials(email);
+        if (empOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status","fail","message","Email no encontrado"));
+        }
+
+        try {
+            //Creamos el PIN usando la util (NO envía correo)
+            String pin = utilPasswordGenerator.createPin(email, req.minutes);
+
+            //Variables de correo
+            String toEmail = email;
             String subject  = "Verifica tu correo";
             String appName  = "RISKOR";
-            String name     = "Usuario Demo";
-            String code     = "384129";
-            int minutes     = 10;
-            String supportEmail = "huasipungo@correo.com";
+            String code     = pin;
+            int minutes     = (req.minutes != null && req.minutes > 0) ? req.minutes : 10;
+            String supportEmail = "riskor.team@correo.com";
 
+            //Enviamos con el ServiceEmailSender
             emailSender.sendPasswordResetCodeTemplate(
                     toEmail,
                     subject,
                     appName,
-                    name,
                     code,
                     minutes,
                     supportEmail
             );
 
-            return ResponseEntity.ok(String.format("OK: correo de verificación enviado a %s con código %s (vence en %d min).", toEmail, code, minutes));
+            return ResponseEntity.ok(Map.of("status","ok","message", "Código enviado"));
+        } catch (IllegalStateException ex) {
+            String m = ex.getMessage();
+            if (m != null && m.startsWith("COOLDOWN_ACTIVE:")) {
+                String sec = m.split(":")[1];
+                return ResponseEntity.status(429).body(Map.of("status","fail","message","Cooldown activo. Intenta en " + sec + "s"));
+            } else if ("MAX_RESENDS_REACHED".equals(m)) {
+                return ResponseEntity.status(429).body(Map.of("status","fail","message","Límite de reenvíos alcanzado"));
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("status","error","message", m));
+            }
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("ERROR enviando correo: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("status","error","message", e.getMessage()));
+        }
+    }
+
+    //Método PARA la verificación del PIN
+    @PostMapping("/pin-verify")
+    public ResponseEntity<?> verifyPin(@RequestBody DTOVerifyPinRequest req) {
+        if (req == null || req.email == null || req.pin == null) {
+            return ResponseEntity.badRequest().body(Map.of("status","fail","message","Email y código requeridos"));
+        }
+        try {
+            UtilPasswordGenerator.VerifyResult vr = utilPasswordGenerator.verifyPin(req.email, req.pin);
+            if (vr.ok) {
+                return ResponseEntity.ok(Map.of("status","ok","message", vr.message));
+            } else if (vr.blocked) {
+                return ResponseEntity.status(HttpStatus.LOCKED).body(Map.of("status","fail","message", vr.message));
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status","fail","message", vr.message, "attemptsLeft", vr.attemptsLeft));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("status","error","message", e.getMessage()));
         }
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(
             @Valid @RequestBody DTORegister dtoRegister
-            ){
+    ){
         try {
             DTORegister answer = objServiceBI.postRegister(dtoRegister);
             if (answer == null) {
@@ -245,10 +228,10 @@ public class ControllerAuth {
                     "data", answer
             ));
         } catch (IllegalStateException e) {
-            Map<String, Object> body = new LinkedHashMap<>();
-            body.put("status", "Duplicado");
-            body.put("message", Optional.ofNullable(e.getMessage()).orElse("Datos duplicados"));
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "status", "Duplicado",
+                    "message", e.getMessage()
+            ));
         }
         catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
@@ -257,5 +240,67 @@ public class ControllerAuth {
                     "detail", e.getMessage()
             ));
         }
+    }
+
+    /**
+     *  IMPORTANTE:
+     *  La razón por la que hay métodos que no son endpoints dentro del controller y no el service es por el parámetro HttpServletResponse
+     *  ya que pertenecen al ciclo de vida del request/response (se menciona por el método de abajo) y si se coloca en el service se pierde
+     *  el principio de separación de capas
+     */
+    private void clearCookie(HttpServletResponse response) {
+        //Creamos la cookie con el mismo nombre y dominio que la cookie original
+        String cookieValue = String.format(
+                "authToken=; " +             //Valor vacío para eliminar
+                        "Path=/; " +
+                        "HttpOnly; " +
+                        "Secure; " +
+                        "SameSite=None; " +
+                        "Max-Age=0; " +              //Expiración inmediata
+                        "Domain=riskor-370e22badbf5.herokuapp.com" // Mismo dominio que la cookie original
+        );
+
+        //Agregamos la cabecera para eliminar la cookie
+        response.addHeader("Set-Cookie", cookieValue);
+        response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
+    }
+
+    /**
+     *  IMPORTANTE:
+     *  La razón por la que hay métodos que no son endpoints dentro del controller y no el service es por el parámetro HttpServletResponse
+     *  ya que pertenecen al ciclo de vida del request/response (se menciona por el método de abajo) y si se coloca en el service se pierde
+     *  el principio de separación de capas
+     */
+    private void addTokenCookie(HttpServletResponse response, String email) {
+        objServiceA.getEmployeeByCredentials(email).ifPresent(employee -> {
+            //Del empleado obtiene el nombre de su ROL dentro de la aplicación para manejar su acceso y guardarlo en la cookie
+            //Obtiene el ID business para evitar que el usuario realice acciones en una empresa que no corresponde
+            String token = objUtilJWT.create(
+                    employee.getIdEmployee(),
+                    employee.getEmployeeEmail(),
+                    employee.getIdRole().getRoleName(),
+                    employee.getIdBusiness().getIdBusiness()
+            );
+
+            //Usamos long porque eso devuelve el método, luego será convertido a int
+            //Porque lo necesitamos entero para la creación de la cookie
+            long maxAgeSeconds = objUtilJWT.getExpiracionSeconds();
+
+            //Crear la cookie como un String formateado
+            String cookieValue = String.format(
+                    "authToken=%s; " +
+                            "Path=/; " + //Se aplica para toda la API esta cookie creada
+                            "HttpOnly; " + //Protege la cookie de accesos JavaScript
+                            "Secure; " + //Asegura la cookie cuando el API está en HTTPS (desarrollo debe ser TRUE solo en producción)
+                            "SameSite=None; " + //Desde otro dominio (Ejemplo vercel)
+                            "Max-Age=%d; " + //Duración de la cookie en segundos
+                            "Domain=riskor-370e22badbf5.herokuapp.com", // Asegura que la cookie sea válida solo para el dominio
+                    token, maxAgeSeconds
+            );
+
+            //Agregar la cookie a la respuesta de la cabecera HTTP
+            response.addHeader("Set-Cookie", cookieValue);
+            response.addHeader("Access-Control-Expose-Headers", "Set-Cookie");
+        });
     }
 }

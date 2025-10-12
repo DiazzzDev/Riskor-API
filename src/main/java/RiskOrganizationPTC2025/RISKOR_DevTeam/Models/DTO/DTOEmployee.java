@@ -55,7 +55,7 @@ public class DTOEmployee {
     @Size(max = 500, message = "La dirección tiene un máximo de 500 carácteres")
     private String address;
 
-    @NotBlank
+    @Nullable
     @Size(max = 9)
     @Pattern(regexp = "^[267]\\d{3}[- ]?\\d{4}$", message = "Número de teléfono inválido (9 dígitos, comienza con 2, 6 o 7)")
     private String personalPhone;

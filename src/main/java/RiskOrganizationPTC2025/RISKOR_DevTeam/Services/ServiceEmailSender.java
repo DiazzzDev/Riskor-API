@@ -112,7 +112,7 @@ public class ServiceEmailSender {
     }
 
     public void sendPasswordResetCodeTemplate(
-            String toEmail, String subject, String appName, String name,
+            String toEmail, String subject, String appName,
             String code,             //el PIN temporal
             int minutes,             //minutos de vigencia
             String supportEmail
@@ -130,7 +130,6 @@ public class ServiceEmailSender {
 
             Map<String, String> vars = new HashMap<>();
             vars.put("appName",      safe(appName));
-            vars.put("name",         safe(name));
             vars.put("code",         safe(code));
             vars.put("minutes",      String.valueOf(minutes));
             vars.put("supportEmail", safe(supportEmail));
