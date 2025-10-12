@@ -19,4 +19,6 @@ public interface RepositoryLocation extends JpaRepository<EntityLocation, String
     void deleteByIdLocationAndIdBusiness_IdBusiness(String idLocation, String idBusiness);
 
     boolean existsByIdLocationAndIdBusiness_IdBusiness(String idLocation, String idBusiness);
+
+    List<EntityLocation> findByIdArea_IdAreaAndIdBusiness_IdBusiness(String idArea, String idBusiness);
 }

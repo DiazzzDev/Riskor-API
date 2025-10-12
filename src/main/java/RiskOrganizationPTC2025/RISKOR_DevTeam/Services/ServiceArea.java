@@ -56,6 +56,44 @@ public class ServiceArea {
         return permissionPage.map(this::convertToDTOA);
     }
 
+    @Transactional(readOnly = true)
+    public DTOAreaInBusiness getAreaBundle(String idBusiness, String idArea) {
+        String biz = idBusiness.toUpperCase();
+
+        // 1) Área
+        EntityArea area = objRepoA
+                .findByIdAreaAndIdBusiness_IdBusiness(idArea, biz)
+                .orElseThrow(() -> new EntityNotFoundException("Área no encontrada para esta empresa"));
+        DTOArea dtoArea = convertToDTOA(area);
+
+        // 2) Locaciones del área
+        List<EntityLocation> locs = objRepoL.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
+        List<DTOLocation> dtoLocs = new ArrayList<>(locs.size());
+        for (EntityLocation l : locs) {
+            DTOLocation d = new DTOLocation();
+            d.setIdLocation(l.getIdLocation());
+            d.setLocationName(l.getLocationName());
+            d.setIdArea(idArea);
+            d.setIdBusiness(biz);
+            dtoLocs.add(d);
+        }
+
+        // 3) Empleados asignados al área (reusa tu repo de links)
+        List<EntityAreaEmployee> links = objRepoAE.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
+        List<DTOEmployee> dtoEmployees = new ArrayList<>(links.size());
+        for (EntityAreaEmployee link : links) {
+            String empId = link.getIdEmployee().getIdEmployee();
+            dtoEmployees.add(objServiceE.getEmployeeById(empId, biz)); // ya tienes este método
+        }
+
+        // 4) Armar respuesta
+        DTOAreaInBusiness out = new DTOAreaInBusiness();
+        out.setArea(dtoArea);
+        out.setLocationsInArea(dtoLocs);
+        out.setEmployeesOnArea(dtoEmployees);
+        return out;
+    }
+
     //Este post es para un área que se va a crear, NO para agregar empleados a esta área si ya está creada
     //Para realizar un post de muchos empleados a un área ya asignada hay un endpoint en ControllerAreaEmployee
     public DTOAreaInBusiness postAreaBundle(String idBusiness, DTOAreaBundleRequest req, MultipartFile image) {

@@ -80,6 +80,32 @@ public class ControllerArea {
         return ResponseEntity.ok(objServiceA.getAllAreas(idBusiness, page, size));
     }
 
+    @GetMapping("/getAreaBundle/{idArea}")
+    public ResponseEntity<?> getAreaBundle(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idArea) {
+        try {
+            DTOAreaInBusiness data = objServiceA.getAreaBundle(idBusiness, idArea);
+            // mismo envoltorio que el POST
+            return ResponseEntity.ok(Map.of(
+                    "status", "Área + datos creados correctamente, Success",
+                    "data", data
+            ));
+        }  catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Área no encontrada",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al consultar el área",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
     @PreAuthorize("hasRole('Administrador')")
     @PostMapping(value = "/postAreaBundle",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
