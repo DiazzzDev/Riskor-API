@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- accident_report.jrxml -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="AccidentReport"
+              pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50"
+              uuid="a1b2c3d4-e5f6-7890-abcd-ef0123456789">
+
+    <!-- === Declaración de campos que mapearán a las propiedades del DTO/Bean === -->
+    <field name="idAccident" class="java.lang.String"/>
+    <field name="description" class="java.lang.String"/>
+    <field name="accidentDate" class="java.util.Date"/>
+    <field name="reportAccident" class="java.util.Date"/>
+    <field name="idAccidentCategory" class="java.lang.String"/>
+    <field name="idAccidentType" class="java.lang.String"/>
+    <field name="idAccidentSeverity" class="java.lang.String"/>
+    <field name="idAccidentStatus" class="java.lang.String"/>
+    <field name="idEmployee" class="java.lang.String"/>
+    <field name="idLocation" class="java.lang.String"/>
+    <field name="idBusiness" class="java.lang.String"/>
+    <field name="sentBy" class="java.lang.String"/>
+
+    <!-- Title -->
+    <title>
+        <band height="80">
+            <staticText>
+                <reportElement x="0" y="0" width="515" height="30" uuid="title-uuid"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="16" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Reporte de Accidente]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <!-- Page header: fecha de generación -->
+    <pageHeader>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="515" height="20"/>
+                <textElement textAlignment="Right">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageHeader>
+
+    <!-- Detail: mostramos datos del accidente en formato simple -->
+    <detail>
+        <band height="360">
+            <!-- Identificadores -->
+            <staticText>
+                <reportElement x="0" y="0" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[ID Accidente:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="0" width="365" height="15"/>
+                <textFieldExpression><![CDATA[$F{idAccident}]]></textFieldExpression>
+            </textField>
+
+            <!-- Descripción -->
+            <staticText>
+                <reportElement x="0" y="22" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Descripción:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="0" y="40" width="515" height="80"/>
+                <textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+            </textField>
+
+            <!-- Fechas -->
+            <staticText>
+                <reportElement x="0" y="130" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Fecha del Accidente:]]></text>
+            </staticText>
+            <textField pattern="yyyy-MM-dd">
+                <reportElement x="150" y="130" width="150" height="15"/>
+                <textFieldExpression><![CDATA[$F{accidentDate}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="150" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Fecha de Reporte:]]></text>
+            </staticText>
+            <textField pattern="yyyy-MM-dd">
+                <reportElement x="150" y="150" width="150" height="15"/>
+                <textFieldExpression><![CDATA[$F{reportAccident}]]></textFieldExpression>
+            </textField>
+
+            <!-- Categorizaciones -->
+            <staticText>
+                <reportElement x="0" y="175" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Categoría:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="175" width="150" height="15"/>
+                <textFieldExpression><![CDATA[$F{idAccidentCategory}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="195" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Tipo:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="195" width="150" height="15"/>
+                <textFieldExpression><![CDATA[$F{idAccidentType}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="215" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Severidad:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="215" width="150" height="15"/>
+                <textFieldExpression><![CDATA[$F{idAccidentSeverity}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="235" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Estado:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="235" width="150" height="15"/>
+                <textFieldExpression><![CDATA[$F{idAccidentStatus}]]></textFieldExpression>
+            </textField>
+
+            <!-- Empleado / Ubicación -->
+            <staticText>
+                <reportElement x="0" y="260" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Empleado (ID):]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="260" width="150" height="15"/>
+                <textFieldExpression><![CDATA[$F{idEmployee}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="280" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Ubicación (ID):]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="280" width="150" height="15"/>
+                <textFieldExpression><![CDATA[$F{idLocation}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="300" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Empresa (ID):]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="300" width="365" height="15"/>
+                <textFieldExpression><![CDATA[$F{idBusiness}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="320" width="140" height="15"/>
+                <textElement><font isBold="true"/></textElement>
+                <text><![CDATA[Enviado por:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="150" y="320" width="365" height="15"/>
+                <textFieldExpression><![CDATA[$F{sentBy}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="30">
+            <textField>
+                <reportElement x="0" y="0" width="515" height="20"/>
+                <textElement textAlignment="Center">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Generado por RISKOR - " + new java.util.Date()]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>
