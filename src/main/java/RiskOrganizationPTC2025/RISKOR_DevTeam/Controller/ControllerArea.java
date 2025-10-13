@@ -148,6 +148,52 @@ public class ControllerArea {
         }
     }
 
+    @PreAuthorize("hasRole('Administrador')")
+    @PutMapping(value = "/putAreaBundle/{idArea}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> putAreaBundle(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idArea,
+            @RequestPart("req") String req,
+            @RequestPart(value = "image", required = false) MultipartFile photo
+    ) {
+        try {
+            // parse JSON
+            DTOAreaBundleRequest dto = mapper.readValue(req, DTOAreaBundleRequest.class);
+
+            // seguridad: forzamos idBusiness
+            dto.getArea().setIdBusiness(idBusiness);
+            // aseguramos que el idArea venga por path variable (preferible)
+            dto.getArea().setIdArea(idArea);
+
+            DTOAreaInBusiness out = objServiceA.putAreaBundle(idBusiness, idArea, dto, photo);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "Área + datos actualizados correctamente, Success",
+                    "data", out
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", e.getMessage(),
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al actualizar el bundle de área",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
     /*
     @PreAuthorize("hasRole('Administrador')")
     @PostMapping("/postArea") //Usar ResponseEntity<?> permite una flexibilidad al momento de las respuestas HTTP

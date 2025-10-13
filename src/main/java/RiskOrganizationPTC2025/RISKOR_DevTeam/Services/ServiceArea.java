@@ -17,9 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -134,6 +133,125 @@ public class ServiceArea {
         out.setEmployeesOnArea(assigned);
         return out;
     }
+
+    public DTOAreaInBusiness putAreaBundle(String idBusiness, String idArea, DTOAreaBundleRequest req, MultipartFile image) {
+        if (req == null || req.getArea() == null) throw new IllegalArgumentException("Payload inválido: falta objeto area");
+
+        String biz = idBusiness.toUpperCase();
+
+        // 0) Verificar que el área exista y pertenezca a la empresa
+        EntityArea area = objRepoA.findByIdAreaAndIdBusiness_IdBusiness(idArea, biz)
+                .orElseThrow(() -> new EntityNotFoundException("Área no encontrada para esta empresa"));
+
+        // 1) Actualizar campos básicos del área (nombre)
+        DTOArea dtoA = req.getArea();
+        if (dtoA.getAreaName() != null && !dtoA.getAreaName().isBlank()) {
+            area.setAreaName(dtoA.getAreaName());
+        }
+
+        // 2) Si envían imagen, reemplazar el mapa en Cloudinary y actualizar el campo
+        if (image != null && !image.isEmpty()) {
+            try {
+                String folder = "RISKOR/Areas-Sketches/" + biz + "/";
+                DTOCloudinary up = cloudinary.uploadImage(image, folder);
+                area.setAreaSketch(up.getUrl());
+            } catch (IOException io) {
+                throw new RuntimeException("Error subiendo nuevo mapa del área.", io);
+            }
+        }
+
+        // Guardar cambios básicos del área
+        EntityArea savedArea = objRepoA.save(area);
+
+        // 3) Crear nuevas locaciones (NOTA: DTOLocationCreate solo trae locationName)
+        List<DTOLocation> outLocations = new ArrayList<>();
+        if (req.getLocations() != null && !req.getLocations().isEmpty()) {
+            for (DTOLocationCreate lc : req.getLocations()) {
+                if (lc == null) continue;
+                // Solo crear nuevas locaciones con el DTO que tienes ahora
+                EntityLocation toSave = toEntityLocation(idBusiness, idArea, lc);
+                EntityLocation savedLoc = objRepoL.save(toSave);
+
+                DTOLocation dtoOut = new DTOLocation();
+                dtoOut.setIdLocation(savedLoc.getIdLocation());
+                dtoOut.setLocationName(savedLoc.getLocationName());
+                dtoOut.setIdArea(idArea);
+                dtoOut.setIdBusiness(biz);
+                outLocations.add(dtoOut);
+            }
+        }
+
+        // 4) Sincronizar empleados asignados:
+        // Obtener enlaces actuales
+        List<EntityAreaEmployee> currentLinks = objRepoAE.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
+        Set<String> currentEmployeeIds = currentLinks.stream()
+                .map(link -> link.getIdEmployee().getIdEmployee())
+                .collect(Collectors.toSet());
+
+        Set<String> requestedEmployeeIds = req.getEmployeeIds() != null ?
+                req.getEmployeeIds().stream()
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toSet())
+                : Collections.emptySet();
+
+        // Añadir nuevos links
+        for (String empId : requestedEmployeeIds) {
+            if (!currentEmployeeIds.contains(empId)) {
+                EntityAreaEmployee link = new EntityAreaEmployee();
+                link.setIdArea(em.getReference(EntityArea.class, idArea));
+                link.setIdEmployee(em.getReference(EntityEmployee.class, empId));
+                link.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness));
+                objRepoAE.save(link);
+            }
+        }
+
+        // Eliminar links que ya no están solicitados (usamos delete(entity) para ser compatibles con tu PK)
+        for (EntityAreaEmployee link : currentLinks) {
+            String empId = link.getIdEmployee().getIdEmployee();
+            if (!requestedEmployeeIds.contains(empId)) {
+                objRepoAE.delete(link);
+            }
+        }
+
+        // 5) Construir la lista final de empleados asignados para devolver
+        List<EntityAreaEmployee> finalLinks = objRepoAE.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
+        List<DTOEmployee> employeesOut = new ArrayList<>();
+        for (EntityAreaEmployee link : finalLinks) {
+            String empId = link.getIdEmployee().getIdEmployee();
+            employeesOut.add(objServiceE.getEmployeeById(empId, biz));
+        }
+
+        // Agregar las locaciones existentes también al output (si quieres devolver todas las locaciones)
+        // Obtenemos todas las locaciones de la DB (incluye las nuevas creadas)
+        List<EntityLocation> allLocs = objRepoL.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
+        // Combinar locaciones nuevas (outLocations) con las que vienen de DB evitando duplicados
+        Map<String, DTOLocation> locMap = new LinkedHashMap<>();
+        for (DTOLocation dl : outLocations) {
+            locMap.put(dl.getIdLocation(), dl);
+        }
+        for (EntityLocation el : allLocs) {
+            if (!locMap.containsKey(el.getIdLocation())) {
+                DTOLocation d = new DTOLocation();
+                d.setIdLocation(el.getIdLocation());
+                d.setLocationName(el.getLocationName());
+                d.setIdArea(idArea);
+                d.setIdBusiness(biz);
+                locMap.put(d.getIdLocation(), d);
+            }
+        }
+        List<DTOLocation> locationsOutFinal = new ArrayList<>(locMap.values());
+
+        //Armar DTO de salida
+        DTOAreaInBusiness out = new DTOAreaInBusiness();
+        out.setArea(convertToDTOA(savedArea));
+        out.setLocationsInArea(locationsOutFinal);
+        out.setEmployeesOnArea(employeesOut);
+
+        return out;
+    }
+
 
     //Método para subir el área para luego guardar las locaciones y empleados que pertenecen a esa misma
     public DTOArea postArea(@Valid DTOArea dtoA, String idBusiness, MultipartFile image) {
