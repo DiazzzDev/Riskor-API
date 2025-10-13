@@ -2,12 +2,14 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Controller;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataDuplicate;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOChangePassword;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmailSender;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmployee;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -252,7 +254,7 @@ public class ControllerEmployee {
     public ResponseEntity<?> postDataEmployee(
             @RequestAttribute("auth.business") String idBusiness,
             @RequestPart("dtoE") String dtoE,
-            @RequestPart(value = "photo") MultipartFile photo
+            @RequestPart(value = "photo", required = false) MultipartFile photo
     ){
         try {
             DTOEmployee dto = mapper.readValue(dtoE, DTOEmployee.class);
@@ -474,6 +476,41 @@ public class ControllerEmployee {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al eliminar la fotografía del empleado",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody DTOChangePassword dto) {
+        try {
+            boolean ok = objServiceE.putUserPassword(dto.getEmail().trim(), dto.getNewPassword());
+            if (ok) {
+                return ResponseEntity.ok(Map.of(
+                        "status", "Contraseña actualizada correctamente, Success",
+                        "data", dto
+                ));
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                        "status", "Fallido",
+                        "message", "No se pudo actualizar la contraseña"
+                ));
+            }
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", "Error",
+                    "message", ex.getMessage()
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado",
+                    "message", "Empleado no encontrado",
+                    "detail", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al cambiar la contraseña",
                     "detail", e.getMessage()
             ));
         }

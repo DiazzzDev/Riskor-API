@@ -16,7 +16,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableWebSecurity
 @EnableMethodSecurity //Con esto habilitamos el uso de PreAuthorize para cada método (Permite agregarla sin esta anotación pero no se aplica)
 public class SecurityConfig {
-    private final UtilJWTCookieAuthFilter jwtCookieAuthFilter; //Variable statica
+    private final UtilJWTCookieAuthFilter jwtCookieAuthFilter; //Variable estática
     private final CorsConfigurationSource corsConfigurationSource; //Inyecta CorsConfigurationSource
 
     // Complemento de las variables de arriba
@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //Permite los preflight requests
                         //Preflights: Navegador pregunta al servidor sobre los métodos y cabeceras permitidos, indicando si la solicitud es segura
-                        .requestMatchers(HttpMethod.POST,"/api/auth/login", "/api/auth/register", "/api/auth/pin-send", "/api/auth/pin-verify").permitAll() //Esto es para que a este endpoint acceda cualquiera
+                        .requestMatchers(HttpMethod.POST,"/api/auth/login", "/api/auth/register", "/api/auth/pin-send", "/api/auth/pin-verify", "/api/employee/password").permitAll() //Esto es para que a este endpoint acceda cualquiera
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/me").authenticated() // Este endpoint es para ver la info del usuario logeado
                         .anyRequest().authenticated()

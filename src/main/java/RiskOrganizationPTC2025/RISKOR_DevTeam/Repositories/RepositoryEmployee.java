@@ -53,4 +53,5 @@ public interface RepositoryEmployee extends JpaRepository<EntityEmployee, String
     Optional<EntityEmployee> findMyInfo(@Param("login") String login);
 
     List<EntityEmployee> findByIdBusiness_IdBusinessAndIdRole_RoleNameIgnoreCaseAndEmployeeEmailIsNotNullAndEndDateIsNull(String idBusiness, String roleName);
+    Optional<EntityEmployee> findByEmployeeEmailIgnoreCase(String employeeEmail);
 }

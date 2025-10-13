@@ -446,6 +446,32 @@ public class ServiceEmployee {
         return convertToDTOE(employee); //@Transactional se encarga de actualizar en los setters
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public boolean putUserPassword(String email, String newPassword) {
+        if (email == null || email.isBlank()) throw new IllegalArgumentException("El email es requerido");
+        if (newPassword == null || newPassword.isBlank()) throw new IllegalArgumentException("La nueva contraseña es requerida");
+
+        //Buscar empleado por correo (asegúrate de que el repository tenga este método)
+        EntityEmployee employee = objRepoE.findByEmployeeEmailIgnoreCase(email).orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con el correo: " + email));
+
+        //Obtener el username asociado
+        EntityUser linkedUser = employee.getUsername();
+        if (linkedUser == null || linkedUser.getUsername() == null || linkedUser.getUsername().isBlank()) {
+            throw new EntityNotFoundException("No existe usuario asociado al empleado con correo: " + email);
+        }
+
+        //Obtener el usuario gestionado desde el repo (opcional: em.getReference también serviría)
+        String username = linkedUser.getUsername();
+        EntityUser managedUser = objRepoU.findById(username)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + username));
+
+        //Setear contraseña nueva (encriptada) y persistir
+        managedUser.setPassword(argon2id.encode(newPassword));
+        objRepoU.save(managedUser); // save() es seguro aunque la entidad esté en contexto transaccional
+
+        return true;
+    }
+
     private DTOEmployee convertToDTOE(EntityEmployee employee) {
         DTOEmployee dtoE = new DTOEmployee();
         dtoE.setIdEmployee(employee.getIdEmployee());
