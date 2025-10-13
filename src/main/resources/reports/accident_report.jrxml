@@ -26,7 +26,7 @@
     <title>
         <band height="80">
             <staticText>
-                <reportElement x="0" y="0" width="515" height="30" uuid="title-uuid"/>
+                <reportElement x="0" y="0" width="515" height="30"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font size="16" isBold="true"/>
                 </textElement>

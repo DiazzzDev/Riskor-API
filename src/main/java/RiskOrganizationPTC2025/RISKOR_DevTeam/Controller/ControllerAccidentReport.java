@@ -15,6 +15,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
 
@@ -33,25 +35,41 @@ public class ControllerAccidentReport {
     public ResponseEntity<?> descargarReportePdf(
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable("id") String id
-        ){
+    ) {
         try {
-            // Buscar el DTO (ajusta la excepción / manejo si tu servicio lanza  exception)
             DTOAccident dto = objServiceA.getById(id, idBusiness);
             if (dto == null) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(Map.of(
+                                "status", "No encontrado, Error",
+                                "message", "Accidente no encontrado",
+                                "timeStamp", Instant.now().toString()
+                        ));
             }
 
             byte[] pdfBytes = reportService.generatePdfFromDto(dto);
             if (pdfBytes == null || pdfBytes.length == 0) {
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(Map.of(
+                                "status", "No Content",
+                                "message", "El reporte no contiene datos",
+                                "timeStamp", Instant.now().toString()
+                        ));
             }
 
             ByteArrayInputStream bis = new ByteArrayInputStream(pdfBytes);
             InputStreamResource resource = new InputStreamResource(bis);
 
+            String fileName = "reporte-accidente-" + id + ".pdf";
+            String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
+            String contentDisposition = "attachment; filename=\"" + fileName.replace("\"", "") + "\"; filename*=UTF-8''" + encoded;
+
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"reporte-accidente-" + id + ".pdf\"");
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, contentDisposition);
             headers.add("Access-Control-Expose-Headers", "Content-Disposition");
+            headers.add("Cache-Control", "no-store");
 
             return ResponseEntity.ok()
                     .headers(headers)
@@ -59,19 +77,33 @@ public class ControllerAccidentReport {
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(resource);
 
-        }catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "status", "No encontrado, Error",
-                    "message", "Accidente no encontrado",
-                    "timeStamp", Instant.now().toString()
-            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "status", "No encontrado, Error",
+                            "message", "Accidente no encontrado",
+                            "timeStamp", Instant.now().toString()
+                    ));
+        } catch (IllegalArgumentException iae) {
+            // Captura la excepción de UUID inválido u otros argumentos
+            iae.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "status", "Error de plantilla JRXML",
+                            "message", iae.getMessage()
+                    ));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "status", "Error crítico no controlado",
-                    "message", "Error al consultar el accidente",
-                    "detail", e.getMessage()
-            ));
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "status", "Error crítico no controlado",
+                            "message", "Error al consultar el accidente",
+                            "detail", e.getMessage()
+                    ));
         }
     }
-}
 
+}
