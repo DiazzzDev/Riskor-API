@@ -16,7 +16,6 @@ import java.util.Optional;
 @Repository
 public interface RepositoryTraining extends JpaRepository<EntityTraining, String> {
     //Buscar por título (Sin importar mayúsculas o minúsculas) aislado por empresa
-
     Page<EntityTraining> findByTitleContainingIgnoreCaseAndIdBusiness_IdBusiness(String title, String idBusiness, Pageable pageable);
 
     //Paginado de TODAS las capacitaciones de una empresa

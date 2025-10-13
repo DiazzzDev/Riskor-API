@@ -46,6 +46,15 @@ public class ServiceRegulationBusiness {
         return regulationBusinessPage.map(this::convertToDTORB);
     }
 
+    @Transactional(readOnly = true)
+    public Page<DTORegulationBusiness> getRegulationByTitle(int page, int size, String title, String idBusiness) {
+        if (title == null || title.isBlank()) throw new IllegalArgumentException("El título es requerido");
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EntityRegulationBusiness> regulations = objRepoRB.findByRegulationTitleContainingIgnoreCaseAndIdBusiness_IdBusiness(title.trim(), idBusiness.toUpperCase(), pageable);
+        return regulations.map(this::convertToDTORB);
+    }
+
     //POST Principal al crear una regulación empresarial
     public DTORegulationBusiness postRegulationBusiness(@Valid DTORegulationBusiness dto, MultipartFile file, String idBusiness) {
         DTOCloudinary up = null; //Limpieza en caso falla luego

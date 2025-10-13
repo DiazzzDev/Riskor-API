@@ -3,7 +3,6 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOCloudinary;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOInspection;
-import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTORegulationBusiness;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryInspection;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryInspectionStatus;
 import jakarta.persistence.EntityManager;
@@ -40,6 +39,15 @@ public class ServiceInspection {
     public DTOInspection getInspectionById(String idBusiness, String idInspection) {
         EntityInspection inspection = objRepoI.findByIdInspectionAndIdBusiness_IdBusiness(idInspection.toUpperCase(), idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Inspección no encontrada con ID: " + idInspection));
         return convertTOInspectionDTO(inspection);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DTOInspection> getInspectionsByTitle(int page, int size, String title, String idBusiness) {
+        if (title == null || title.isBlank()) throw new IllegalArgumentException("El título es requerido");
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EntityInspection> inspections = objRepoI.findByInspectionTitleContainingIgnoreCaseAndIdBusiness_IdBusiness(title.trim(), idBusiness.toUpperCase(), pageable);
+        return inspections.map(this::convertTOInspectionDTO);
     }
 
     //Método para retornar una lista de todos los registros dentro de la tabla referenciada

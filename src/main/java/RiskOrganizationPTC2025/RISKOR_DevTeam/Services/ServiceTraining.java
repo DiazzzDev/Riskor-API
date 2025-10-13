@@ -60,7 +60,7 @@ public class ServiceTraining {
         return convertToDTOT(nextTrainingForEmployee.get(0));
     }
 
-    @Transactional(readOnly = true) //Validación de transactional que va a evitar que se pueda llegar a realizar un ataque al escribir en los datos que se mandan
+    @Transactional(readOnly = true)
     public Page<DTOTraining> getTrainingByTitle(int page, int size, String title, String idBusiness) {
         if (title == null || title.isBlank()) throw new IllegalArgumentException("El título es requerido");
 

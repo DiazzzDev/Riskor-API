@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,43 @@ public class ControllerRegulationBusiness {
     private ServiceRegulationBusiness objServiceRB;
 
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()); // Soporta LocalDate en el dto
+
+    @GetMapping("/getRegulationByTitle/{title}")
+    public ResponseEntity<?> getRegulationByTitle(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        try {
+            if (size < 5 || size > 30) {
+                ResponseEntity.badRequest().body(Map.of(
+                        "status", "El tamaño de la página debe estar entre 5 y 30"
+                ));
+                return ResponseEntity.ok(null);
+            }
+            Page<DTORegulationBusiness> regulations = objServiceRB.getRegulationByTitle(page, size, title, idBusiness);
+
+            if (regulations == null || regulations.isEmpty()) {
+                //Devolvemos un OK vacío para el páginado del frontend
+                return ResponseEntity.ok(Page.empty(PageRequest.of(page, size)));
+            }
+
+            return ResponseEntity.ok(regulations);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Datos inválidos",
+                    "errorType", "VALIDATION_ERROR",
+                    "message", "Datos inválidos, vuelva a intentarlo"
+            ));
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al listar regulaciones",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
 
     @GetMapping("/getRegulationBusiness")
     public ResponseEntity<?> getRegulationBusiness(

@@ -18,5 +18,7 @@ public interface RepositoryRegulationBusiness extends JpaRepository<EntityRegula
 
     //Borrar protegido por empresa
     void deleteByIdRegulationAndIdBusiness_IdBusiness(String idRegulation, String idBusiness);
-    boolean existsByIdRegulationAndIdBusiness_IdBusiness(String idRegulation, String idBusiness); //Verificar existencia
+
+    //Buscar por título
+    Page<EntityRegulationBusiness> findByRegulationTitleContainingIgnoreCaseAndIdBusiness_IdBusiness(String title, String idBusiness, Pageable pageable);
 }

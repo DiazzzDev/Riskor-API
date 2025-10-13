@@ -16,4 +16,6 @@ public interface RepositoryInspection extends JpaRepository<EntityInspection, St
     Optional<EntityInspection> findByIdInspectionAndIdBusiness_IdBusiness(String idInspection, String idBusiness);
 
     Page<EntityInspection> findByIdBusiness_IdBusiness(String idBusiness, Pageable pageable);
+
+    Page<EntityInspection> findByInspectionTitleContainingIgnoreCaseAndIdBusiness_IdBusiness(String trim, String upperCase, Pageable pageable);
 }
