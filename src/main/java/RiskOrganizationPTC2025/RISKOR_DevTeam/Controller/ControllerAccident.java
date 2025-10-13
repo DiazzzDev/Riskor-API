@@ -184,42 +184,4 @@ public class ControllerAccident {
             ));
         }
     }
-
-    @PreAuthorize("hasRole('Administrador')")
-    @DeleteMapping("/deleteAccident/{idAccident}")
-    public ResponseEntity<?> deleteAccident(
-            @RequestAttribute("auth.business") String idBusiness,
-            @PathVariable String idAccident
-    ) {
-        try {
-            boolean ok = objServiceA.removeAccident(idAccident, idBusiness);
-            if (!ok) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                        "status", "No encontrado, Error",
-                        "message", "El ID del accidente no ha sido encontrado",
-                        "timeStamp", Instant.now().toString()
-                ));
-            }
-            return ResponseEntity.ok(Map.of(
-                    "status", "Proceso completado correctamente",
-                    "message", "Accidente eliminado correctamente, Success"
-            ));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "status", "No encontrado, Error",
-                    "message", "Accidente no encontrado"
-            ));
-        } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                    "status", "Conflicto",
-                    "message", "No se puede eliminar: registro referenciado"
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "status", "Error crítico no controlado",
-                    "message", "Error al eliminar el accidente",
-                    "detail", e.getMessage()
-            ));
-        }
-    }
 }
