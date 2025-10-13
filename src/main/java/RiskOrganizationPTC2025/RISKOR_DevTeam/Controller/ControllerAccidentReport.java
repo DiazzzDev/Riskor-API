@@ -6,6 +6,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceAccidentReport;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
 import java.time.Instant;
 import java.util.Map;
 
@@ -27,7 +29,7 @@ public class ControllerAccidentReport {
     private ServiceAccident objServiceA;
 
     @PreAuthorize("hasRole('Administrador')")
-    @GetMapping("/{id}/pdf")
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> descargarReportePdf(
             @RequestAttribute("auth.business") String idBusiness,
             @PathVariable("id") String id
@@ -39,14 +41,16 @@ public class ControllerAccidentReport {
                 return ResponseEntity.notFound().build();
             }
 
-            // Generar PDF (tu servicio ya devuelve byte[])
             byte[] pdfBytes = reportService.generatePdfFromDto(dto);
+            if (pdfBytes == null || pdfBytes.length == 0) {
+                return ResponseEntity.noContent().build();
+            }
 
-            ByteArrayResource resource = new ByteArrayResource(pdfBytes);
+            ByteArrayInputStream bis = new ByteArrayInputStream(pdfBytes);
+            InputStreamResource resource = new InputStreamResource(bis);
 
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"reporte-accidente-" + id + ".pdf\"");
-            // Exponer el header para que front pueda leerlo si está en otro dominio
             headers.add("Access-Control-Expose-Headers", "Content-Disposition");
 
             return ResponseEntity.ok()
