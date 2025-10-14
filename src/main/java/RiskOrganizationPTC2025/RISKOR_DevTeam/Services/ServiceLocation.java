@@ -10,6 +10,9 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -28,6 +31,26 @@ public class ServiceLocation {
     public List<DTOLocation> getLocation(String idBusiness){
         List<EntityLocation> locations = objRepoL.findByIdBusiness_IdBusiness(idBusiness.toUpperCase());
         return locations.stream().map(this::convertToDTOL).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DTOLocation> getLocationByName(String idBusiness, String name, String idArea, int page, int size) {
+        if (page < 0 || size <= 0) throw new IllegalArgumentException("page y size inválidos");
+
+        Pageable pageable = PageRequest.of(page, size);
+        String safeName = (name == null) ? "" : name.trim();
+        String safeBusiness = idBusiness.trim(); // no forzar toUpperCase
+
+        Page<EntityLocation> pageEntities;
+        if (idArea != null && !idArea.isBlank()) {
+            // Buscar dentro de un area específica + business
+            pageEntities = objRepoL.findByLocationNameContainingIgnoreCaseAndIdArea_IdAreaAndIdBusiness_IdBusiness(safeName, idArea.trim(), safeBusiness, pageable);
+        } else {
+            // Buscar por nombre dentro de la empresa
+            pageEntities = objRepoL.findByLocationNameContainingIgnoreCaseAndIdBusiness_IdBusiness(safeName, safeBusiness, pageable);
+        }
+
+        return pageEntities.map(this::convertToDTOL);
     }
 
     public DTOLocation postLocation(@Valid DTOLocation dtoL, String idBusiness){

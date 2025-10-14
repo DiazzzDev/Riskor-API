@@ -6,6 +6,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +24,47 @@ import java.util.Map;
 public class ControllerLocation {
     @Autowired
     private ServiceLocation objServiceL;
+
+    @GetMapping("/getLocationByName")
+    public ResponseEntity<?> getLocationByName(
+            @RequestAttribute("auth.business") String idBusiness,
+            @RequestParam(name = "locationName", required = false) String locationName,
+            @RequestParam(name = "idArea", required = false) String idArea,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size
+    ) {
+        try {
+            if (idBusiness == null || idBusiness.isBlank()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "status", "Falta información",
+                        "message", "No se recibió idBusiness en el request"
+                ));
+            }
+            if (page < 0 || size <= 0 || size > 30) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Parámetros inválidos",
+                        "message", "page >= 0 y size entre 1 y 30"
+                ));
+            }
+
+            Page<DTOLocation> result = objServiceL.getLocationByName(idBusiness, locationName, idArea, page, size);
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", "Validación",
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al buscar locaciones",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
 
     @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getLocations") //Response entity<?> Es una forma flexible de lo que vamos a mostrar en la respuesta HTTP

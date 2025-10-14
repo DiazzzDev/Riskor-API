@@ -3,7 +3,8 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityLocation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,8 @@ public interface RepositoryLocation extends JpaRepository<EntityLocation, String
 
     // Obtener todas las locaciones de un area+business
     List<EntityLocation> findByIdArea_IdAreaAndIdBusiness_IdBusiness(String idArea, String idBusiness);
+
+    Page<EntityLocation> findByLocationNameContainingIgnoreCaseAndIdBusiness_IdBusiness(String locationName, String idBusiness, Pageable pageable);
+
+    Page<EntityLocation> findByLocationNameContainingIgnoreCaseAndIdArea_IdAreaAndIdBusiness_IdBusiness(String locationName, String idArea, String idBusiness, Pageable pageable);
 }
