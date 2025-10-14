@@ -139,188 +139,97 @@ public class ServiceArea {
 
         String biz = idBusiness.toUpperCase();
 
-        // 0) Verificar que el área exista y pertenezca a la empresa
+        // 0) Verificar que el área exista
         EntityArea area = objRepoA.findByIdAreaAndIdBusiness_IdBusiness(idArea, biz)
                 .orElseThrow(() -> new EntityNotFoundException("Área no encontrada para esta empresa"));
 
-        // 1) Actualizar campos básicos del área (nombre)
-        DTOArea dtoA = req.getArea();
-        if (dtoA.getAreaName() != null && !dtoA.getAreaName().isBlank()) {
-            area.setAreaName(dtoA.getAreaName());
+        // 1) Actualizar datos básicos
+        if (req.getArea().getAreaName() != null && !req.getArea().getAreaName().isBlank()) {
+            area.setAreaName(req.getArea().getAreaName());
         }
-
-        // 2) Si envían imagen, reemplazar el mapa en Cloudinary y actualizar el campo
         if (image != null && !image.isEmpty()) {
             try {
                 String folder = "RISKOR/Areas-Sketches/" + biz + "/";
                 DTOCloudinary up = cloudinary.uploadImage(image, folder);
                 area.setAreaSketch(up.getUrl());
-            } catch (IOException io) {
-                throw new RuntimeException("Error subiendo nuevo mapa del área.", io);
+            } catch (IOException e) {
+                throw new RuntimeException("Error subiendo nuevo mapa del área.", e);
             }
         }
-
-        // Guardar cambios básicos del área
         EntityArea savedArea = objRepoA.save(area);
 
-        // 3) Crear nuevas locaciones (NOTA: DTOLocationCreate solo trae locationName)
-        List<DTOLocation> outLocations = new ArrayList<>();
-        if (req.getLocations() != null && !req.getLocations().isEmpty()) {
+        // 2) SINCRONIZAR LOCACIONES
+        List<EntityLocation> currentLocs = objRepoL.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
+        Map<String, EntityLocation> currentLocsByName = currentLocs.stream().collect(Collectors.toMap(l -> normalize(l.getLocationName()), l -> l));
 
-            // PRE: si req.getLocations() es List<DTOLocationCreate>, mapear a DTOLocationUpsert con idLocation=null
-            List<DTOLocationUpsert> incoming = req.getLocations().stream()
-                    .filter(Objects::nonNull)
-                    .map(lc -> {
-                        DTOLocationUpsert up = new DTOLocationUpsert();
-                        up.setIdLocation(null); // si tu DTO original no trae id
-                        up.setLocationName(lc.getLocationName());
-                        up.setIdArea(idArea);
-                        up.setIdBusiness(biz);
-                        return up;
-                    })
-                    .collect(Collectors.toList());
+        // Lo que viene en el request
+        Set<String> incomingNames = req.getLocations() == null ? new HashSet<>() :
+                req.getLocations().stream()
+                        .filter(Objects::nonNull)
+                        .map(DTOLocationCreate::getLocationName)
+                        .filter(s -> s != null && !s.isBlank())
+                        .map(this::normalize)
+                        .collect(Collectors.toSet());
 
-            // 3.1) Pre-cargar las locaciones existentes para evitar N+1
-            List<EntityLocation> existingLocs = objRepoL.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
-            Map<String, EntityLocation> byId = existingLocs.stream()
-                    .collect(Collectors.toMap(EntityLocation::getIdLocation, e -> e));
-            Map<String, EntityLocation> byName = existingLocs.stream()
-                    .collect(Collectors.toMap(e -> normalize(e.getLocationName()), e -> e, (a,b) -> a));
-
-            // Mantener orden y evitar duplicados en la misma petición: key por name normalizado o id
-            LinkedHashMap<String, DTOLocation> resultMap = new LinkedHashMap<>();
-
-            for (DTOLocationUpsert up : incoming) {
-                if (up == null) continue;
-
-                String rawName = up.getLocationName();
-                if (rawName == null) continue;
-                String name = rawName.trim();
-                if (name.isEmpty()) continue;
-
-                String normalizedName = normalize(name);
-
-                // 1) Si el cliente dio idLocation: validar ownership y usarla
-                if (up.getIdLocation() != null && !up.getIdLocation().isBlank()) {
-                    EntityLocation foundById = byId.get(up.getIdLocation());
-                    if (foundById == null) {
-                        // invalid id: lanzar excepción para que el cliente sepa
-                        throw new IllegalArgumentException("idLocation enviado no existe o no pertenece al área: " + up.getIdLocation());
-                    }
-                    // (Opcional) actualizar nombre si difiere
-                    if (!foundById.getLocationName().equals(name)) {
-                        foundById.setLocationName(name);
-                        objRepoL.save(foundById);
-                    }
-                    DTOLocation dtoOut = convertToDto(foundById);
-                    resultMap.put(foundById.getIdLocation(), dtoOut);
-                    // mantener los maps consistentes
-                    byName.put(normalize(foundById.getLocationName()), foundById);
-                    continue;
-                }
-
-                // 2) No vino id: buscar por nombre normalizado
-                EntityLocation existing = byName.get(normalizedName);
-                if (existing != null) {
-                    resultMap.put(existing.getIdLocation(), convertToDto(existing));
-                    continue;
-                }
-
-                // 3) No existe: crear nueva locación
-                EntityLocation toSave = toEntityLocation(idBusiness, idArea, name); // adapta si tu helper recibe DTOLocationCreate
-                toSave.setLocationName(name);
-
-                EntityLocation saved;
-                try {
-                    saved = objRepoL.save(toSave);
-                } catch (org.springframework.dao.DataIntegrityViolationException dive) {
-                    // Condición de carrera: otro request creó la misma locación entre la búsqueda y el save.
-                    // Reintentar recuperar por nombre
-                    Optional<EntityLocation> retry = objRepoL.findByLocationNameIgnoreCaseAndIdArea_IdAreaAndIdBusiness_IdBusiness(name, idArea, biz);
-                    if (retry.isPresent()) {
-                        saved = retry.get();
-                    } else {
-                        throw dive;
-                    }
-                }
-
-                // Añadir al resultado
-                resultMap.put(saved.getIdLocation(), convertToDto(saved));
-                // Actualizar caches locales
-                byId.put(saved.getIdLocation(), saved);
-                byName.put(normalize(saved.getLocationName()), saved);
+        // Eliminar locaciones que ya no existen
+        for (EntityLocation loc : currentLocs) {
+            if (!incomingNames.contains(normalize(loc.getLocationName()))) {
+                objRepoL.delete(loc);
             }
-
-            // Pasar resultado a outLocations manteniendo orden
-            outLocations.addAll(resultMap.values());
         }
 
-        // 4) Sincronizar empleados asignados:
-        // Obtener enlaces actuales
-        List<EntityAreaEmployee> currentLinks = objRepoAE.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
-        Set<String> currentEmployeeIds = currentLinks.stream()
-                .map(link -> link.getIdEmployee().getIdEmployee())
-                .collect(Collectors.toSet());
+        // Crear locaciones nuevas que no existan
+        List<DTOLocation> outLocations = new ArrayList<>();
+        if (req.getLocations() != null) {
+            for (DTOLocationCreate locReq : req.getLocations()) {
+                String normName = normalize(locReq.getLocationName());
+                if (!currentLocsByName.containsKey(normName)) {
+                    EntityLocation newLoc = toEntityLocation(idBusiness, idArea, locReq);
+                    EntityLocation savedLoc = objRepoL.save(newLoc);
+                    outLocations.add(convertToDto(savedLoc));
+                } else {
+                    outLocations.add(convertToDto(currentLocsByName.get(normName)));
+                }
+            }
+        }
 
-        Set<String> requestedEmployeeIds = req.getEmployeeIds() != null ?
+        // 3) SINCRONIZAR EMPLEADOS
+        List<EntityAreaEmployee> currentLinks = objRepoAE.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
+        Set<String> currentEmpIds = currentLinks.stream().map(l -> l.getIdEmployee().getIdEmployee()).collect(Collectors.toSet());
+
+        Set<String> requestedEmpIds = req.getEmployeeIds() == null ? new HashSet<>() :
                 req.getEmployeeIds().stream()
                         .filter(Objects::nonNull)
                         .map(String::trim)
                         .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toSet())
-                : Collections.emptySet();
+                        .collect(Collectors.toSet());
 
-        // Añadir nuevos links
-        for (String empId : requestedEmployeeIds) {
-            if (!currentEmployeeIds.contains(empId)) {
-                EntityAreaEmployee link = new EntityAreaEmployee();
-                link.setIdArea(em.getReference(EntityArea.class, idArea));
-                link.setIdEmployee(em.getReference(EntityEmployee.class, empId));
-                link.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness));
-                objRepoAE.save(link);
-            }
-        }
-
-        // Eliminar links que ya no están solicitados (usamos delete(entity) para ser compatibles con tu PK)
+        // Eliminar los que no están en el request
         for (EntityAreaEmployee link : currentLinks) {
-            String empId = link.getIdEmployee().getIdEmployee();
-            if (!requestedEmployeeIds.contains(empId)) {
+            if (!requestedEmpIds.contains(link.getIdEmployee().getIdEmployee())) {
                 objRepoAE.delete(link);
             }
         }
 
-        // 5) Construir la lista final de empleados asignados para devolver
-        List<EntityAreaEmployee> finalLinks = objRepoAE.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
-        List<DTOEmployee> employeesOut = new ArrayList<>();
-        for (EntityAreaEmployee link : finalLinks) {
-            String empId = link.getIdEmployee().getIdEmployee();
-            employeesOut.add(objServiceE.getEmployeeById(empId, biz));
-        }
-
-        // Agregar las locaciones existentes también al output (si quieres devolver todas las locaciones)
-        // Obtenemos todas las locaciones de la DB (incluye las nuevas creadas)
-        List<EntityLocation> allLocs = objRepoL.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
-        // Combinar locaciones nuevas (outLocations) con las que vienen de DB evitando duplicados
-        Map<String, DTOLocation> locMap = new LinkedHashMap<>();
-        for (DTOLocation dl : outLocations) {
-            locMap.put(dl.getIdLocation(), dl);
-        }
-        for (EntityLocation el : allLocs) {
-            if (!locMap.containsKey(el.getIdLocation())) {
-                DTOLocation d = new DTOLocation();
-                d.setIdLocation(el.getIdLocation());
-                d.setLocationName(el.getLocationName());
-                d.setIdArea(idArea);
-                d.setIdBusiness(biz);
-                locMap.put(d.getIdLocation(), d);
+        // Agregar los que faltan
+        EntityArea areaRef = em.getReference(EntityArea.class, idArea);
+        EntityBusinessInfo bizRef = em.getReference(EntityBusinessInfo.class, idBusiness);
+        for (String empId : requestedEmpIds) {
+            if (!currentEmpIds.contains(empId)) {
+                EntityAreaEmployee newLink = new EntityAreaEmployee();
+                newLink.setIdArea(areaRef);
+                newLink.setIdEmployee(em.getReference(EntityEmployee.class, empId));
+                newLink.setIdBusiness(bizRef);
+                objRepoAE.save(newLink);
             }
         }
-        List<DTOLocation> locationsOutFinal = new ArrayList<>(locMap.values());
 
-        //Armar DTO de salida
+        // 4) Construir DTO de salida
+        List<DTOEmployee> employeesOut = assignEmployeesToArea(idBusiness, idArea, new ArrayList<>(requestedEmpIds));
+
         DTOAreaInBusiness out = new DTOAreaInBusiness();
         out.setArea(convertToDTOA(savedArea));
-        out.setLocationsInArea(locationsOutFinal);
+        out.setLocationsInArea(outLocations);
         out.setEmployeesOnArea(employeesOut);
 
         return out;
