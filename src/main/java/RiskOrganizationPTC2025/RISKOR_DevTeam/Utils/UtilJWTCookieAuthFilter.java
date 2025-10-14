@@ -118,7 +118,7 @@ public class UtilJWTCookieAuthFilter extends OncePerRequestFilter {
         if ("/api/auth/register".equals(p) && "POST".equalsIgnoreCase(method)) return true;
         if ("/api/auth/pin-send".equals(p) && "POST".equalsIgnoreCase(method)) return true;
         if ("/api/auth/pin-verify".equals(p) && "POST".equalsIgnoreCase(method)) return true;
-        if ("/api/employee/password".equals(p) && "POST".equalsIgnoreCase(method)) return true;
+        if ("/api/employee/password".equals(p) && "PUT".equalsIgnoreCase(method)) return true;
         return false;
     }
 }
