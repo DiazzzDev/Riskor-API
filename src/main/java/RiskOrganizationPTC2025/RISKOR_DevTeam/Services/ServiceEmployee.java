@@ -472,6 +472,37 @@ public class ServiceEmployee {
         return true;
     }
 
+    public void changeEmployeePassword(String employeeId, DTONewPassword dto) throws Exception {
+
+        // 1. Validar que la nueva contraseña y la confirmación coincidan
+        if (!dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
+            throw new Exception("La nueva contraseña y su confirmación no coinciden.");
+        }
+
+        // 2. Buscar el usuario (asociado al empleado)
+        // Se asume que el idEmployee te permite obtener el User
+        // En un caso real, obtendrías el usuario de la sesión/token de seguridad.
+        EntityEmployee employee = objRepoE.findById(employeeId).orElseThrow(() -> new Exception("Empleado no encontrado"));
+
+        EntityUser user = objRepoU.findById(employee.getUsername().getUsername()).orElseThrow(() -> new Exception("Usuario no encontrado")); // Asumiendo que Employee tiene el username
+
+        // 3. Verificar la contraseña actual
+        if (!argon2id.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new Exception("La contraseña actual es incorrecta.");
+        }
+
+        // 4. Asegurarse de que la nueva contraseña no sea la misma que la actual
+        if (dto.getCurrentPassword().equals(dto.getNewPassword())) {
+            throw new Exception("La nueva contraseña no puede ser igual a la contraseña actual.");
+        }
+
+        // 5. Hashear y actualizar la contraseña
+        String hashedNewPassword = argon2id.encode(dto.getNewPassword());
+        user.setPassword(hashedNewPassword);
+
+        objRepoU.save(user);
+    }
+
     private DTOEmployee convertToDTOE(EntityEmployee employee) {
         DTOEmployee dtoE = new DTOEmployee();
         dtoE.setIdEmployee(employee.getIdEmployee());

@@ -4,6 +4,7 @@ import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataDuplicate;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Exceptions.ExceptionDataNotFound;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOChangePassword;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTONewPassword;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmailSender;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Services.ServiceEmployee;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -513,6 +514,27 @@ public class ControllerEmployee {
                     "message", "Error al cambiar la contraseña",
                     "detail", e.getMessage()
             ));
+        }
+    }
+
+    @PatchMapping("/password/changePassword") // PATCH es común para actualizaciones parciales como una contraseña
+    public ResponseEntity<?> changePassword(
+            @RequestAttribute("auth.id") String idEmployee,
+            @Valid @RequestBody DTONewPassword dto) {
+
+        try {
+            // En un escenario real, el idEmployee se obtendría del token de seguridad
+            // para asegurar que solo un usuario pueda cambiar su propia contraseña.
+            objServiceE.changeEmployeePassword(idEmployee, dto);
+            return ResponseEntity.ok().build(); // Devuelve 200 OK sin cuerpo
+
+        } catch (Exception e) {
+            // Manejo de errores específicos (contraseña incorrecta, no coinciden, etc.)
+            // Es buena práctica usar un GlobalExceptionHandler para mapear excepciones a códigos HTTP
+            if (e.getMessage().contains("incorrecta") || e.getMessage().contains("no coinciden")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // 400 Bad Request
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 Internal Server Error
         }
     }
 }
