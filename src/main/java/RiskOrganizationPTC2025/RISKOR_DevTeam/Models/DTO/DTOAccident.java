@@ -31,14 +31,22 @@ public class DTOAccident {
     @Nullable
     private String idAccidentCategory;
 
+    private String accidentCategory;
+
     @Nullable
     private String idAccidentType;
+
+    private String accidentType;
 
     @Nullable
     private String idAccidentSeverity;
 
+    private String accidentSeverity;
+
     @Nullable
     private String idAccidentStatus;
+
+    private String accidentStatus;
 
     @NotBlank
     private String idEmployee;

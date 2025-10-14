@@ -20,5 +20,9 @@ public interface RepositoryLocation extends JpaRepository<EntityLocation, String
 
     boolean existsByIdLocationAndIdBusiness_IdBusiness(String idLocation, String idBusiness);
 
+    // Buscar por nombre (case-insensitive) dentro de area+business
+    Optional<EntityLocation> findByLocationNameIgnoreCaseAndIdArea_IdAreaAndIdBusiness_IdBusiness(String locationName, String idArea, String idBusiness);
+
+    // Obtener todas las locaciones de un area+business
     List<EntityLocation> findByIdArea_IdAreaAndIdBusiness_IdBusiness(String idArea, String idBusiness);
 }

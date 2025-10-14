@@ -24,11 +24,14 @@
 
     <!-- Title -->
     <title>
-        <band height="80">
+        <band height="60">
+            <rectangle>
+                <reportElement x="0" y="0" width="515" height="60" backcolor="#616FEF" mode="Opaque"/>
+            </rectangle>
             <staticText>
-                <reportElement x="0" y="0" width="515" height="30"/>
+                <reportElement x="0" y="15" width="515" height="30" forecolor="#FFFFFF"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="16" isBold="true"/>
+                    <font size="18" isBold="true" pdfFontName="Helvetica-Bold"/>
                 </textElement>
                 <text><![CDATA[Reporte de Accidente]]></text>
             </staticText>
@@ -37,11 +40,14 @@
 
     <!-- Page header: fecha de generación -->
     <pageHeader>
-        <band height="20">
+        <band height="25">
+            <line>
+                <reportElement x="0" y="24" width="515" height="1" forecolor="#616FEF"/>
+            </line>
             <textField>
                 <reportElement x="0" y="0" width="515" height="20"/>
                 <textElement textAlignment="Right">
-                    <font size="8"/>
+                    <font size="8" isItalic="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
             </textField>
@@ -50,140 +56,148 @@
 
     <!-- Detail: mostramos datos del accidente en formato simple -->
     <detail>
-        <band height="360">
-            <!-- Identificadores -->
+        <band height="380">
+            <!-- Rectángulo de fondo para el bloque de información -->
+            <rectangle>
+                <reportElement x="0" y="0" width="515" height="380" backcolor="#F5F5F5" mode="Opaque"/>
+            </rectangle>
+
+            <!-- Campo: ID Accidente -->
             <staticText>
-                <reportElement x="0" y="0" width="140" height="15"/>
+                <reportElement x="10" y="10" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[ID Accidente:]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="0" width="365" height="15"/>
+                <reportElement x="160" y="10" width="345" height="15"/>
                 <textFieldExpression><![CDATA[$F{idAccident}]]></textFieldExpression>
             </textField>
 
-            <!-- Descripción -->
+            <!-- Campo: Descripción -->
             <staticText>
-                <reportElement x="0" y="22" width="140" height="15"/>
+                <reportElement x="10" y="35" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Descripción:]]></text>
             </staticText>
             <textField isStretchWithOverflow="true">
-                <reportElement x="0" y="40" width="515" height="80"/>
+                <reportElement x="10" y="50" width="495" height="70"/>
                 <textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
             </textField>
 
             <!-- Fechas -->
             <staticText>
-                <reportElement x="0" y="130" width="140" height="15"/>
+                <reportElement x="10" y="125" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Fecha del Accidente:]]></text>
             </staticText>
-            <textField pattern="yyyy-MM-dd">
-                <reportElement x="150" y="130" width="150" height="15"/>
+            <textField pattern="dd/MM/yyyy">
+                <reportElement x="160" y="125" width="150" height="15"/>
                 <textFieldExpression><![CDATA[$F{accidentDate}]]></textFieldExpression>
             </textField>
 
             <staticText>
-                <reportElement x="0" y="150" width="140" height="15"/>
+                <reportElement x="320" y="125" width="120" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Fecha de Reporte:]]></text>
             </staticText>
-            <textField pattern="yyyy-MM-dd">
-                <reportElement x="150" y="150" width="150" height="15"/>
+            <textField pattern="dd/MM/yyyy">
+                <reportElement x="440" y="125" width="65" height="15"/>
                 <textFieldExpression><![CDATA[$F{reportAccident}]]></textFieldExpression>
             </textField>
 
-            <!-- Categorizaciones -->
+            <!-- Categorías -->
             <staticText>
-                <reportElement x="0" y="175" width="140" height="15"/>
+                <reportElement x="10" y="150" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Categoría:]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="175" width="150" height="15"/>
+                <reportElement x="160" y="150" width="150" height="15"/>
                 <textFieldExpression><![CDATA[$F{idAccidentCategory}]]></textFieldExpression>
             </textField>
 
             <staticText>
-                <reportElement x="0" y="195" width="140" height="15"/>
+                <reportElement x="320" y="150" width="40" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Tipo:]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="195" width="150" height="15"/>
+                <reportElement x="360" y="150" width="145" height="15"/>
                 <textFieldExpression><![CDATA[$F{idAccidentType}]]></textFieldExpression>
             </textField>
 
             <staticText>
-                <reportElement x="0" y="215" width="140" height="15"/>
+                <reportElement x="10" y="170" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Severidad:]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="215" width="150" height="15"/>
+                <reportElement x="160" y="170" width="150" height="15"/>
                 <textFieldExpression><![CDATA[$F{idAccidentSeverity}]]></textFieldExpression>
             </textField>
 
             <staticText>
-                <reportElement x="0" y="235" width="140" height="15"/>
+                <reportElement x="320" y="170" width="60" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Estado:]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="235" width="150" height="15"/>
+                <reportElement x="380" y="170" width="125" height="15"/>
                 <textFieldExpression><![CDATA[$F{idAccidentStatus}]]></textFieldExpression>
             </textField>
 
-            <!-- Empleado / Ubicación -->
+            <!-- Empleado / Ubicación / Empresa / Enviado por -->
             <staticText>
-                <reportElement x="0" y="260" width="140" height="15"/>
+                <reportElement x="10" y="200" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Empleado (ID):]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="260" width="150" height="15"/>
+                <reportElement x="160" y="200" width="345" height="15"/>
                 <textFieldExpression><![CDATA[$F{idEmployee}]]></textFieldExpression>
             </textField>
 
             <staticText>
-                <reportElement x="0" y="280" width="140" height="15"/>
+                <reportElement x="10" y="220" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Ubicación (ID):]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="280" width="150" height="15"/>
+                <reportElement x="160" y="220" width="345" height="15"/>
                 <textFieldExpression><![CDATA[$F{idLocation}]]></textFieldExpression>
             </textField>
 
             <staticText>
-                <reportElement x="0" y="300" width="140" height="15"/>
+                <reportElement x="10" y="240" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Empresa (ID):]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="300" width="365" height="15"/>
+                <reportElement x="160" y="240" width="345" height="15"/>
                 <textFieldExpression><![CDATA[$F{idBusiness}]]></textFieldExpression>
             </textField>
 
             <staticText>
-                <reportElement x="0" y="320" width="140" height="15"/>
+                <reportElement x="10" y="260" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
                 <text><![CDATA[Enviado por:]]></text>
             </staticText>
             <textField>
-                <reportElement x="150" y="320" width="365" height="15"/>
+                <reportElement x="160" y="260" width="345" height="15"/>
                 <textFieldExpression><![CDATA[$F{sentBy}]]></textFieldExpression>
             </textField>
         </band>
     </detail>
 
     <pageFooter>
-        <band height="30">
+        <band height="25">
+            <line>
+                <reportElement x="0" y="0" width="515" height="1" forecolor="#616FEF"/>
+            </line>
             <textField>
-                <reportElement x="0" y="0" width="515" height="20"/>
+                <reportElement x="0" y="5" width="515" height="20"/>
                 <textElement textAlignment="Center">
-                    <font size="8"/>
+                    <font size="8" isItalic="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA["Generado por RISKOR - " + new java.util.Date()]]></textFieldExpression>
             </textField>

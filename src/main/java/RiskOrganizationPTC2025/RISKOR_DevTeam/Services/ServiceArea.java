@@ -166,19 +166,93 @@ public class ServiceArea {
         // 3) Crear nuevas locaciones (NOTA: DTOLocationCreate solo trae locationName)
         List<DTOLocation> outLocations = new ArrayList<>();
         if (req.getLocations() != null && !req.getLocations().isEmpty()) {
-            for (DTOLocationCreate lc : req.getLocations()) {
-                if (lc == null) continue;
-                // Solo crear nuevas locaciones con el DTO que tienes ahora
-                EntityLocation toSave = toEntityLocation(idBusiness, idArea, lc);
-                EntityLocation savedLoc = objRepoL.save(toSave);
 
-                DTOLocation dtoOut = new DTOLocation();
-                dtoOut.setIdLocation(savedLoc.getIdLocation());
-                dtoOut.setLocationName(savedLoc.getLocationName());
-                dtoOut.setIdArea(idArea);
-                dtoOut.setIdBusiness(biz);
-                outLocations.add(dtoOut);
+            // PRE: si req.getLocations() es List<DTOLocationCreate>, mapear a DTOLocationUpsert con idLocation=null
+            List<DTOLocationUpsert> incoming = req.getLocations().stream()
+                    .filter(Objects::nonNull)
+                    .map(lc -> {
+                        DTOLocationUpsert up = new DTOLocationUpsert();
+                        up.setIdLocation(null); // si tu DTO original no trae id
+                        up.setLocationName(lc.getLocationName());
+                        up.setIdArea(idArea);
+                        up.setIdBusiness(biz);
+                        return up;
+                    })
+                    .collect(Collectors.toList());
+
+            // 3.1) Pre-cargar las locaciones existentes para evitar N+1
+            List<EntityLocation> existingLocs = objRepoL.findByIdArea_IdAreaAndIdBusiness_IdBusiness(idArea, biz);
+            Map<String, EntityLocation> byId = existingLocs.stream()
+                    .collect(Collectors.toMap(EntityLocation::getIdLocation, e -> e));
+            Map<String, EntityLocation> byName = existingLocs.stream()
+                    .collect(Collectors.toMap(e -> normalize(e.getLocationName()), e -> e, (a,b) -> a));
+
+            // Mantener orden y evitar duplicados en la misma petición: key por name normalizado o id
+            LinkedHashMap<String, DTOLocation> resultMap = new LinkedHashMap<>();
+
+            for (DTOLocationUpsert up : incoming) {
+                if (up == null) continue;
+
+                String rawName = up.getLocationName();
+                if (rawName == null) continue;
+                String name = rawName.trim();
+                if (name.isEmpty()) continue;
+
+                String normalizedName = normalize(name);
+
+                // 1) Si el cliente dio idLocation: validar ownership y usarla
+                if (up.getIdLocation() != null && !up.getIdLocation().isBlank()) {
+                    EntityLocation foundById = byId.get(up.getIdLocation());
+                    if (foundById == null) {
+                        // invalid id: lanzar excepción para que el cliente sepa
+                        throw new IllegalArgumentException("idLocation enviado no existe o no pertenece al área: " + up.getIdLocation());
+                    }
+                    // (Opcional) actualizar nombre si difiere
+                    if (!foundById.getLocationName().equals(name)) {
+                        foundById.setLocationName(name);
+                        objRepoL.save(foundById);
+                    }
+                    DTOLocation dtoOut = convertToDto(foundById);
+                    resultMap.put(foundById.getIdLocation(), dtoOut);
+                    // mantener los maps consistentes
+                    byName.put(normalize(foundById.getLocationName()), foundById);
+                    continue;
+                }
+
+                // 2) No vino id: buscar por nombre normalizado
+                EntityLocation existing = byName.get(normalizedName);
+                if (existing != null) {
+                    resultMap.put(existing.getIdLocation(), convertToDto(existing));
+                    continue;
+                }
+
+                // 3) No existe: crear nueva locación
+                EntityLocation toSave = toEntityLocation(idBusiness, idArea, name); // adapta si tu helper recibe DTOLocationCreate
+                toSave.setLocationName(name);
+
+                EntityLocation saved;
+                try {
+                    saved = objRepoL.save(toSave);
+                } catch (org.springframework.dao.DataIntegrityViolationException dive) {
+                    // Condición de carrera: otro request creó la misma locación entre la búsqueda y el save.
+                    // Reintentar recuperar por nombre
+                    Optional<EntityLocation> retry = objRepoL.findByLocationNameIgnoreCaseAndIdArea_IdAreaAndIdBusiness_IdBusiness(name, idArea, biz);
+                    if (retry.isPresent()) {
+                        saved = retry.get();
+                    } else {
+                        throw dive;
+                    }
+                }
+
+                // Añadir al resultado
+                resultMap.put(saved.getIdLocation(), convertToDto(saved));
+                // Actualizar caches locales
+                byId.put(saved.getIdLocation(), saved);
+                byName.put(normalize(saved.getLocationName()), saved);
             }
+
+            // Pasar resultado a outLocations manteniendo orden
+            outLocations.addAll(resultMap.values());
         }
 
         // 4) Sincronizar empleados asignados:
@@ -329,6 +403,25 @@ public class ServiceArea {
         return loc;
     }
 
+    private EntityLocation toEntityLocation(String idBusiness, String idArea, String locationName) {
+        EntityLocation loc = new EntityLocation();
+        loc.setLocationName(locationName);
+        loc.setIdArea(em.getReference(EntityArea.class, idArea));
+        loc.setIdBusiness(em.getReference(EntityBusinessInfo.class, idBusiness));
+        return loc;
+    }
+
+    private DTOLocation convertToDto(EntityLocation el) {
+        DTOLocation d = new DTOLocation();
+        d.setIdLocation(el.getIdLocation());
+        d.setLocationName(el.getLocationName());
+        d.setIdArea(el.getIdArea() != null ? el.getIdArea().getIdArea() : null);
+        d.setIdBusiness(el.getIdBusiness() != null ? el.getIdBusiness().getIdBusiness() : null);
+        return d;
+    }
+
+
+
     private List<DTOEmployee> assignEmployeesToArea(String idBusiness, String idArea, List<String> employeeIds) {
         //Llamamos las entidades de empresa y área con las cargas perezosas, haciendo referencia a la clase con su ID
         EntityArea areaRef = em.getReference(EntityArea.class, idArea);
@@ -396,6 +489,10 @@ public class ServiceArea {
 
         area.setAreaSketch("Sin mapa"); //Limpiar campo en DB
         return convertToDTOA(area);
+    }
+
+    private String normalize(String s) {
+        return s == null ? "" : s.trim().toLowerCase();
     }
 
     //Método que ayuda a conseguir el ID público que da cloudinary a la img
