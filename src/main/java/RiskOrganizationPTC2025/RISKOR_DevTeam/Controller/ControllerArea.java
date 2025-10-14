@@ -34,28 +34,37 @@ public class ControllerArea {
 
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
-    @GetMapping("/getArea/{name}")
+    @GetMapping("/getAreaByName")
     public ResponseEntity<?> getAreaByName(
             @RequestAttribute("auth.business") String idBusiness,
-            @PathVariable String name,
+            @RequestParam(name = "areaName", required = false) String areaName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int size
-    ){
+    ) {
         try {
-            if(size <= 0 || size > 30){
-                ResponseEntity.badRequest().body(Map.of(
-                        "status", "El tamaño de la página debe estar entre 1 y 30"
+            if (page < 0 || size <= 0 || size > 30) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "Parámetros inválidos",
+                        "message", "page >= 0 y size entre 1 y 30"
                 ));
-                return ResponseEntity.ok(null);
             }
-            return ResponseEntity.ok(objServiceA.getAreaByName(idBusiness, name, page, size));
+
+            Page<DTOArea> result = objServiceA.getAreaByName(idBusiness, areaName, page, size);
+            return ResponseEntity.ok(result);
+
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "status", "No encontrado, Error",
+                    "status", "No encontrado",
                     "message", "Área no encontrada",
                     "timeStamp", Instant.now().toString()
             ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", "Parámetros inválidos",
+                    "message", e.getMessage()
+            ));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",
                     "message", "Error al consultar el área",
@@ -63,6 +72,7 @@ public class ControllerArea {
             ));
         }
     }
+
 
     @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
     @GetMapping("/getArea/{idArea}")

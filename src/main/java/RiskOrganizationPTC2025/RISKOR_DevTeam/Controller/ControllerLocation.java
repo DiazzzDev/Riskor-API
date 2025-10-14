@@ -137,7 +137,7 @@ public class ControllerLocation {
         }
     }
 
-    @PreAuthorize("hasRole('Administrador')")
+    @PreAuthorize("hasRole('Administrador', 'Mantenimiento')")
     @DeleteMapping("/deleteLocation/{idLocation}")
     public ResponseEntity<?> deleteLocation(
             @RequestAttribute("auth.business") String idBusiness,

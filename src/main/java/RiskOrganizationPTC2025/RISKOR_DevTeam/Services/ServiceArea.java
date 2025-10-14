@@ -44,10 +44,13 @@ public class ServiceArea {
 
     @Transactional(readOnly = true)
     public Page<DTOArea> getAreaByName(String idBusiness, String name, int page, int size) {
+        if (page < 0 || size <= 0) throw new IllegalArgumentException("page y size inválidos");
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<EntityArea> areas = objRepoA.findByAreaNameContainingIgnoreCaseAndIdBusiness_IdBusiness(name, idBusiness.toUpperCase(), pageable);
-        return areas.map(this::convertToDTOA);
+        String safeName = (name == null) ? "" : name;
+        return objRepoA.findByAreaNameContainingIgnoreCaseAndIdBusiness_IdBusiness(safeName, idBusiness, pageable).map(this::convertToDTOA);
     }
+
 
     @Transactional(readOnly = true)
     public DTOArea getAreaById(String idBusiness, String idArea) {
