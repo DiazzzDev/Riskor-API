@@ -491,6 +491,7 @@ public class ServiceEmployee {
 
         //En este campo no se aplica el operador ternario porque no usa cargas perezosas
         dtoE.setUsername(employee.getUsername().getUsername());
+        dtoE.setUserDetails(employee.getUsername().getCreationDate());
         dtoE.setStatus(em.getReference(EntityUser.class, employee.getUsername().getUsername()).getStatus());
 
         // NOMBRES (null-safe, sin getReference)

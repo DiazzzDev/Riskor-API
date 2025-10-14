@@ -183,12 +183,18 @@ public class ServiceArea {
         if (req.getLocations() != null) {
             for (DTOLocationCreate locReq : req.getLocations()) {
                 String normName = normalize(locReq.getLocationName());
-                if (!currentLocsByName.containsKey(normName)) {
+                boolean exists = currentLocs.stream()
+                        .anyMatch(l -> normalize(l.getLocationName()).equals(normName));
+                if (!exists) {
                     EntityLocation newLoc = toEntityLocation(idBusiness, idArea, locReq);
                     EntityLocation savedLoc = objRepoL.save(newLoc);
                     outLocations.add(convertToDto(savedLoc));
                 } else {
-                    outLocations.add(convertToDto(currentLocsByName.get(normName)));
+                    // Agregar la locación existente a DTO de salida
+                    currentLocs.stream()
+                            .filter(l -> normalize(l.getLocationName()).equals(normName))
+                            .findFirst()
+                            .ifPresent(l -> outLocations.add(convertToDto(l)));
                 }
             }
         }

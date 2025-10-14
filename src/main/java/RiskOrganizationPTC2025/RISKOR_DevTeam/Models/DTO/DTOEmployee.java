@@ -82,6 +82,8 @@ public class DTOEmployee {
     @NotBlank
     private String username;
 
+    private LocalDate userDetails;
+
     @Nullable //Ayuda a detectar posibles NullPointerExceptions, teniendo mayor control de excepciones
     private String idCommitteePosition;
 
