@@ -164,6 +164,7 @@ public class ServiceTraining {
 
         dtoT.setTrainingLocation(training.getTrainingLocation());
         dtoT.setIdTrainingModality(training.getIdTrainingModality() != null ? training.getIdTrainingModality().getIdTrainingModality() : null);
+        dtoT.setTrainingModality(training.getIdTrainingModality() != null ? training.getIdTrainingModality().getTrainingModality() : null);
         dtoT.setIdBusiness(training.getIdBusiness() != null ? training.getIdBusiness().getIdBusiness() : null);
 
         return dtoT;

@@ -43,6 +43,8 @@ public class DTOTraining {
     @NotBlank
     private String idTrainingModality;
 
+    private String trainingModality;
+
     //Este campo no debe ser aceptado por el cliente, el service y el controller lo setean (Si lo hiciera el cliente gran falla de seguridad)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY) //Se agrega para evitar que un atacante modifique el JSON cambiando el ID y modificando registros de otras empresas
     private String idBusiness;
