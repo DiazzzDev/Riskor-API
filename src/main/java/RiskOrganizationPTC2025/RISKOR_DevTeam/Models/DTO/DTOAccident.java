@@ -51,11 +51,17 @@ public class DTOAccident {
     @NotBlank
     private String idEmployee;
 
+    private String employee;
+
     @NotBlank
     private String idLocation;
 
+    private String location;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY) //Para no permitir que el cliente cambie empresa por body; la inyectas desde el path.
     private String idBusiness;
+
+    private String business;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String sentBy;

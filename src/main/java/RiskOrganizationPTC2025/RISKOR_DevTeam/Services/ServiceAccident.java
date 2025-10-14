@@ -155,12 +155,6 @@ public class ServiceAccident {
         return convertToDTOA(accident); //JPA sincroniza por @Transactional
     }
 
-    public boolean removeAccident(String idAccident, String idBusiness) {
-        long rows = objRepoA.deleteByIdAccidentAndIdBusiness_IdBusiness(idAccident, idBusiness.toUpperCase());
-        if (rows == 0) throw new EntityNotFoundException("Accidente no encontrado");
-        return true;
-    }
-
     private DTOAccident convertToDTOA(EntityAccident accident){
         DTOAccident dtoA = new DTOAccident();
         dtoA.setIdAccident(accident.getIdAccident());
@@ -168,12 +162,19 @@ public class ServiceAccident {
         dtoA.setAccidentDate(accident.getAccidentDate());
         dtoA.setReportAccident(accident.getReportAccident());
         dtoA.setIdAccidentCategory(accident.getIdAccidentCategory() != null ? accident.getIdAccidentCategory().getIdAccidentCategory() : null);
+        dtoA.setAccidentCategory(accident.getIdAccidentCategory() != null ? accident.getIdAccidentCategory().getAccidentCategory() : null);
         dtoA.setIdAccidentType(accident.getIdAccidentType() != null ? accident.getIdAccidentType().getIdAccidentType() : null);
+        dtoA.setAccidentType(accident.getIdAccidentType() != null ? accident.getIdAccidentType().getAccidentType() : null);
         dtoA.setIdAccidentSeverity(accident.getIdAccidentSeverity() != null ? accident.getIdAccidentSeverity().getIdAccidentSeverity() : null);
+        dtoA.setAccidentSeverity(accident.getIdAccidentSeverity() != null ? accident.getIdAccidentSeverity().getAccidentSeverity() : null);
         dtoA.setIdAccidentStatus(accident.getIdAccidentStatus() != null ? accident.getIdAccidentStatus().getIdAccidentStatus() : null);
+        dtoA.setAccidentStatus(accident.getIdAccidentStatus() != null ? accident.getIdAccidentStatus().getAccidentStatus() : null);
         dtoA.setIdEmployee(accident.getIdEmployee() != null ? accident.getIdEmployee().getIdEmployee() : null);
+        dtoA.setEmployee(accident.getIdEmployee() != null ? accident.getIdEmployee().getFirstName() + accident.getIdEmployee().getLastName() : null);
         dtoA.setIdLocation(accident.getIdLocation() != null ? accident.getIdLocation().getIdLocation() : null);
+        dtoA.setLocation(accident.getIdLocation() != null ? accident.getIdLocation().getLocationName() : null);
         dtoA.setIdBusiness(accident.getIdBusiness() != null ? accident.getIdBusiness().getIdBusiness() : null);
+        dtoA.setBusiness(accident.getIdBusiness() != null ? accident.getIdBusiness().getIdBusiness() : null);
 
         return dtoA;
     }

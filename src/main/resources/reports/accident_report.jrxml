@@ -125,7 +125,7 @@
                     <text><![CDATA[Tipo:]]></text>
                 </staticText>
                 <textField>
-                    <reportElement x="360" y="140" width="145" height="15"/>
+                    <reportElement x="350" y="150" width="140" height="15"/>
                     <textFieldExpression><![CDATA[$F{idAccidentType}]]></textFieldExpression>
                 </textField>
 
@@ -153,7 +153,7 @@
                 <staticText>
                     <reportElement x="0" y="185" width="140" height="15"/>
                     <textElement><font isBold="true"/></textElement>
-                    <text><![CDATA[Empleado (ID):]]></text>
+                    <text><![CDATA[Empleado:]]></text>
                 </staticText>
                 <textField>
                     <reportElement x="150" y="185" width="345" height="15"/>
@@ -163,7 +163,7 @@
                 <staticText>
                     <reportElement x="0" y="205" width="140" height="15"/>
                     <textElement><font isBold="true"/></textElement>
-                    <text><![CDATA[Ubicación (ID):]]></text>
+                    <text><![CDATA[Ubicación:]]></text>
                 </staticText>
                 <textField>
                     <reportElement x="150" y="205" width="345" height="15"/>
@@ -173,7 +173,7 @@
                 <staticText>
                     <reportElement x="0" y="225" width="140" height="15"/>
                     <textElement><font isBold="true"/></textElement>
-                    <text><![CDATA[Empresa (ID):]]></text>
+                    <text><![CDATA[Empresa:]]></text>
                 </staticText>
                 <textField>
                     <reportElement x="150" y="225" width="345" height="15"/>

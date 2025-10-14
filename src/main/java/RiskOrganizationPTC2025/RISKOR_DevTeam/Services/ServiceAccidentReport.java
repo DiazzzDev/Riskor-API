@@ -49,13 +49,13 @@ public class ServiceAccidentReport {
         m.put("description", dto.getDescription());
         m.put("accidentDate", toDate(dto.getAccidentDate()));
         m.put("reportAccident", toDate(dto.getReportAccident()));
-        m.put("idAccidentCategory", dto.getIdAccidentCategory());
-        m.put("idAccidentType", dto.getIdAccidentType());
-        m.put("idAccidentSeverity", dto.getIdAccidentSeverity());
-        m.put("idAccidentStatus", dto.getIdAccidentStatus());
-        m.put("idEmployee", dto.getIdEmployee());
-        m.put("idLocation", dto.getIdLocation());
-        m.put("idBusiness", dto.getIdBusiness());
+        m.put("idAccidentCategory", dto.getAccidentCategory());
+        m.put("idAccidentType", dto.getAccidentType());
+        m.put("idAccidentSeverity", dto.getAccidentSeverity());
+        m.put("idAccidentStatus", dto.getAccidentStatus());
+        m.put("idEmployee", dto.getEmployee());
+        m.put("idLocation", dto.getLocation());
+        m.put("idBusiness", dto.getBusiness());
         m.put("sentBy", dto.getSentBy());
         return m;
     }
