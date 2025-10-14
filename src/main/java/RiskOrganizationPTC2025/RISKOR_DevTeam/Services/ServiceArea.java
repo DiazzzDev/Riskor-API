@@ -43,6 +43,13 @@ public class ServiceArea {
     private RepositoryAreaEmployee objRepoAE;
 
     @Transactional(readOnly = true)
+    public Page<DTOArea> getAreaByName(String idBusiness, String name, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EntityArea> areas = objRepoA.findByAreaNameContainingIgnoreCaseAndIdBusiness_IdBusiness(name, idBusiness.toUpperCase(), pageable);
+        return areas.map(this::convertToDTOA);
+    }
+
+    @Transactional(readOnly = true)
     public DTOArea getAreaById(String idBusiness, String idArea) {
         EntityArea area = objRepoA.findByIdAreaAndIdBusiness_IdBusiness(idArea, idBusiness.toUpperCase()).orElseThrow(() -> new EntityNotFoundException("Área no encontrada"));
         return convertToDTOA(area);
@@ -51,8 +58,8 @@ public class ServiceArea {
     @Transactional(readOnly = true)
     public Page<DTOArea> getAllAreas(String idBusiness, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<EntityArea> permissionPage = objRepoA.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
-        return permissionPage.map(this::convertToDTOA);
+        Page<EntityArea> areas = objRepoA.findByIdBusiness_IdBusiness(idBusiness.toUpperCase(), pageable);
+        return areas.map(this::convertToDTOA);
     }
 
     @Transactional(readOnly = true)

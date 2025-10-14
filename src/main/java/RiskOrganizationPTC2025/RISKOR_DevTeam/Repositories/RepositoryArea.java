@@ -21,4 +21,6 @@ public interface RepositoryArea extends JpaRepository<EntityArea, String> {
     // Existencia y borrado seguros por empresa
     boolean existsByIdAreaAndIdBusiness_IdBusiness(String idArea, String idBusiness);
     void deleteByIdAreaAndIdBusiness_IdBusiness(String idArea, String idBusiness);
+
+    Page<EntityArea> findByAreaNameContainingIgnoreCaseAndIdBusiness_IdBusiness(String areaName, String idBusiness, Pageable pageable);
 }
