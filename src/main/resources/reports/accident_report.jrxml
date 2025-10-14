@@ -179,7 +179,7 @@
     </detail>
 
     <pageFooter>
-        <band height="30">
+        <band height="25">
             <line>
                 <reportElement x="0" y="0" width="515" height="1" forecolor="#616FEF"/>
             </line>

@@ -15,7 +15,7 @@ public final class AccidentSpecs {
                 cb.equal(cb.upper(root.get("idBusiness").get("idBusiness")), idBusiness.toUpperCase());
     }
 
-    // Filtro por empleado exacto (opcional)
+    // Filtro por empleado exacto
     public static Specification<EntityAccident> byEmployeeId(String employeeId) {
         return (root, query, cb) -> {
             if (employeeId == null || employeeId.isBlank()) return cb.conjunction();
@@ -23,7 +23,7 @@ public final class AccidentSpecs {
         };
     }
 
-    // Filtro por estatus de accidente (opcional)
+    // Filtro por estatus de accidente
     public static Specification<EntityAccident> byStatus(String statusId) {
         return (root, query, cb) -> {
             if (statusId == null || statusId.isBlank()) return cb.conjunction();
@@ -31,7 +31,7 @@ public final class AccidentSpecs {
         };
     }
 
-    // Rango de fechas (opcional)
+    // Rango de fechas
     public static Specification<EntityAccident> inDateRange(LocalDate from, LocalDate to) {
         return (root, query, cb) -> {
             if (from == null && to == null) return cb.conjunction();
@@ -46,7 +46,7 @@ public final class AccidentSpecs {
         };
     }
 
-    // Búsqueda por nombre, DUI (con/sin guión) o correo (opcional)
+    // Búsqueda por nombre, DUI (con/sin guión) o correo
     public static Specification<EntityAccident> searchQ(String employeeInfo) {
         return (root, query, cb) -> {
             if (employeeInfo == null || employeeInfo.isBlank()) return cb.conjunction();
