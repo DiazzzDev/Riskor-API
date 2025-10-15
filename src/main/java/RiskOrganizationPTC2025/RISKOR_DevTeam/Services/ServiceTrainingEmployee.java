@@ -109,22 +109,29 @@ public class ServiceTrainingEmployee {
     }
 
     public boolean removeEmployeeFromTraining(String idTraining, String idEmployee, String idBusiness) {
-        long rows = objRepoTE.deleteByIdTraining_IdTrainingAndIdEmployee_IdEmployeeAndIdBusiness_IdBusiness(idTraining, idEmployee, idBusiness.toUpperCase());
+        if(idTraining == null || idEmployee == null || idBusiness == null)
+            throw new IllegalArgumentException("Los IDs no pueden ser nulos");
 
-        //Evitamos doble consulta y eliminamos, si no lo encuentra y elimina las filas afectadas serán 0 y devolverá false
-        if(rows != 0) return true;
+        int rows = objRepoTE.deleteByTrainingAndEmployeeAndBusiness(idTraining, idEmployee, idBusiness);
+        if(rows == 0) throw new EntityNotFoundException("Registro de entrenamiento no encontrado para eliminar");
 
-        return false; //Si se retornó false significa que no se pudo eliminar
+        return true;
     }
 
     public boolean removeTrainingEmployee(String idTrainingEmployee, String idBusiness) {
-        //Como ya posee validaciones desde la DB con múltiples CONSTRAINT se las aplicamos desde el nombre del método de la JPA
-        //Para eliminar de manera eficiente y segura
-        long rows = objRepoTE.deleteByIdTrainingEmployeeAndIdBusiness_IdBusiness(idTrainingEmployee, idBusiness.toUpperCase());
+        if(idTrainingEmployee == null || idTrainingEmployee.trim().isEmpty())
+            throw new IllegalArgumentException("El ID del trainingEmployee no puede ser nulo o vacío");
 
-        if (rows == 0) throw new EntityNotFoundException("Registro no encontrado"); //Si al momento de eliminar una fila devolvió 0 va a mandar error
+        if(idBusiness == null || idBusiness.trim().isEmpty())
+            throw new IllegalArgumentException("El ID del business no puede ser nulo o vacío");
+
+        // Eliminación explícita con query, retorna filas afectadas
+        int rows = objRepoTE.deleteByTrainingEmployeeAndBusiness(idTrainingEmployee, idBusiness);
+
+        if(rows == 0) throw new EntityNotFoundException("Registro no encontrado");
         return true;
     }
+
 
     private DTOTrainingEmployee convertToDTOTE(EntityTrainingEmployee trainingEmployee){
         DTOTrainingEmployee dtoTE = new DTOTrainingEmployee();

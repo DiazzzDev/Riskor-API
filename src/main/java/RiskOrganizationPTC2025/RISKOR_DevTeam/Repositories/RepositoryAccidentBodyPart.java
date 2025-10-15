@@ -22,6 +22,4 @@ public interface RepositoryAccidentBodyPart extends JpaRepository<EntityAccident
     @Query("DELETE FROM EntityAccidentBodyPart e WHERE e.idAccidentBodyPart = :idAccidentBodyPart AND e.idBusiness.idBusiness = :idBusiness")
     int deleteByIdAccidentBodyPartAndIdBusiness(@Param("idAccidentBodyPart") String idAccidentBodyPart, @Param("idBusiness") String idBusiness);
 
-    // Verificar existencia dentro de la empresa
-    boolean existsByIdAccidentBodyPartAndIdBusiness_IdBusiness(String idAccidentBodyPart, String idBusiness);
 }
