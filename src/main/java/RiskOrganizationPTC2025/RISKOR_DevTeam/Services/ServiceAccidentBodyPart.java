@@ -42,9 +42,11 @@ public class ServiceAccidentBodyPart {
 
     //DELETE (seguro y más eficiente por empresa)
     public boolean removeAccidentBodyP(String idAccidentBodyPart, String idBusiness) {
-        if (idAccidentBodyPart == null || idAccidentBodyPart.trim().isEmpty()) throw new IllegalArgumentException("El ID no puede ser nulo o vacío");
+        if (idAccidentBodyPart == null || idAccidentBodyPart.trim().isEmpty())
+            throw new IllegalArgumentException("El ID no puede ser nulo o vacío");
 
-        long rows = objRepoABP.deleteByIdAccidentBodyPartAndIdBusiness_IdBusiness(idAccidentBodyPart, idBusiness.toUpperCase());
+        // No uses toUpperCase() si el ID es RAW/UUID (podría romperlo).
+        int rows = objRepoABP.deleteByIdAccidentBodyPartAndIdBusiness(idAccidentBodyPart, idBusiness);
         if (rows == 0) throw new EntityNotFoundException("Registro no encontrado");
         return true;
     }
