@@ -145,6 +145,7 @@ public class ServiceTrainingEmployee {
         dtoTE.setPhoto(trainingEmployee.getIdEmployee() != null ? trainingEmployee.getIdEmployee().getPhoto() : null);
         dtoTE.setFirstname(trainingEmployee.getIdEmployee() != null ? trainingEmployee.getIdEmployee().getFirstName() : null);
         dtoTE.setLastname(trainingEmployee.getIdEmployee() != null ? trainingEmployee.getIdEmployee().getLastName() : null);
+        dtoTE.setDUI(trainingEmployee.getIdEmployee() != null ? trainingEmployee.getIdEmployee().getDui() : null);
 
         dtoTE.setIdTraining(trainingEmployee.getIdTraining() != null ? trainingEmployee.getIdTraining().getIdTraining() : null);
         dtoTE.setIdBusiness(trainingEmployee.getIdBusiness() != null ? trainingEmployee.getIdBusiness().getIdBusiness() : null);
