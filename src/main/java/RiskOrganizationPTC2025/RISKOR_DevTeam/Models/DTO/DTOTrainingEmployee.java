@@ -32,6 +32,11 @@ public class DTOTrainingEmployee {
     @NotBlank
     private String idEmployee;
 
+    private String photo;
+    private String firstname;
+    private String lastname;
+    private String DUI;
+
     @NotBlank
     private String idTraining;
 
