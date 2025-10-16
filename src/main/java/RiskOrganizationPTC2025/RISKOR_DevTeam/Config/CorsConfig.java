@@ -24,8 +24,11 @@ public class    CorsConfig {
         config.addAllowedOrigin("http://127.0.0.1:5501");
         config.addAllowedOrigin("http://127.0.0.1:5502");
         config.addAllowedOrigin("http://127.0.0.2:5501");
+
+        //Producción
         config.addAllowedOrigin("https://sistemaweb-beta.vercel.app/"); //Dominio web definido por vercel
-        config.addAllowedOrigin("https://riskor.app"); //Dominio web
+        config.addAllowedOrigin("https://riskor.app");
+        config.addAllowedOrigin("https://www.riskor.app");//Dominio web
         config.addAllowedOrigin("https://localhost");
         config.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
 
@@ -63,9 +66,12 @@ public class    CorsConfig {
         configuration.addAllowedOrigin("http://127.0.0.1:5501");
         configuration.addAllowedOrigin("http://127.0.0.1:5502");
         configuration.addAllowedOrigin("http://127.0.0.2:5501");
+
+        //Producción
         configuration.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
-        configuration.addAllowedOrigin("https://sistemaweb-beta.vercel.app/");
-        configuration.addAllowedOrigin("https://riskor.app");
+        configuration.addAllowedOrigin("https://sistemaweb-beta.vercel.app/"); //Dominio default de vercel
+        configuration.addAllowedOrigin("https://riskor.app"); //Dominio comprado de vercel
+        configuration.addAllowedOrigin("https://www.riskor.app"); //Dominio agregado en vercel para resolver problemas de acceso
         configuration.addAllowedOrigin("https://localhost");
 
         configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
