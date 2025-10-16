@@ -2,6 +2,7 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories;
 
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.EntityTrainingEmployee;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface RepositoryTrainingEmployee extends JpaRepository<EntityTrainingEmployee, String> {
+public interface RepositoryTrainingEmployee extends JpaRepository<EntityTrainingEmployee, String>, JpaSpecificationExecutor<EntityTrainingEmployee> {
     Optional<EntityTrainingEmployee> findByIdTrainingEmployeeAndIdBusiness_IdBusiness(String idTrainingEmployee, String idBusiness);
 
     List<EntityTrainingEmployee> findByIdEmployee_IdEmployeeAndIdBusiness_IdBusiness(String idEmployee, String idBusiness);

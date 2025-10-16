@@ -55,22 +55,15 @@ public class ControllerTrainingEmployee {
     @GetMapping("/getTrainingEmployee/training/{idTraining}")
     public ResponseEntity<?> getAttendanceByTraining(
             @RequestAttribute("auth.business") String idBusiness,
-            @PathVariable String idTraining
+            @PathVariable String idTraining,
+            @RequestParam(required = false) String employeeInfo
     ){
         try {
-            List<DTOTrainingEmployee> attendanceList = objServiceTE.getAttendanceByTraining(idTraining, idBusiness);
+            List<DTOTrainingEmployee> attendanceList = objServiceTE.getAttendanceByTraining(idTraining, idBusiness, employeeInfo);
 
-            if (attendanceList.isEmpty()) {
-                return ResponseEntity.noContent().build(); //HTTP 204 No Content
-            }
+            if (attendanceList.isEmpty()) return ResponseEntity.noContent().build();
 
             return ResponseEntity.ok(attendanceList);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "status", "No encontrado, Error",
-                    "message", "Capacitación no encontrada o sin registros de asistencia",
-                    "timeStamp", Instant.now().toString()
-            ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "Error crítico no controlado",

@@ -3,11 +3,13 @@ package RiskOrganizationPTC2025.RISKOR_DevTeam.Services;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Entities.*;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Models.DTO.DTOTrainingEmployee;
 import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.RepositoryTrainingEmployee;
+import RiskOrganizationPTC2025.RISKOR_DevTeam.Repositories.spec.TrainingEmployeeSpecs;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -177,18 +179,15 @@ public class ServiceTrainingEmployee {
     }
 
     @Transactional(readOnly = true)
-    public List<DTOTrainingEmployee> getAttendanceByTraining(String idTraining, String idBusiness) {
-        if (idTraining == null || idTraining.isBlank()) throw new IllegalArgumentException("El ID de la capacitación no puede ser nulo o vacío.");
+    public List<DTOTrainingEmployee> getAttendanceByTraining(String idTraining, String idBusiness, String search) {
 
-        List<EntityTrainingEmployee> attendanceList = objRepoTE.findByIdTraining_IdTrainingAndIdBusiness_IdBusiness(idTraining, idBusiness.toUpperCase());
+        Specification<EntityTrainingEmployee> spec = TrainingEmployeeSpecs.byTrainingAndBusiness(idTraining, idBusiness)
+                .and(TrainingEmployeeSpecs.searchEmployee(search));
 
-        if (attendanceList.isEmpty()) {
-            // En lugar de lanzar una excepción, retornamos una lista vacía.
-            // El controlador puede decidir si esto es un 204 No Content o un 200 OK con lista vacía.
-            return attendanceList.stream().map(this::convertToDTOTE).collect(Collectors.toList());
-        }
+        List<EntityTrainingEmployee> attendanceList = objRepoTE.findAll(spec);
 
-        // Convertimos la lista de entidades a la lista de DTOs
-        return attendanceList.stream().map(this::convertToDTOTE).collect(Collectors.toList());
+        return attendanceList.stream()
+                .map(this::convertToDTOTE)
+                .collect(Collectors.toList());
     }
 }
