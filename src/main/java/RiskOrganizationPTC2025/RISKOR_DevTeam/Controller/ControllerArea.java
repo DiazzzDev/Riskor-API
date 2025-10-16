@@ -74,7 +74,7 @@ public class ControllerArea {
     }
 
 
-    @PreAuthorize("hasAnyRole('Administrador', 'Mantenimiento')")
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getArea/{idArea}")
     public ResponseEntity<?> getAreaById(
             @RequestAttribute("auth.business") String idBusiness,
@@ -120,6 +120,7 @@ public class ControllerArea {
         return ResponseEntity.ok(objServiceA.getAllAreas(idBusiness, page, size));
     }
 
+    @PreAuthorize("hasRole('Administrador')")
     @GetMapping("/getAreaBundle/{idArea}")
     public ResponseEntity<?> getAreaBundle(
             @RequestAttribute("auth.business") String idBusiness,

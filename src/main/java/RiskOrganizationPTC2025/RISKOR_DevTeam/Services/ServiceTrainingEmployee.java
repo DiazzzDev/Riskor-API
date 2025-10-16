@@ -168,4 +168,20 @@ public class ServiceTrainingEmployee {
         );
         return ldt.format(fmt);
     }
+
+    @Transactional(readOnly = true)
+    public List<DTOTrainingEmployee> getAttendanceByTraining(String idTraining, String idBusiness) {
+        if (idTraining == null || idTraining.isBlank()) throw new IllegalArgumentException("El ID de la capacitación no puede ser nulo o vacío.");
+
+        List<EntityTrainingEmployee> attendanceList = objRepoTE.findByIdTraining_IdTrainingAndIdBusiness_IdBusiness(idTraining, idBusiness.toUpperCase());
+
+        if (attendanceList.isEmpty()) {
+            // En lugar de lanzar una excepción, retornamos una lista vacía.
+            // El controlador puede decidir si esto es un 204 No Content o un 200 OK con lista vacía.
+            return attendanceList.stream().map(this::convertToDTOTE).collect(Collectors.toList());
+        }
+
+        // Convertimos la lista de entidades a la lista de DTOs
+        return attendanceList.stream().map(this::convertToDTOTE).collect(Collectors.toList());
+    }
 }

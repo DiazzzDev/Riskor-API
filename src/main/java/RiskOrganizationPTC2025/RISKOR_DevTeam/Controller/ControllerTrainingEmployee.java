@@ -52,6 +52,34 @@ public class ControllerTrainingEmployee {
         }
     }
 
+    @GetMapping("/getTrainingEmployee/training/{idTraining}")
+    public ResponseEntity<?> getAttendanceByTraining(
+            @RequestAttribute("auth.business") String idBusiness,
+            @PathVariable String idTraining
+    ){
+        try {
+            List<DTOTrainingEmployee> attendanceList = objServiceTE.getAttendanceByTraining(idTraining, idBusiness);
+
+            if (attendanceList.isEmpty()) {
+                return ResponseEntity.noContent().build(); //HTTP 204 No Content
+            }
+
+            return ResponseEntity.ok(attendanceList);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "status", "No encontrado, Error",
+                    "message", "Capacitación no encontrada o sin registros de asistencia",
+                    "timeStamp", Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "Error crítico no controlado",
+                    "message", "Error al listar la asistencia por capacitación",
+                    "detail", e.getMessage()
+            ));
+        }
+    }
+
     @GetMapping("/getTrainingEmployee/employee/{idEmployee}")
     public ResponseEntity<?> getTrainingEmployeesByTraining(
             @RequestAttribute("auth.business") String idBusiness,

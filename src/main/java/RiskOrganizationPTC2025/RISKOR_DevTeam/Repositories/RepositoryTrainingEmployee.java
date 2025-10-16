@@ -46,4 +46,6 @@ public interface RepositoryTrainingEmployee extends JpaRepository<EntityTraining
     List<EntityTrainingEmployee> findByIdBusiness_IdBusiness(String idBusiness);
 
     boolean existsByIdTrainingEmployeeAndIdBusiness_IdBusiness(String idTrainingEmployee, String idBusiness);
+
+    List<EntityTrainingEmployee> findByIdTraining_IdTrainingAndIdBusiness_IdBusiness(String idTraining, String upperCase);
 }
