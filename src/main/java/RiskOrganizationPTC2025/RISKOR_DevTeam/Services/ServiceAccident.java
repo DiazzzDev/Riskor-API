@@ -175,6 +175,7 @@ public class ServiceAccident {
         dtoA.setLocation(accident.getIdLocation() != null ? accident.getIdLocation().getLocationName() : null);
         dtoA.setIdBusiness(accident.getIdBusiness() != null ? accident.getIdBusiness().getIdBusiness() : null);
         dtoA.setBusiness(accident.getIdBusiness() != null ? accident.getIdBusiness().getIdBusiness() : null);
+        dtoA.setSentBy(accident.getIdEmployee() != null ? accident.getSentBy().getFirstName() + " " + accident.getSentBy().getLastName() : null);
 
         return dtoA;
     }
