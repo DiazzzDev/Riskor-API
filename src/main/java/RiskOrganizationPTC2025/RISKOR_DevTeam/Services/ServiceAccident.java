@@ -170,7 +170,7 @@ public class ServiceAccident {
         dtoA.setIdAccidentStatus(accident.getIdAccidentStatus() != null ? accident.getIdAccidentStatus().getIdAccidentStatus() : null);
         dtoA.setAccidentStatus(accident.getIdAccidentStatus() != null ? accident.getIdAccidentStatus().getAccidentStatus() : null);
         dtoA.setIdEmployee(accident.getIdEmployee() != null ? accident.getIdEmployee().getIdEmployee() : null);
-        dtoA.setEmployee(accident.getIdEmployee() != null ? accident.getIdEmployee().getFirstName() + accident.getIdEmployee().getLastName() : null);
+        dtoA.setEmployee(accident.getIdEmployee() != null ? accident.getIdEmployee().getFirstName() + " " + accident.getIdEmployee().getLastName() : null);
         dtoA.setIdLocation(accident.getIdLocation() != null ? accident.getIdLocation().getIdLocation() : null);
         dtoA.setLocation(accident.getIdLocation() != null ? accident.getIdLocation().getLocationName() : null);
         dtoA.setIdBusiness(accident.getIdBusiness() != null ? accident.getIdBusiness().getIdBusiness() : null);
