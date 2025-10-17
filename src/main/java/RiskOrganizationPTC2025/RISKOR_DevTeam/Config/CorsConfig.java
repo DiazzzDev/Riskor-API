@@ -22,6 +22,8 @@ public class    CorsConfig {
 
         //Orígenes desde donde se pueden hacer solicitudes
         config.addAllowedOrigin("http://127.0.0.1:5501");
+        config.addAllowedOrigin("http://127.0.0.1:5502");
+        config.addAllowedOrigin("http://127.0.0.2:5501");
 
         //Producción
         config.addAllowedOrigin("https://sistemaweb-git-main-edwin-diazs-projects-68bb9355.vercel.app"); //Dominio web definido por vercel
@@ -62,6 +64,8 @@ public class    CorsConfig {
 
         //Orígenes desde donde se pueden hacer solicitudes
         configuration.addAllowedOrigin("http://127.0.0.1:5501");
+        configuration.addAllowedOrigin("http://127.0.0.1:5502");
+        configuration.addAllowedOrigin("http://127.0.0.2:5501");
 
         //Producción
         configuration.addAllowedOrigin("https://riskor-370e22badbf5.herokuapp.com");
