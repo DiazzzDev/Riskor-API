@@ -34,20 +34,6 @@
             </staticText>
         </band>
     </title>
-
-    <!-- Page header: fecha de generación -->
-    <pageHeader>
-        <band height="20">
-            <textField>
-                <reportElement x="0" y="0" width="515" height="20"/>
-                <textElement textAlignment="Right">
-                    <font size="8"/>
-                </textElement>
-                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
-            </textField>
-        </band>
-    </pageHeader>
-
     <!-- Detail: mostramos datos del accidente en formato simple -->
     <detail>
         <band height="360">
@@ -139,7 +125,7 @@
             <staticText>
                 <reportElement x="0" y="260" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
-                <text><![CDATA[Empleado (ID):]]></text>
+                <text><![CDATA[Empleado:]]></text>
             </staticText>
             <textField>
                 <reportElement x="150" y="260" width="150" height="15"/>
@@ -149,7 +135,7 @@
             <staticText>
                 <reportElement x="0" y="280" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
-                <text><![CDATA[Ubicación (ID):]]></text>
+                <text><![CDATA[Ubicación:]]></text>
             </staticText>
             <textField>
                 <reportElement x="150" y="280" width="150" height="15"/>
@@ -159,7 +145,7 @@
             <staticText>
                 <reportElement x="0" y="300" width="140" height="15"/>
                 <textElement><font isBold="true"/></textElement>
-                <text><![CDATA[Empresa (ID):]]></text>
+                <text><![CDATA[Empresa:]]></text>
             </staticText>
             <textField>
                 <reportElement x="150" y="300" width="365" height="15"/>
